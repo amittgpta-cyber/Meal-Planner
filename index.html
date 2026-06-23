@@ -97,10 +97,14 @@
     .cart-tools { display: flex; gap: 10px; margin-bottom: 20px; }
     .cart-tools input { flex: 1; padding: 14px 20px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); }
     .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); font-weight: bold; margin: 24px 0 12px; }
+    
+    /* Advanced Swipe CSS */
     .swipe-wrapper { position: relative; overflow: hidden; margin-bottom: 12px; border-radius: 1.5rem; }
-    .swipe-bg { position: absolute; inset: 0; background: var(--color-error); border-radius: 1.5rem; display: flex; align-items: center; justify-content: flex-end; padding-right: 24px; color: #fff; font-weight: bold; }
-    .swipe-item { position: relative; z-index: 1; transition: transform 0.2s; background: var(--color-surface); padding: 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); display: flex; align-items: center; gap: 16px; }
+    .swipe-bg { position: absolute; inset: 0; background: var(--color-error); border-radius: 1.5rem; display: flex; align-items: center; justify-content: flex-end; padding-right: 24px; color: #fff; font-weight: bold; cursor: pointer; }
+    .swipe-item { position: relative; z-index: 1; background: var(--color-surface); padding: 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); display: flex; align-items: center; gap: 16px; will-change: transform; transition: transform 0.3s var(--ease-spring); }
+    .swipe-item.swiping { transition: none; }
     .swipe-item.dimmed { opacity: 0.5; background: transparent; }
+    
     .checkbox { width: 24px; height: 24px; border: 2px solid var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: transparent; transition: 0.2s; flex-shrink: 0; }
     .swipe-item.checked .checkbox { background: var(--color-primary); color: var(--color-bg); }
     .item-name { font-size: 1.125rem; font-weight: 600; text-transform: capitalize; }
@@ -112,7 +116,7 @@
     .dialog-head { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); flex-shrink: 0; }
     .dialog-body { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; }
     
-    .toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--color-surface-2); border: 1px solid var(--color-border); padding: 12px 24px; border-radius: 2rem; font-weight: bold; z-index: 3000; transition: 0.3s var(--ease-spring); box-shadow: var(--shadow-md); color: var(--color-text); }
+    .toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--color-surface-2); border: 1px solid var(--color-border); padding: 12px 24px; border-radius: 2rem; font-weight: bold; z-index: 3000; transition: 0.3s var(--ease-spring); box-shadow: var(--shadow-md); color: var(--color-text); display: flex; align-items: center; gap: 10px; }
     .toast.show { top: 20px; }
 
     .loader { position: fixed; inset: 0; background: var(--color-bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -133,7 +137,7 @@
 </head>
 <body>
   <div class="loader" id="mainLoader"><div class="spinner"></div><h2 style="font-family:var(--font-display);">Syncing...</h2></div>
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast"><span>Message</span></div>
 
   <div class="topbar-wrapper">
     <div class="topbar-main">
@@ -149,7 +153,7 @@
     <main id="main">
       <div id="page-plan" class="page active">
         <section class="hero">
-          <div class="hero-grid"><h2 id="hero-title">Plan Your Day</h2></div>
+          <div class="hero-grid"><h2 id="hero-title" style="margin-bottom: 1.5rem;">Plan Your Day</h2></div>
           
           <div class="filter-grid">
               <button class="toggle-label active" onclick="toggleFilter('veg', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg> Veg</button>
@@ -261,7 +265,7 @@
                 <h5 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: .12em; color: var(--color-primary); margin-bottom: 1.25rem;">Add Manual Entry</h5>
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; width: 100%;">
                     <input class="ghost-btn" style="flex: 1; min-width: 0; text-align: left; border-radius: 1.25rem; padding: 14px 16px;" id="unified-meal-input" placeholder="Type meal name...">
-                    <select class="ghost-btn" style="flex: 0 1 auto; min-width: 100px; border-radius: 1.25rem; padding: 14px 8px;" id="unified-meal-category">
+                    <select class="ghost-btn" style="flex: 0 0 auto; min-width: 100px; border-radius: 1.25rem; padding: 14px 8px;" id="unified-meal-category">
                         <option value="breakfast">Breakfast</option>
                         <option value="lunch">Lunch</option>
                         <option value="dinner">Dinner</option>
@@ -290,10 +294,15 @@
 
   <script>
     function escapeHtml(str) { return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-    function showToast(msg) {
+    function showToast(msg, isUndo = false) {
         const t = document.getElementById('toast');
-        t.innerText = msg; t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 3000);
+        if (isUndo) {
+            t.innerHTML = `<span>${msg}</span> <button onclick="undoDelete()" style="color:var(--color-primary); font-weight:bold; margin-left:auto; text-transform:uppercase; font-size: 0.9rem;">Undo</button>`;
+        } else {
+            t.innerHTML = `<span>${msg}</span>`;
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+        t.classList.add('show');
     }
 
     let lastScrollY = window.scrollY;
@@ -366,17 +375,127 @@
 
     let pendingApprovals = [];
 
-    let touchStartX = 0; let currentTranslate = 0; let swipingId = null; let swipingContext = null;
-    function handleSwipeStart(e, id, context) { touchStartX = e.touches[0].clientX; swipingId = id; swipingContext = context; const el = document.getElementById(`swipe-item-${id}`); if (el) el.classList.add('swiping'); }
-    function handleSwipeMove(e, id) { if (swipingId !== id) return; const diff = e.touches[0].clientX - touchStartX; if (diff < 0) { currentTranslate = diff; const el = document.getElementById(`swipe-item-${id}`); if (el) el.style.transform = `translateX(${currentTranslate}px)`; } }
+    /* --- Advanced iPhone Physics Swipe Logic --- */
+    let touchStartX = 0, currentX = 0, startTime = 0, activeSwipeId = null, activeSwipeContext = null;
+    
+    function handleSwipeStart(e, id, context) { 
+        if (activeSwipeId && activeSwipeId !== id) resetSwipe(activeSwipeId);
+        touchStartX = e.touches[0].clientX; 
+        startTime = Date.now();
+        activeSwipeId = id; activeSwipeContext = context;
+        const el = document.getElementById(`swipe-item-${id}`); 
+        if (el) el.classList.add('swiping'); 
+    }
+    
+    function handleSwipeMove(e, id) { 
+        if (activeSwipeId !== id) return; 
+        currentX = e.touches[0].clientX - touchStartX; 
+        if (currentX > 0) currentX = 0; // Prevent right swipe
+        
+        let renderX = currentX;
+        if (currentX < -80) { renderX = -80 + (currentX + 80) * 0.2; } // Friction effect
+        
+        const el = document.getElementById(`swipe-item-${id}`); 
+        if (el) el.style.transform = `translateX(${renderX}px)`; 
+    }
+    
     function handleSwipeEnd(e, id, originalKey) {
-      if (swipingId !== id) return;
-      const el = document.getElementById(`swipe-item-${id}`); swipingId = null;
-      if (el) { el.classList.remove('swiping'); if (currentTranslate < -80) { el.style.transform = `translateX(-100%)`; setTimeout(() => { if (swipingContext === 'cart') deleteCartItem(originalKey); if (swipingContext === 'master') deleteMasterItem(originalKey); }, 200); } else el.style.transform = `translateX(0)`; }
-      currentTranslate = 0;
+        if (activeSwipeId !== id) return;
+        const el = document.getElementById(`swipe-item-${id}`); 
+        if (!el) return;
+        
+        el.classList.remove('swiping'); 
+        const timeDiff = Date.now() - startTime;
+        const velocity = currentX / timeDiff;
+
+        if (velocity < -0.8 || currentX < -120) {
+            // Hard Swipe -> Instant Delete
+            el.style.transform = `translateX(-100%)`; 
+            setTimeout(() => executeSoftDelete(activeSwipeContext, originalKey), 200);
+            activeSwipeId = null;
+        } else if (currentX < -50) {
+            // Half Swipe -> Snap Open
+            el.style.transform = `translateX(-80px)`;
+            // Leaves activeSwipeId set so tap outside closes it
+        } else {
+            // Cancel -> Snap Shut
+            resetSwipe(id);
+            activeSwipeId = null;
+        }
+        currentX = 0;
     }
 
-    function deleteCartItem(index) { if(navigator.vibrate) navigator.vibrate(15); state.cart.splice(index, 1); renderCart(); syncCartToBackend(); }
+    function resetSwipe(id) {
+        const el = document.getElementById(`swipe-item-${id}`);
+        if (el) el.style.transform = `translateX(0px)`;
+    }
+
+    // Global listener to close half-swipes when tapping elsewhere
+    document.addEventListener('touchstart', e => {
+        if (activeSwipeId && !e.target.closest(`#swipe-wrapper-${activeSwipeId}`)) {
+            resetSwipe(activeSwipeId);
+            activeSwipeId = null;
+        }
+    });
+
+    /* --- Soft Delete (Undo) Logic --- */
+    let pendingDelete = null;
+    let deleteTimer = null;
+
+    function executeSoftDelete(context, key) {
+        if(navigator.vibrate) navigator.vibrate(15);
+        if (pendingDelete) finalizeDelete(); // Finalize any existing pending delete immediately
+
+        if (context === 'cart') {
+            const idx = Number(key);
+            const item = state.cart[idx];
+            pendingDelete = { context, key: idx, item };
+            state.cart.splice(idx, 1);
+            renderCart();
+        } else if (context === 'master') {
+            const name = key;
+            const idx = state.masterGrocery.findIndex(i => i.name === name);
+            const item = state.masterGrocery[idx];
+            pendingDelete = { context, key: name, item, idx };
+            state.masterGrocery.splice(idx, 1);
+            openMasterList();
+        }
+
+        showToast("Item deleted.", true);
+        deleteTimer = setTimeout(() => { finalizeDelete(); }, 5000);
+    }
+
+    function undoDelete() {
+        clearTimeout(deleteTimer);
+        if (!pendingDelete) return;
+
+        if (pendingDelete.context === 'cart') {
+            state.cart.splice(pendingDelete.key, 0, pendingDelete.item);
+            renderCart();
+        } else if (pendingDelete.context === 'master') {
+            state.masterGrocery.splice(pendingDelete.idx, 0, pendingDelete.item);
+            openMasterList();
+        }
+
+        pendingDelete = null;
+        document.getElementById('toast').classList.remove('show');
+    }
+
+    function finalizeDelete() {
+        if (!pendingDelete) return;
+        const context = pendingDelete.context;
+        
+        if (context === 'cart') {
+            syncCartToBackend();
+        } else if (context === 'master') {
+            fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteMasterItem', item: pendingDelete.item.name }) }).catch(e=>e);
+        }
+        
+        pendingDelete = null;
+        document.getElementById('toast').classList.remove('show');
+    }
+
+
     function clearActiveCart() { if(navigator.vibrate) navigator.vibrate(15); state.cart = state.cart.filter(c => !c.checked); renderCart(); syncCartToBackend(); showToast("Active items cleared."); }
     function addManualCartItem() {
         const v = document.getElementById('manualCartAdd').value.trim();
@@ -386,7 +505,6 @@
         }
     }
     
-    function deleteMasterItem(name) { if(navigator.vibrate) navigator.vibrate(15); state.masterGrocery = state.masterGrocery.filter(i => i.name !== name); openMasterList(); fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'deleteMasterItem', item: name }) }); }
     function addManualMasterItem() { const val = document.getElementById('newMasterInput').value.trim(); if(val) { if(state.masterGrocery.some(m => m.name.toLowerCase() === val.toLowerCase())) { showToast("Already in Master List!"); return; } state.masterGrocery.push({name: val, freq: 1}); document.getElementById('newMasterInput').value = ''; openMasterList(); fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'addMasterItem', item: val }) }); } }
 
     function getMealTag(name) {
@@ -616,10 +734,11 @@
         const inCart = state.cart.some(c => c.name.toLowerCase() === item.name.toLowerCase());
         const safeId = item.name.replace(/[^a-zA-Z0-9]/g, '');
         return `
-        <div class="swipe-wrapper" id="swipe-item-master-${safeId}" ontouchstart="handleSwipeStart(event, 'master-${safeId}', 'master')" ontouchmove="handleSwipeMove(event, 'master-${safeId}')" ontouchend="handleSwipeEnd(event, 'master-${safeId}', '${escapeHtml(item.name)}')">
-          <div class="swipe-bg"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></div>
-          <div class="swipe-item grocery-item ${inCart ? 'checked' : ''} ${isRecent && !inCart ? 'dimmed' : ''}" onclick="toggleMasterItem('${escapeHtml(item.name)}', ${isRecent})">
-            <div class="checkbox">${inCart ? '✓' : ''}</div><div class="item-name">${escapeHtml(item.name)}</div>
+        <div class="swipe-wrapper" id="swipe-wrapper-master-${safeId}">
+          <div class="swipe-bg" onclick="executeSoftDelete('master', '${escapeHtml(item.name)}')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></div>
+          <div class="swipe-item grocery-item ${inCart ? 'checked' : ''} ${isRecent && !inCart ? 'dimmed' : ''}" id="swipe-item-master-${safeId}" ontouchstart="handleSwipeStart(event, 'master-${safeId}', 'master')" ontouchmove="handleSwipeMove(event, 'master-${safeId}')" ontouchend="handleSwipeEnd(event, 'master-${safeId}', '${escapeHtml(item.name)}')">
+            <div class="checkbox" onclick="toggleMasterItem('${escapeHtml(item.name)}', ${isRecent}); event.stopPropagation();">${inCart ? '✓' : ''}</div>
+            <div onclick="toggleMasterItem('${escapeHtml(item.name)}', ${isRecent}); event.stopPropagation();"><div class="item-name">${escapeHtml(item.name)}</div></div>
           </div>
         </div>`;
       }).join('');
@@ -657,11 +776,11 @@
       let activeHtml = '', dimmedHtml = '';
       state.cart.forEach((item, index) => {
         const html = `
-          <div class="swipe-wrapper" id="swipe-item-cart-${index}" ontouchstart="handleSwipeStart(event, 'cart-${index}', 'cart')" ontouchmove="handleSwipeMove(event, 'cart-${index}')" ontouchend="handleSwipeEnd(event, 'cart-${index}', ${index})">
-              <div class="swipe-bg"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></div>
-              <div class="swipe-item ${item.checked ? 'checked' : ''} ${item.recent && !item.checked ? 'dimmed' : ''}" onclick="toggleCartItem(${index})">
-                  <div class="checkbox">${item.checked ? '✓' : ''}</div>
-                  <div><div class="item-name">${escapeHtml(item.name)}</div>${item.flag ? `<div class="item-flag">🕒 ${item.flag}</div>` : ''}</div>
+          <div class="swipe-wrapper" id="swipe-wrapper-cart-${index}">
+              <div class="swipe-bg" onclick="executeSoftDelete('cart', '${index}')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></div>
+              <div class="swipe-item ${item.checked ? 'checked' : ''} ${item.recent && !item.checked ? 'dimmed' : ''}" id="swipe-item-cart-${index}" ontouchstart="handleSwipeStart(event, 'cart-${index}', 'cart')" ontouchmove="handleSwipeMove(event, 'cart-${index}')" ontouchend="handleSwipeEnd(event, 'cart-${index}', ${index})">
+                  <div class="checkbox" onclick="toggleCartItem(${index}); event.stopPropagation();">${item.checked ? '✓' : ''}</div>
+                  <div onclick="toggleCartItem(${index}); event.stopPropagation();"><div class="item-name">${escapeHtml(item.name)}</div>${item.flag ? `<div class="item-flag">🕒 ${item.flag}</div>` : ''}</div>
               </div>
           </div>`;
         if (item.recent && !item.checked) dimmedHtml += html; else activeHtml += html;
