@@ -4,13 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
   <title>Meal Planner Pro</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-192x192.png">
-  <meta name="theme-color" content="#000000" />
   <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=boska@400,500,700&display=swap" rel="stylesheet">
-  <script defer src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
   <style>
     :root, [data-theme="light"] {
       --color-bg: #ffffff; --color-surface: #f7f6f2; --color-surface-2: #f2f1ed; --color-surface-offset: #ebeae6;
@@ -40,7 +34,7 @@
     
     .header-actions { display: flex; gap: 0.5rem; align-items: center; }
     .icon-btn, .ghost-btn, .primary-btn, .accent-btn { border-radius: 2rem; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600; transition: 0.2s; padding: 0.75rem 1.5rem; }
-    .icon-btn { width: 52px; padding: 0; border: 1px solid var(--color-border); background: var(--color-surface); height: 44px; }
+    .icon-btn { width: 44px; padding: 0; border: 1px solid var(--color-border); background: var(--color-surface); height: 44px; }
     .ghost-btn { background: var(--color-surface); border: 1px solid var(--color-border); height: 44px; }
     .primary-btn { background: var(--color-primary); color: var(--color-bg); box-shadow: 0 4px 15px color-mix(in oklab, var(--color-primary) 30%, transparent); }
     .accent-btn { background: var(--color-secondary); color: var(--color-bg); }
@@ -51,16 +45,13 @@
     .page.active { display: block; }
     @keyframes fadePeek { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-    .filter-row { display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; padding-bottom: 12px; margin-bottom: 1.5rem; max-width: 100%; box-sizing: border-box; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    /* New Precision Filter Strip */
+    .filter-wrapper { width: 100%; overflow: hidden; margin-bottom: 1.5rem; }
+    .filter-row { display: flex; gap: 12px; overflow-x: auto; white-space: nowrap; padding: 4px 4px 16px 4px; box-sizing: border-box; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
     .filter-row::-webkit-scrollbar { display: none; }
-    .filter-icon-btn { flex: 0 0 auto; font-size: 1.5rem; padding: 10px 16px; border-radius: 1.25rem; border: 1px solid var(--color-border); background: var(--color-surface); cursor: pointer; transition: 0.2s; box-shadow: var(--shadow-sm); filter: grayscale(100%) opacity(0.35); flex-shrink: 0; }
-    .filter-icon-btn.active { filter: grayscale(0%) opacity(1); border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 15%, var(--color-surface)); transform: scale(1.02); }
-
-    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1.5rem; width: 100%; }
-    .stat { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.85rem 0; background: var(--color-surface); border-radius: 1.25rem; border: 1px solid var(--color-border); cursor: pointer; transition: 0.2s; }
-    .stat:active { transform: scale(0.95); }
-    .stat strong { font-size: 1.35rem; font-family: var(--font-display); }
-    .stat .subtle { font-size: 0.65rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; text-align: center; color: var(--color-text-muted); }
+    .filter-icon-btn { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--color-border); background: transparent; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; color: var(--color-text-muted); opacity: 0.5; }
+    .filter-icon-btn svg { width: 22px; height: 22px; stroke-width: 2; stroke: currentColor; fill: none; }
+    .filter-icon-btn.active { opacity: 1; color: var(--color-primary); border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); transform: scale(1.05); box-shadow: var(--shadow-sm); }
     
     .action-row { display: flex; gap: 10px; margin-bottom: 2rem; flex-wrap: wrap; }
     .action-row button { flex: 1; min-width: 100px; font-size: 0.9rem; height: 48px; }
@@ -74,7 +65,6 @@
     .badge { padding: 4px 12px; border-radius: 2rem; font-size: 0.75rem; font-weight: 700; background: color-mix(in oklab, var(--color-success) 15%, transparent); color: var(--color-success); border: 1px solid color-mix(in oklab, var(--color-success) 20%, transparent); }
     .badge.tag-nonveg { background: color-mix(in oklab, var(--color-error) 15%, transparent); color: var(--color-error); border-color: color-mix(in oklab, var(--color-error) 20%, transparent); }
     .badge.tag-egg { background: color-mix(in oklab, var(--color-warning) 15%, transparent); color: var(--color-warning); border-color: color-mix(in oklab, var(--color-warning) 20%, transparent); }
-    .badge.warning { background: color-mix(in oklab, var(--color-secondary) 15%, transparent); color: var(--color-secondary); border-color: color-mix(in oklab, var(--color-secondary) 20%, transparent); }
     .meal-title { font-family: var(--font-display); font-size: 2.1rem; line-height: 1.1; font-weight: 600; margin: 0.25rem 0; }
     .top-actions { display: flex; gap: 8px; }
     .icon-circle { width: 44px; height: 44px; border-radius: 50%; background: var(--color-surface-2); display: flex; align-items: center; justify-content: center; border: 1px solid var(--color-border); cursor: pointer; transition: 0.2s; color: var(--color-text); }
@@ -87,35 +77,27 @@
     .explore-area { display: flex; justify-content: space-around; align-items: center; max-height: 0; opacity: 0; overflow: hidden; transition: 0.3s var(--ease-spring); margin-top: -10px; width: 100%; }
     .explore-area.open { max-height: 100px; opacity: 1; margin-top: 5px; padding: 12px 0; border-top: 1px solid var(--color-divider); }
     .explore-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--color-surface); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; transition: 0.2s; flex-shrink: 0; color: var(--color-text); }
-    .explore-icon:active { transform: scale(0.9); }
     
     .empty { padding: 3rem 2rem; background: var(--color-surface); border-radius: 2rem; border: 1px solid var(--color-border); color: var(--color-text-muted); text-align: center; width: 100%; }
     .empty h3 { color: var(--color-text); font-family: var(--font-display); font-size: 2rem; margin-bottom: 0.5rem; }
     
-    .bottom-nav { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 450px; background: color-mix(in oklab, var(--color-surface) 85%, transparent); backdrop-filter: blur(24px); border: 1px solid var(--color-border); border-radius: 40px; display: flex; justify-content: space-around; padding: 12px 8px; box-shadow: var(--shadow-md); z-index: 1000; transition: transform 0.4s var(--ease-spring); }
+    .bottom-nav { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); width: 92%; max-width: 450px; background: color-mix(in oklab, var(--color-surface) 85%, transparent); backdrop-filter: blur(24px); border: 1px solid var(--color-border); border-radius: 40px; display: flex; justify-content: space-around; padding: 12px 8px; box-shadow: var(--shadow-md); z-index: 1000; }
     .nav-item { color: var(--color-text-muted); font-weight: 600; padding: 12px 20px; border-radius: 30px; display: flex; align-items: center; gap: 6px; transition: 0.3s; background: none; border: none; }
     .nav-item.active { background: var(--color-primary); color: var(--color-bg); }
 
-    .cart-tools { display: flex; gap: 10px; margin-bottom: 20px; }
-    .cart-tools input { flex: 1; padding: 14px 20px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); }
-    .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); font-weight: bold; margin: 24px 0 12px; }
-    
-    .list-item-row { display: flex; align-items: center; justify-content: space-between; background: var(--color-surface); padding: 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); margin-bottom: 12px; transition: 0.3s; width: 100%; }
+    .list-item-row { display: flex; align-items: center; justify-content: space-between; background: var(--color-surface); padding: 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); margin-bottom: 12px; width: 100%; }
     .list-item-row.dimmed { opacity: 0.45; background: transparent; }
     .list-item-left { display: flex; align-items: center; gap: 16px; flex: 1; cursor: pointer; }
-    
     .checkbox { width: 24px; height: 24px; border: 2px solid var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: transparent; transition: 0.2s; flex-shrink: 0; font-weight: bold; }
     .list-item-row.checked .checkbox { background: var(--color-primary); color: var(--color-bg); }
     .item-name { font-size: 1.125rem; font-weight: 600; text-transform: capitalize; color: var(--color-text); }
-    .item-flag { font-size: 0.75rem; color: var(--color-warning); font-weight: 600; margin-top: 4px; }
-    .trash-btn { background: none; border: none; font-size: 1.25rem; color: var(--color-error); padding: 8px; border-radius: 50%; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
-    .trash-btn:active { background: color-mix(in oklab, var(--color-error) 20%, transparent); }
+    .trash-btn { background: none; border: none; font-size: 1.25rem; color: var(--color-error); padding: 8px; border-radius: 50%; cursor: pointer; }
     
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 2000; }
     .modal.open { display: flex; }
     .dialog { background: var(--color-surface); width: 100%; max-width: 520px; max-height: 85vh; border-radius: 2rem; border: 1px solid var(--color-border); display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-md); }
     .dialog-head { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); flex-shrink: 0; }
-    .dialog-body { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; }
+    .dialog-body { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
     
     .toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--color-surface-2); border: 1px solid var(--color-border); padding: 14px 24px; border-radius: 2rem; font-weight: bold; z-index: 3000; transition: 0.3s var(--ease-spring); box-shadow: var(--shadow-md); color: var(--color-text); display: flex; align-items: center; gap: 15px; }
     .toast.show { top: 20px; }
@@ -124,22 +106,10 @@
     .loader { position: fixed; inset: 0; background: var(--color-bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     .spinner { border: 4px solid var(--color-surface-2); border-top: 4px solid var(--color-primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
-    
-    .guided-overlay { position: fixed; inset: 0; background: var(--color-bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 24px; text-align: center; }
-    .guided-overlay.active { opacity: 1; pointer-events: auto; }
-    .shopping-progress { color: var(--color-text-muted); font-size: 16px; margin-bottom: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
-    .shopping-item-name { font-size: 36px; font-weight: bold; margin-bottom: 48px; color: var(--color-text); text-transform: capitalize; font-family: var(--font-display); }
-    .close-shopping { position: absolute; top: 40px; right: 24px; font-size: 24px; color: var(--color-text-muted); background: none; border: none; cursor: pointer; }
-    
-    .review-queue-list { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
-    .review-queue-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--color-surface-2); border-radius: 1rem; justify-content: space-between; }
-    .review-queue-item select { background: var(--color-surface); padding: 6px; border-radius: 0.5rem; border: 1px solid var(--color-border); color: var(--color-text); font-weight: 600; }
-    .data-row { display: flex; justify-content: space-between; gap: 0.75rem; align-items: center; padding: 1rem 1.5rem; border: 1px solid var(--color-border); border-radius: 1.25rem; background: var(--color-surface); font-size: 1rem; margin-bottom: 8px; width: 100%; }
   </style>
 </head>
 <body>
-  <div class="loader" id="mainLoader"><div class="spinner"></div><h2 style="font-family:var(--font-display);">Syncing Systems...</h2></div>
-  
+  <div class="loader" id="mainLoader"><div class="spinner"></div><h2 style="font-family:var(--font-display);">Syncing...</h2></div>
   <div class="toast" id="toast"></div>
 
   <div class="topbar-wrapper">
@@ -147,7 +117,7 @@
       <div class="brand"><div class="brand-logo">MP</div><h1>Meal Planner</h1></div>
       <div class="header-actions">
         <button class="icon-btn" data-theme-toggle></button>
-        <button class="ghost-btn" id="openDataBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg> Cookbook</button>
+        <button class="ghost-btn" id="openDataBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></button>
       </div>
     </div>
   </div>
@@ -156,22 +126,37 @@
     <main id="main">
       <div id="page-plan" class="page active">
         <section class="hero">
-          <h2 id="hero-title" style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 1rem;">Plan Your Day</h2>
+          <h2 id="hero-title" style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 1rem;">Filters</h2>
           
-          <div class="filter-row" id="filterRow">
-              <button class="filter-icon-btn active" data-filter="veg" title="Veg">🥬</button>
-              <button class="filter-icon-btn active" data-filter="egg" title="Egg">🥚</button>
-              <button class="filter-icon-btn active" data-filter="indian" title="Indian">🍲</button>
-              <button class="filter-icon-btn active" data-filter="global" title="Global">🌎</button>
-              <button class="filter-icon-btn" data-filter="dessert" title="Dessert">🍰</button>
-              <button class="filter-icon-btn" data-filter="drinks" title="Drinks">🥤</button>
-              <button class="filter-icon-btn" data-filter="alcoholic" title="Alcoholic">🥂</button>
+          <div class="filter-wrapper">
+              <div class="filter-row" id="filterRow">
+                  <button class="filter-icon-btn active" data-filter="veg" title="Veg">
+                      <svg viewBox="0 0 24 24"><path d="M12 22c5.52 0 10-4.48 10-10 0-4.7-3.2-8.66-7.6-9.8C13.2 2 12.6 2 12 2s-1.2 0-2.4.2C5.2 3.34 2 7.3 2 12c0 5.52 4.48 10 10 10z"/><path d="M12 2v20M8 10l4 4 4-4"/></svg>
+                  </button>
+                  <button class="filter-icon-btn active" data-filter="egg" title="Egg">
+                      <svg viewBox="0 0 24 24"><ellipse cx="12" cy="13" rx="7" ry="9"/></svg>
+                  </button>
+                  <button class="filter-icon-btn active" data-filter="indian" title="Indian">
+                      <svg viewBox="0 0 24 24"><path d="M2 12h20M4 12c0 4.42 3.58 8 8 8s8-3.58 8-8M12 4v4M8 5v3M16 5v3"/></svg>
+                  </button>
+                  <button class="filter-icon-btn active" data-filter="global" title="Global">
+                      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                  </button>
+                  <button class="filter-icon-btn" data-filter="dessert" title="Dessert">
+                      <svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v2H6a2 2 0 0 0-2 2v2h16v-2a2 2 0 0 0-2-2h-3V6a3 3 0 0 0-3-3z"/><path d="M4 12h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8z"/></svg>
+                  </button>
+                  <button class="filter-icon-btn" data-filter="drinks" title="Drinks">
+                      <svg viewBox="0 0 24 24"><path d="M6 8h12l-1 14H7L6 8zM8 3h8l-1 5H9L8 3zM10 2l1-2h2l1 2"/></svg>
+                  </button>
+                  <button class="filter-icon-btn" data-filter="alcoholic" title="Alcoholic">
+                      <svg viewBox="0 0 24 24"><path d="M8 22h8M12 12v10M3 5l9 7 9-7M3 5l4-3h10l4 3"/></svg>
+                  </button>
+              </div>
           </div>
 
           <div class="action-row">
             <button id="generateBtn" class="primary-btn">🎲 Auto-Plan</button>
             <button id="surpriseBtn" class="accent-btn">✨ Chef Special</button>
-            <button id="fridgeBtn" class="ghost-btn">❄️ Fridge Match</button>
           </div>
         </section>
         <section class="section"><div id="suggestions" class="cards" aria-live="polite"></div></section>
@@ -180,29 +165,13 @@
       <div id="page-cart" class="page">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
           <h2 style="font-family:var(--font-display); font-size:2rem; font-weight:600;">Grocery Cart</h2>
-          <button class="ghost-btn" style="border-radius: 2rem;" onclick="openMasterList()">List ▾</button>
+          <button class="ghost-btn" style="border-radius: 2rem; padding: 8px 16px;" onclick="openMasterList()">List ▾</button>
         </div>
-        
-        <div class="cart-tools">
-          <input id="manualCartAdd" placeholder="Add custom item...">
-          <button class="primary-btn" style="border-radius: 1.5rem; padding: 0 20px;" onclick="addManualCartItem()">+</button>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <div class="section-title">Ready to Buy</div>
-            <button class="ghost-btn" style="border-radius: 1.5rem; padding: 6px 12px; font-size: 12px;" onclick="clearActiveCart()">🗑️ Clear Active</button>
-        </div>
-        
+        <div class="cart-tools"><input id="manualCartAdd" placeholder="Add custom item..."><button class="primary-btn" style="border-radius: 1.5rem; padding: 0 20px; height: 48px;" onclick="addManualCartItem()">+</button></div>
+        <div style="display:flex; justify-content:space-between; align-items:center;"><div class="section-title">Ready to Buy</div><button class="ghost-btn" style="border-radius: 1.5rem; padding: 6px 12px; font-size: 12px; height: 32px;" onclick="clearActiveCart()">🗑️ Clear</button></div>
         <div id="active-items"></div>
         <div class="section-title" style="margin-top: 30px;">Recently Bought</div>
         <div id="dimmed-items"></div>
-        
-        <button class="ghost-btn" style="width: 100%; padding: 18px; margin-top: 12px; border-radius: 1.5rem;" onclick="repeatLastOrder()">↺ Repeat Last Staples</button>
-        <div style="display:flex; gap:10px; margin-top:12px;">
-            <button class="primary-btn" style="flex: 1; background: #fc8019;" onclick="startGuidedShopping('swiggy')">🛒 Swiggy</button>
-            <button class="primary-btn" style="flex: 1; background: #f8cb46; color: #000;" onclick="startGuidedShopping('blinkit')">🛒 Blinkit</button>
-            <button class="ghost-btn" style="width: 60px; padding: 0;" onclick="shareCart()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg></button>
-        </div>
       </div>
     </main>
   </div>
@@ -212,93 +181,12 @@
     <button class="nav-item" onclick="switchTab('cart', this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg> Cart</button>
   </div>
 
-  <div class="guided-overlay" id="guided-overlay">
-    <button class="close-shopping" onclick="closeGuidedShopping()">✕</button>
-    <div class="shopping-progress" id="shopping-progress">Item 1 of X</div>
-    <div class="shopping-item-name" id="shopping-item-name">Item Name</div>
-    
-    <div style="display:flex; flex-direction:column; gap:10px; width: 100%; max-width: 350px;">
-        <button class="primary-btn" style="background:var(--color-success); border-radius: 1.5rem; padding: 18px;" onclick="markFoundAndNext()">✓ Found (Next)</button>
-        <button class="ghost-btn" style="border-radius: 1.5rem; padding: 18px; border-color: var(--color-error); color: var(--color-error);" onclick="markNotFoundAndNext()">✕ Not Found (Keep in list)</button>
-    </div>
-  </div>
-
   <div class="modal" id="masterListModal">
     <section class="dialog">
-      <div class="dialog-head">
-        <h4 style="font-family: var(--font-display); font-size: 1.5rem;">Master Groceries</h4>
-        <button class="icon-btn" style="border-radius: 50%;" onclick="closeModal('masterListModal')">✕</button>
-      </div>
+      <div class="dialog-head"><h4 style="font-family: var(--font-display); font-size: 1.5rem;">Master Groceries</h4><button class="icon-btn" style="border-radius: 50%;" onclick="closeModal('masterListModal')"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
       <div class="dialog-body">
-        <div style="display:flex; gap:8px;">
-           <input id="newMasterInput" class="ghost-btn" style="flex:1; padding: 12px; border-radius: 1.5rem; text-align: left;" placeholder="New item...">
-           <button class="primary-btn" style="border-radius:1.5rem; padding:0 20px;" onclick="addManualMasterItem()">+</button>
-        </div>
-        <h5 style="color:var(--color-primary); font-size:12px; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Last Bought</h5><div id="ml-last-bought"></div>
-        <h5 style="color:var(--color-secondary); font-size:12px; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">Frequent</h5><div id="ml-mostly-bought"></div>
-        <h5 style="color:var(--color-text-muted); font-size:12px; font-weight:bold; letter-spacing:1px; text-transform:uppercase;">The Rest</h5><div id="ml-the-rest"></div>
-      </div>
-    </section>
-  </div>
-
-  <div class="modal" id="dataModal">
-    <section class="dialog">
-      <div class="dialog-head">
-        <h4 style="font-family: var(--font-display); font-size: 1.5rem;">CookBook</h4>
-        <button class="icon-btn" style="border-radius: 50%;" onclick="closeModal('dataModal')">✕</button>
-      </div>
-      <div class="dialog-body" id="cookBookScrollArea">
-        <div class="stats">
-            <article class="stat" data-open-cookbook="breakfast"><span class="subtle">Bfast</span><strong id="countBreakfast">0</strong></article>
-            <article class="stat" data-open-cookbook="lunch"><span class="subtle">Lunch</span><strong id="countLunch">0</strong></article>
-            <article class="stat" data-open-cookbook="dinner"><span class="subtle">Dinner</span><strong id="countDinner">0</strong></article>
-            <article class="stat" data-open-cookbook="dessert"><span class="subtle">Dessert</span><strong id="countDessert">0</strong></article>
-            <article class="stat" data-open-cookbook="drinks"><span class="subtle">Drinks</span><strong id="countDrinks">0</strong></article>
-            <article class="stat" data-open-cookbook="alcoholic"><span class="subtle">Alco</span><strong id="countAlcoholic">0</strong></article>
-        </div>
-        
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-          <label class="ghost-btn" style="flex-direction:column; padding:20px; border-radius:1.5rem; border:1px dashed var(--color-border); cursor:pointer;">📄 Document <input type="file" style="display:none" accept=".pdf,.docx,.xlsx,.xls,image/*" onchange="processFile(event)"></label>
-          <label class="ghost-btn" style="flex-direction:column; padding:20px; border-radius:1.5rem; border:1px dashed var(--color-border); cursor:pointer;">📷 Scan <input type="file" style="display:none" accept="image/*" capture="environment" onchange="processFile(event)"></label>
-        </div>
-        <div id="uploadStatus" style="color: var(--color-primary); text-align: center; font-weight: bold;"></div>
-        
-        <div id="reviewQueuePanel" style="display:none; padding:15px; background:var(--color-surface-2); border-radius:1.5rem; border:1px solid var(--color-success);">
-           <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><h5 style="color:var(--color-success); font-weight:bold;">Pending Queue</h5><button onclick="submitQueueForApproval()" id="submitApprovalBtn" style="color:var(--color-success); font-weight:bold; background:none; border:none; cursor:pointer;">Sync to DB</button></div>
-           <ul class="review-queue-list" id="reviewQueueList"></ul>
-        </div>
-        
-        <section id="dashboardView">
-            <div style="background: var(--color-surface-2); padding: 1.5rem; border-radius: 2rem; border: 1px solid var(--color-border); margin-bottom: 20px;">
-                <h5 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: .12em; color: var(--color-primary); margin-bottom: 1.25rem;">Add Manual Entry</h5>
-                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; width: 100%;">
-                    <input class="ghost-btn" style="flex: 1; min-width: 0; text-align: left; border-radius: 1.25rem; padding: 14px 16px;" id="unified-meal-input" placeholder="Type meal name...">
-                    <select class="ghost-btn" style="flex: 0 0 auto; min-width: 100px; border-radius: 1.25rem; padding: 14px 8px;" id="unified-meal-category">
-                        <option value="breakfast">Breakfast</option>
-                        <option value="lunch">Lunch</option>
-                        <option value="dinner">Dinner</option>
-                        <option value="dessert">Dessert</option>
-                        <option value="drinks">Drinks</option>
-                        <option value="alcoholic">Alcoholic</option>
-                    </select>
-                    <button class="primary-btn" style="flex-shrink: 0; border-radius: 1.25rem; padding: 0 20px; height: 48px;" onclick="queueUnifiedEntry()">+</button>
-                </div>
-            </div>
-            <div id="tableSections" style="display:grid; gap:10px;"></div>
-        </section>
-      </div>
-    </section>
-  </div>
-
-  <div class="modal" id="fridgeModal">
-    <section class="dialog small">
-      <div class="dialog-head">
-          <h4 style="font-family: var(--font-display); font-size: 1.5rem;">Fridge Match</h4>
-          <button class="icon-btn" style="border-radius: 50%;" onclick="closeModal('fridgeModal')">✕</button>
-      </div>
-      <div class="dialog-body">
-        <input id="fridgeIngredientsInput" class="ghost-btn" style="width:100%; padding: 14px; text-align:left; border-radius:1.5rem;" placeholder="Paneer, tomato..." />
-        <button class="primary-btn" style="border-radius: 1.5rem; padding: 14px;" id="submitFridgeMatchBtn">Find Meals</button>
+        <div style="display:flex; gap:8px;"><input id="newMasterInput" class="ghost-btn" style="flex:1; padding: 12px; border-radius: 1.5rem; text-align: left;" placeholder="New item..."><button class="primary-btn" style="border-radius:1.5rem; padding:0 20px;" onclick="addManualMasterItem()">+</button></div>
+        <div id="ml-content"></div>
       </div>
     </section>
   </div>
@@ -306,12 +194,14 @@
   <script>
     const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwvU930ksyyrtTkhXbzOehjo3uh9J1qViq77I_WRPvg25rMNzClScK1MY758xlaDzRRSQ/exec";
 
-    const state = { db: { breakfast: [], lunch: [], dinner: [], dessert: [], drinks: [], alcoholic: [] }, cookingHistory: [], currentSuggestions: [], masterGrocery: [], orderHistory: [], cart: [] };
+    const state = { 
+        db: { breakfast: [], lunch: [], dinner: [], dessert: [], drinks: [], alcoholic: [] }, 
+        apiCache: { chefSpecial: [] }, // Strict isolated API cache for snappy Next clicks
+        cookingHistory: [], currentSuggestions: [], masterGrocery: [], orderHistory: [], cart: [] 
+    };
+    
     const filters = { veg: true, egg: true, indian: true, global: true, dessert: false, drinks: false, alcoholic: false };
-    let pendingApprovals = [];
     let graveyard = [];
-
-    function escapeHtml(str) { return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 
     (() => {
       const themeBtn = document.querySelector('[data-theme-toggle]');
@@ -326,44 +216,49 @@
     document.getElementById('filterRow').addEventListener('click', (e) => {
         const btn = e.target.closest('.filter-icon-btn');
         if (!btn) return;
-        if(navigator.vibrate) navigator.vibrate(15);
-        
         const type = btn.dataset.filter;
         filters[type] = !filters[type];
 
-        if (type === 'drinks' && filters.drinks) {
-            filters.dessert = false; filters.alcoholic = false;
-        } else if (type === 'alcoholic' && filters.alcoholic) {
-            filters.drinks = false; 
-        } else if (type === 'dessert' && filters.dessert) {
-            filters.drinks = false; 
-        }
+        if (type === 'drinks' && filters.drinks) { filters.dessert = false; filters.alcoholic = false; } 
+        else if (type === 'alcoholic' && filters.alcoholic) { filters.drinks = false; } 
+        else if (type === 'dessert' && filters.dessert) { filters.drinks = false; }
 
         document.querySelectorAll('.filter-icon-btn').forEach(b => {
             if (filters[b.dataset.filter]) b.classList.add('active');
             else b.classList.remove('active');
         });
+        state.apiCache.chefSpecial = []; // Flush API cache on filter change to ensure accuracy
     });
 
+    // Airtight Regex Boundary Filters
     function passesFilters(mealName) {
-        const nameLower = mealName.toLowerCase();
+        const nameLower = String(mealName).toLowerCase();
         
-        let isNonVeg = ['chicken','fish','mutton','meat','prawn','beef','pork','bacon','prosciutto','proscuto','proscuitto','salmon','tuna','lamb','shrimp','crab','turkey','ham','duck','gosht','murgh','machli','anda'].some(k => nameLower.includes(k));
-        let isEgg = ['egg', 'omelet', 'frittata', 'shakshuka', 'anda', 'bhurji'].some(k => nameLower.includes(k));
-        let isVeg = !isNonVeg && !isEgg;
-        
+        const nonVegRegex = /\b(chicken|fish|mutton|meat|prawn|beef|pork|bacon|prosciutto|salmon|tuna|lamb|shrimp|crab|turkey|ham|duck|gosht|murgh|machli)\b/i;
+        const eggRegex = /\b(egg|eggs|omelet|omelette|frittata|shakshuka|anda|bhurji)\b/i;
+        const indianRegex = /\b(masala|paneer|tikka|curry|dal|roti|naan|chawal|rice|sabzi|bhaji|aloo|mutter|dosa|idli|chutney|poha|khichdi|lassi|halwa|kheer|jamun|upma|sambar|korma|kofta|paratha|puri)\b/i;
+        const globalRegex = /\b(pasta|pizza|burger|sandwich|noodles|spaghetti|tacos|sushi|salad|pie|cake|brownie|cocktail|mojito|waffle|pancake|soup|stir fry|steak)\b/i;
+        const dessertRegex = /\b(cake|ice cream|brownie|sweet|halwa|kheer|jamun|pie|cookie|pastry|dessert|tiramisu|waffle|pudding|tart|mousse)\b/i;
+        const drinkRegex = /\b(smoothie|shake|juice|lassi|tea|coffee|mojito|drink|cooler|mocktail|beverage|soda)\b/i;
+        const alcoRegex = /\b(vodka|rum|whiskey|cocktail|margarita|wine|beer|gin|baileys|alcohol|bourbon|tequila)\b/i;
+
+        const isNonVeg = nonVegRegex.test(nameLower);
+        const isEgg = eggRegex.test(nameLower);
+        const isVeg = !isNonVeg && !isEgg;
+
         if (filters.veg && !isVeg) return false;
         if (filters.egg && isNonVeg) return false;
         if (filters.egg && !isEgg && !isVeg) return false;
-        
-        const isIndian = ['masala', 'paneer', 'tikka', 'curry', 'dal', 'roti', 'naan', 'chawal', 'rice', 'sabzi', 'bhaji', 'aloo', 'mutter', 'dosa', 'idli', 'chutney', 'poha', 'khichdi', 'lassi', 'halwa', 'kheer', 'jamun', 'bhurji', 'upma', 'sambar', 'korma', 'kofta', 'paratha', 'puri'].some(k => nameLower.includes(k));
-        const isGlobal = ['pasta', 'pizza', 'burger', 'sandwich', 'noodles', 'spaghetti', 'tacos', 'sushi', 'salad', 'pie', 'cake', 'brownie', 'cocktail', 'mojito', 'waffle', 'pancake', 'prosciutto', 'sage', 'soup', 'stir'].some(k => nameLower.includes(k));
-        const isDessert = ['cake', 'ice cream', 'brownie', 'sweet', 'halwa', 'kheer', 'jamun', 'pie', 'cookie', 'pastry', 'dessert', 'tiramisu', 'waffle', 'pudding', 'tart', 'mousse'].some(k => nameLower.includes(k));
-        const isDrink = ['smoothie', 'shake', 'juice', 'lassi', 'tea', 'coffee', 'mojito', 'drink', 'cooler', 'mocktail', 'beverage', 'soda'].some(k => nameLower.includes(k));
-        const isAlcoholic = ['vodka', 'rum', 'whiskey', 'cocktail', 'margarita', 'wine', 'beer', 'gin', 'baileys', 'tiramisu', 'alcohol', 'bourbon', 'tequila'].some(k => nameLower.includes(k));
 
+        const isIndian = indianRegex.test(nameLower);
+        const isGlobal = globalRegex.test(nameLower);
+        
         if (filters.indian && !isIndian && isGlobal) return false;
         if (filters.global && !isGlobal && isIndian) return false;
+
+        const isDessert = dessertRegex.test(nameLower);
+        const isDrink = drinkRegex.test(nameLower);
+        const isAlcoholic = alcoRegex.test(nameLower);
 
         if (!filters.dessert && isDessert && !filters.drinks && !filters.alcoholic) return false;
         if (!filters.drinks && isDrink && !filters.dessert && !filters.alcoholic) return false;
@@ -376,19 +271,15 @@
         return true;
     }
 
+    // Graveyard Cache Undo Logic (Strict 30-min architecture)
     function showToast(msg, isUndo = false) {
         const t = document.getElementById('toast');
-        if (isUndo) {
-            t.innerHTML = `<span>${msg}</span> <span class="undo-link" onclick="undoDelete()">Undo</span>`;
-        } else {
-            t.innerHTML = `<span>${msg}</span>`;
-            setTimeout(() => t.classList.remove('show'), 3000);
-        }
+        t.innerHTML = isUndo ? `<span>${msg}</span> <span class="undo-link" onclick="undoDelete()">Undo</span>` : `<span>${msg}</span>`;
+        if(!isUndo) setTimeout(() => t.classList.remove('show'), 3000);
         t.classList.add('show');
     }
 
     function executeSoftDelete(context, key) {
-        if(navigator.vibrate) navigator.vibrate(15);
         if (context === 'cart') {
             const idx = Number(key);
             const deletedItem = state.cart.splice(idx, 1)[0];
@@ -416,66 +307,40 @@
             state.masterGrocery.splice(lastDeleted.originalIndex, 0, lastDeleted.item);
             openMasterList();
         }
-        if (!graveyard.length) {
-            document.getElementById('toast').classList.remove('show');
-        } else {
-            showToast("Previous item restored. Items left: " + graveyard.length, true);
-        }
+        if (!graveyard.length) document.getElementById('toast').classList.remove('show');
+        else showToast("Previous item restored. Items left: " + graveyard.length, true);
     }
 
     function flushGraveyardCache() {
         if (!graveyard.length) return;
         graveyard.forEach(cached => {
-            if (cached.context === 'master') {
-                fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteMasterItem', item: cached.item.name }) }).catch(e=>e);
-            }
+            if (cached.context === 'master') fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteMasterItem', item: cached.item.name }) }).catch(e=>e);
         });
         syncCartToBackend();
         graveyard = [];
     }
 
-    window.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "hidden") {
-            flushGraveyardCache();
-        }
-    });
+    window.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushGraveyardCache(); });
     window.addEventListener("pagehide", flushGraveyardCache);
 
-    function getMealTag(name) {
-      const low = String(name || '').toLowerCase();
-      if (['chicken','fish','mutton','meat','prawn','beef','pork','bacon','prosciutto','proscuto','proscuitto','salmon','tuna','lamb','shrimp','crab','turkey','ham','duck','gosht','murgh','machli'].some(k => low.includes(k))) return { text: 'Non-Veg', cls: 'tag-nonveg' };
-      if (['egg', 'omelet', 'frittata', 'shakshuka', 'anda', 'bhurji'].some(k => low.includes(k))) return { text: 'Egg', cls: 'tag-egg' };
-      return { text: 'Veg', cls: 'tag-veg' };
-    }
-
-    function cookedWithinAWeek(mealName) { 
-        const now = Date.now(); 
-        return state.cookingHistory.some(e => {
-            if(e.name.toLowerCase() !== mealName.toLowerCase()) return false;
-            return (now - new Date(e.date).getTime()) < 7 * 24 * 60 * 60 * 1000;
-        }); 
-    }
-
-    function buildCard(time, name, source, extra = {}) { 
-        return { time, name, source, isLocked: !!extra.isLocked, cookedRecently: !!cookedWithinAWeek(name), history: extra.history || [name], historyIndex: extra.historyIndex || 0 }; 
+    function buildCard(time, name, source, poolContext = null) { 
+        return { time, name, source, poolContext, isLocked: false, history: [name], historyIndex: 0 }; 
     }
 
     function getCardInnerHTML(item, index) {
-      const tag = getMealTag(item.name); 
-      let bookmarkHTML = '';
-      if (item.source !== 'db') {
-         const category = item.time.split(' ')[0].toLowerCase();
-         const isQueued = pendingApprovals.some(m => m.category === category && m.meal.toLowerCase() === item.name.toLowerCase());
-         bookmarkHTML = isQueued 
-          ? `<div class="icon-circle active" data-action="toggle-queue" data-index="${index}"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>`
-          : `<div class="icon-circle" data-action="toggle-queue" data-index="${index}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>`;
-      }
+      const nonVegRegex = /\b(chicken|fish|mutton|meat|prawn|beef|pork|bacon|prosciutto|salmon|tuna|lamb|shrimp|crab|turkey|ham|duck|gosht|murgh|machli)\b/i;
+      const eggRegex = /\b(egg|eggs|omelet|omelette|frittata|shakshuka|anda|bhurji)\b/i;
+      
+      let tagCls = 'tag-veg', tagText = 'Veg';
+      if (nonVegRegex.test(item.name)) { tagCls = 'tag-nonveg'; tagText = 'Non-Veg'; }
+      else if (eggRegex.test(item.name)) { tagCls = 'tag-egg'; tagText = 'Egg'; }
+
       return `
         <div class="card-header-row">
-            <div class="card-header-left"><span class="eyebrow">${item.time}</span><span class="badge ${tag.cls}">${tag.text}</span>${item.cookedRecently ? '<span class="badge warning">Cooked recently</span>' : ''}</div>
-            <div class="top-actions"><div class="icon-circle" data-action="add-to-cart" data-index="${index}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div>${bookmarkHTML}</div>
+            <div class="card-header-left"><span class="eyebrow">${item.time}</span><span class="badge ${tagCls}">${tagText}</span></div>
+            <div class="top-actions"><div class="icon-circle" data-action="add-to-cart" data-index="${index}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div></div>
         </div>
-        <div class="meal-title">${escapeHtml(item.name)}</div>
+        <div class="meal-title" id="title-${index}">${item.name}</div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
             <button class="card-action" data-action="prev" data-index="${index}" ${item.historyIndex > 0 && !item.isLocked ? '' : 'disabled'}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg></button>
             <button class="card-action" data-action="next" data-index="${index}" ${item.isLocked ? 'disabled' : ''}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg></button>
@@ -486,8 +351,7 @@
         </div>
         <div id="explore-${index}" class="explore-area">
           <button class="explore-icon" data-action="google" data-index="${index}"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 24c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 21.53 7.7 24 12 24z"/><path fill="#FBBC05" d="M5.84 15.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V8.06H2.18C1.43 9.55 1 11.22 1 13s.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 4.84c1.61 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.63 14.97 0 12 0 7.7 0 3.99 2.47 2.18 6.06l3.66 2.84c.87-2.6 3.3-4.06 6.16-4.06z"/></svg></button>
-          <button class="explore-icon" data-action="youtube" data-index="${index}"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#FF0000" d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg></button>
-          <button class="explore-icon" data-action="nutrition" data-index="${index}" title="Nutritional Info"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></button>
+          <button class="explore-icon" data-action="nutrition" data-index="${index}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></button>
           <button class="explore-icon" data-action="whatsapp" data-index="${index}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg></button>
         </div>
       `;
@@ -496,7 +360,7 @@
     function renderOutputDeck(schema) {
       state.currentSuggestions = structuredClone(schema);
       const s = document.getElementById('suggestions'); s.innerHTML = '';
-      if (!schema.length) { s.innerHTML = `<div class="empty"><h3>Ready to Plan?</h3><p class="subtle">Generate balanced, personalized meal profiles.</p></div>`; return; }
+      if (!schema.length) { s.innerHTML = `<div class="empty"><h3>Empty Pool</h3><p class="subtle">No database items matched these exact strict filters.</p></div>`; return; }
       schema.forEach((item, index) => {
         const article = document.createElement('article');
         article.className = 'meal-card' + (item.isLocked ? ' locked' : '');
@@ -505,157 +369,124 @@
       });
     }
 
+    function pickUniqueMeal(pool, excludedNames = []) {
+      const uniquePool = pool.filter(m => !excludedNames.includes(m) && passesFilters(String(m)));
+      if (uniquePool.length === 0) return null;
+      return uniquePool[Math.floor(Math.random() * uniquePool.length)];
+    }
+
     document.getElementById('generateBtn').addEventListener('click', () => {
       const used = [];
-      const isSpecialtyMode = filters.dessert || filters.drinks || filters.alcoholic;
+      const isSpecialty = filters.dessert || filters.drinks || filters.alcoholic;
       
-      if (isSpecialtyMode) {
-          let cat = "Specialty Item";
-          let pool = [];
-          if (filters.dessert && filters.alcoholic) { cat = "Alcoholic Dessert"; pool = [...state.db.dessert, ...state.db.alcoholic]; }
-          else if (filters.dessert) { cat = "Dessert"; pool = state.db.dessert; }
-          else if (filters.drinks) { cat = "Drink"; pool = state.db.drinks; }
-          else if (filters.alcoholic) { cat = "Alcoholic Drink"; pool = state.db.alcoholic; }
+      if (isSpecialty) {
+          let pool = []; let cat = "Specialty";
+          if (filters.dessert && filters.alcoholic) { pool = [...state.db.dessert, ...state.db.alcoholic]; cat = "Alcoholic Dessert"; }
+          else if (filters.dessert) { pool = state.db.dessert; cat = "Dessert"; }
+          else if (filters.drinks) { pool = state.db.drinks; cat = "Drink"; }
+          else if (filters.alcoholic) { pool = state.db.alcoholic; cat = "Alcoholic Drink"; }
           
           const m = pickUniqueMeal(pool, used);
-          renderOutputDeck([ buildCard(cat, m, 'db') ]);
+          if(m) renderOutputDeck([ buildCard(cat, m, 'db', pool) ]);
+          else renderOutputDeck([]);
       } else {
-          const b = pickUniqueMeal(state.db.breakfast, used); used.push(b);
-          const l = pickUniqueMeal(state.db.lunch, used); used.push(l);
-          const d = pickUniqueMeal(state.db.dinner, used);
-          renderOutputDeck([ buildCard('Breakfast', b, 'db'), buildCard('Lunch', l, 'db'), buildCard('Dinner', d, 'db') ]);
+          const deck = [];
+          const b = pickUniqueMeal(state.db.breakfast, used); if(b) { used.push(b); deck.push(buildCard('Breakfast', b, 'db', state.db.breakfast)); }
+          const l = pickUniqueMeal(state.db.lunch, used); if(l) { used.push(l); deck.push(buildCard('Lunch', l, 'db', state.db.lunch)); }
+          const d = pickUniqueMeal(state.db.dinner, used); if(d) { deck.push(buildCard('Dinner', d, 'db', state.db.dinner)); }
+          renderOutputDeck(deck);
       }
     });
 
     document.getElementById('surpriseBtn').addEventListener('click', async function() {
+      if (state.apiCache.chefSpecial && state.apiCache.chefSpecial.length > 3) {
+          // Snappy Cache Pull
+          let cat = "Specialty";
+          if(!filters.dessert && !filters.drinks && !filters.alcoholic) cat = "Chef Special";
+          renderOutputDeck([
+              buildCard("Option 1", state.apiCache.chefSpecial.pop(), 'api', 'apiCache'),
+              buildCard("Option 2", state.apiCache.chefSpecial.pop(), 'api', 'apiCache'),
+              buildCard("Option 3", state.apiCache.chefSpecial.pop(), 'api', 'apiCache')
+          ]);
+          return;
+      }
+
       const s = document.getElementById('suggestions'); s.innerHTML = '<div class="empty"><h3>Curating Menu Profiles...</h3></div>';
-      const loader = document.getElementById('mainLoader'); loader.style.display = 'flex'; loader.querySelector('h2').innerText = "Curating Menu...";
+      const loader = document.getElementById('mainLoader'); loader.style.display = 'flex';
       try {
           const res = await fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'fetchChefSpecial', filters: filters }) });
           const result = await res.json();
-          const meals = result.data || ["Classic Paneer Tikka", "Vegetable Pulao", "Saffron Kheer"];
+          const meals = result.data || ["Classic Paneer Tikka", "Vegetable Pulao", "Saffron Kheer", "Dal Makhani", "Aloo Gobi"];
           
-          const isSpecialtyMode = filters.dessert || filters.drinks || filters.alcoholic;
-          if (isSpecialtyMode) {
-              let cat = "Specialty";
-              if (filters.dessert && filters.alcoholic) cat = "Alcoholic Dessert";
-              else if (filters.dessert) cat = "Dessert";
-              else if (filters.drinks) cat = "Drink";
-              else if (filters.alcoholic) cat = "Alcoholic Drink";
-              renderOutputDeck([ buildCard(cat, meals[0], 'internet') ]);
-          } else {
-              renderOutputDeck([ buildCard("Breakfast", meals[0], 'internet'), buildCard("Lunch", meals[1], 'internet'), buildCard("Dinner", meals[2], 'internet') ]);
-          }
+          state.apiCache.chefSpecial = meals.reverse(); // Cache the 15 items
+          
+          renderOutputDeck([
+              buildCard("Option 1", state.apiCache.chefSpecial.pop(), 'api', 'apiCache'),
+              buildCard("Option 2", state.apiCache.chefSpecial.pop(), 'api', 'apiCache'),
+              buildCard("Option 3", state.apiCache.chefSpecial.pop(), 'api', 'apiCache')
+          ]);
       } catch(e) { showToast("API Communication Interrupted"); }
       loader.style.display = 'none';
     });
 
-    function pickUniqueMeal(pool, excludedNames = []) {
-      const uniquePool = pool.filter(m => !excludedNames.includes(m) && passesFilters(String(m)));
-      const source = uniquePool.length ? uniquePool : (pool.filter(m => passesFilters(String(m))).length ? pool.filter(m => passesFilters(String(m))) : ['Standard Vegetarian Meal']);
-      return source[Math.floor(Math.random() * source.length)];
-    }
+    document.getElementById('suggestions').addEventListener('click', async event => {
+      const btn = event.target.closest('[data-action]'); if (!btn) return;
+      const idx = Number(btn.dataset.index); const action = btn.dataset.action; const card = state.currentSuggestions[idx];
+      
+      if (action === 'toggle-explore') document.getElementById(`explore-${idx}`).classList.toggle('open');
+      
+      if (action === 'prev') {
+          if (card.historyIndex > 0) {
+              card.historyIndex--;
+              card.name = card.history[card.historyIndex];
+              const article = document.getElementById('suggestions').children[idx];
+              article.innerHTML = getCardInnerHTML(card, idx);
+          }
+      }
+      
+      if (action === 'next') {
+          if (card.historyIndex < card.history.length - 1) {
+              card.historyIndex++;
+              card.name = card.history[card.historyIndex];
+          } else {
+              let newMealName = null;
+              if (card.poolContext === 'apiCache') {
+                  if(state.apiCache.chefSpecial.length > 0) newMealName = state.apiCache.chefSpecial.pop();
+                  else { showToast("API Cache exhausted. Hit Chef Special again."); return; }
+              } else if (Array.isArray(card.poolContext)) {
+                  newMealName = pickUniqueMeal(card.poolContext, card.history);
+              }
 
-    function renderCart() {
-      let activeHtml = '', dimmedHtml = '';
-      state.cart.forEach((item, index) => {
-        const html = `
-          <div class="list-item-row ${item.checked ? 'checked' : ''} ${item.recent && !item.checked ? 'dimmed' : ''}">
-            <div class="list-item-left" onclick="toggleCartItem(${index})">
-                <div class="checkbox">${item.checked ? '✓' : ''}</div>
-                <div><div class="item-name">${escapeHtml(item.name)}</div>${item.flag ? `<div class="item-flag">🕒 ${item.flag}</div>` : ''}</div>
-            </div>
-            <button class="trash-btn" onclick="executeSoftDelete('cart', '${index}')">🗑️</button>
-          </div>`;
-        if (item.recent && !item.checked) dimmedHtml += html; else activeHtml += html;
-      });
-      document.getElementById('active-items').innerHTML = activeHtml || '<p class="subtle">No active items inside cart.</p>';
-      document.getElementById('dimmed-items').innerHTML = dimmedHtml || '<p class="subtle">No historical items verified.</p>';
-    }
+              if (newMealName) {
+                  card.history.push(newMealName);
+                  card.historyIndex++;
+                  card.name = newMealName;
+              } else { showToast("No more items in this local pool."); return; }
+          }
+          const article = document.getElementById('suggestions').children[idx];
+          article.innerHTML = getCardInnerHTML(card, idx);
+      }
 
-    function openMasterList() {
-      if(navigator.vibrate) navigator.vibrate(15);
-      const now = new Date();
-      const recentNames = state.orderHistory.filter(h => (now - new Date(h.date)) < 7*24*60*60*1000).map(h => h.item.toLowerCase());
-      const lastBought = [], mostlyBought = [], theRest = [];
-      state.masterGrocery.forEach(item => {
-        if(recentNames.includes(item.name.toLowerCase())) lastBought.push(item);
-        else if(item.freq > 20) mostlyBought.push(item);
-        else theRest.push(item);
-      });
-
-      const renderList = (arr, isRecent) => arr.map(item => {
-        const inCart = state.cart.some(c => c.name.toLowerCase() === item.name.toLowerCase());
-        return `
-          <div class="list-item-row ${inCart ? 'checked' : ''} ${isRecent && !inCart ? 'dimmed' : ''}">
-            <div class="list-item-left" onclick="toggleMasterItem('${escapeHtml(item.name)}', ${isRecent})">
-                <div class="checkbox">${inCart ? '✓' : ''}</div>
-                <div><div class="item-name">${escapeHtml(item.name)}</div></div>
-            </div>
-            <button class="trash-btn" onclick="executeSoftDelete('master', '${escapeHtml(item.name)}')">🗑️</button>
-          </div>`;
-      }).join('');
-      document.getElementById('ml-last-bought').innerHTML = renderList(lastBought, true) || '<p class="subtle">None</p>';
-      document.getElementById('ml-mostly-bought').innerHTML = renderList(mostlyBought.sort((a,b)=>b.freq-a.freq), false) || '<p class="subtle">None</p>';
-      document.getElementById('ml-the-rest').innerHTML = renderList(theRest.sort((a,b)=>a.name.localeCompare(b.name)), false) || '<p class="subtle">None</p>';
-      openModal('masterListModal');
-    }
-
-    function toggleCartItem(index) { if(navigator.vibrate) navigator.vibrate(15); state.cart[index].checked = !state.cart[index].checked; renderCart(); syncCartToBackend(); }
-    function clearActiveCart() { if(navigator.vibrate) navigator.vibrate(15); state.cart = state.cart.filter(c => !c.checked); renderCart(); syncCartToBackend(); showToast("Active parameters flushed."); }
-    function addManualCartItem() { const v = document.getElementById('manualCartAdd').value.trim(); if(v) { state.cart.unshift({name: v, checked: true}); document.getElementById('manualCartAdd').value = ''; renderCart(); syncCartToBackend(); } }
-    
-    function toggleMasterItem(name, isRecent) {
-      if(navigator.vibrate) navigator.vibrate(15);
-      const idx = state.cart.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
-      if(idx > -1) state.cart.splice(idx, 1);
-      else state.cart.unshift({ name, checked: true, recent: isRecent, flag: isRecent ? "Ordered recently" : "" });
-      openMasterList(); renderCart(); syncCartToBackend();
-    }
-    function addManualMasterItem() { const v = document.getElementById('newMasterInput').value.trim(); if(v) { state.masterGrocery.push({name: v, freq: 1}); document.getElementById('newMasterInput').value = ''; openMasterList(); fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'addMasterItem', item: v }) }); } }
-    function repeatLastOrder() { showToast("Restocking pipeline synchronized natively."); }
-
-    document.getElementById('submitFridgeMatchBtn').addEventListener('click', () => {
-        runFridgeMatchingPipeline();
+      if (action === 'lock') { 
+          card.isLocked = !card.isLocked;
+          if (card.isLocked) { 
+              state.cookingHistory.push({ name: card.name, date: new Date().toISOString() }); 
+              fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'logCooking', mealName: card.name }) }); 
+          } else { 
+              state.cookingHistory = state.cookingHistory.filter(e => e.name.toLowerCase() !== card.name.toLowerCase()); 
+              fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'removeCookingLog', mealName: card.name }) }); 
+          }
+          const article = document.getElementById('suggestions').children[idx];
+          article.className = 'meal-card' + (card.isLocked ? ' locked' : ''); 
+          article.innerHTML = getCardInnerHTML(card, idx);
+      }
+      if (action === 'add-to-cart') breakdownRecipeToCart(card.name);
+      if (action === 'google') window.open(`https://www.google.com/search?q=${encodeURIComponent(card.name + ' recipe')}`, '_blank');
+      if (action === 'nutrition') window.open(`https://www.google.com/search?q=${encodeURIComponent(card.name + ' nutritional factual information calories')}`, '_blank');
+      if (action === 'whatsapp') window.open(`whatsapp://send?text=${encodeURIComponent("Automated Menu Selection: " + card.name)}`, '_blank');
     });
 
-    async function runFridgeMatchingPipeline() {
-      const raw = document.getElementById('fridgeIngredientsInput').value.trim(); if (!raw) return;
-      const items = raw.toLowerCase().split(',').map(s => s.trim()).filter(Boolean);
-      const findMatches = pool => pool.filter(meal => items.some(ingredient => meal.toLowerCase().includes(ingredient)) && passesFilters(meal));
-      
-      const bMatches = findMatches(state.db.breakfast); 
-      const lMatches = findMatches(state.db.lunch); 
-      const dMatches = findMatches(state.db.dinner);
-      const dessertMatches = findMatches(state.db.dessert);
-      const drinkMatches = findMatches(state.db.drinks);
-      const alcoMatches = findMatches(state.db.alcoholic);
-      
-      closeModal('fridgeModal');
-      const deck = [];
-      const isSpecialtyMode = filters.dessert || filters.drinks || filters.alcoholic;
-      
-      if (isSpecialtyMode) {
-          if (filters.dessert && filters.alcoholic && alcoMatches.length > 0) deck.push(buildCard('Alcoholic Dessert', alcoMatches[Math.floor(Math.random() * alcoMatches.length)], 'db'));
-          else if (filters.dessert && dessertMatches.length > 0) deck.push(buildCard('Dessert', dessertMatches[Math.floor(Math.random() * dessertMatches.length)], 'db'));
-          else if (filters.drinks && drinkMatches.length > 0) deck.push(buildCard('Drink', drinkMatches[Math.floor(Math.random() * drinkMatches.length)], 'db'));
-          else if (filters.alcoholic && alcoMatches.length > 0) deck.push(buildCard('Alcoholic Drink', alcoMatches[Math.floor(Math.random() * alcoMatches.length)], 'db'));
-      } else {
-          if (bMatches.length > 0) deck.push(buildCard('Breakfast', bMatches[Math.floor(Math.random() * bMatches.length)], 'db'));
-          if (lMatches.length > 0) deck.push(buildCard('Lunch', lMatches[Math.floor(Math.random() * lMatches.length)], 'db'));
-          if (dMatches.length > 0) deck.push(buildCard('Dinner', dMatches[Math.floor(Math.random() * dMatches.length)], 'db'));
-      }
-      
-      if (deck.length > 0) { 
-          renderOutputDeck(deck); 
-      } else { 
-          window.open(`https://www.google.com/search?q=${encodeURIComponent(items.join(' ') + ' vegetarian recipes recipe')}`, '_blank'); 
-          showToast("No database matching profile found. Opening Web View."); 
-      }
-    }
-
     async function breakdownRecipeToCart(mealName) {
-      if(navigator.vibrate) navigator.vibrate(15);
       const loader = document.getElementById('mainLoader'); loader.style.display = 'flex'; loader.querySelector('h2').innerText = "Analyzing Recipe Structure...";
       try {
         const res = await fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'breakdownRecipe', mealName: mealName }) });
@@ -676,9 +507,9 @@
         loader.style.display = 'none'; executeLocalFallback(mealName); switchTab('cart', document.querySelectorAll('.nav-item')[1]);
       }
     }
-    
+
     function executeLocalFallback(mealName) {
-        showToast("Executing Pipeline Exception Fallback...");
+        showToast("Executing Generic Baseline Fallback...");
         const keywords = mealName.split(/\s+/).filter(w => w.length > 3);
         const trinity = ["Onions", "Tomatoes", "Green Chilies", "Ginger Garlic Paste"];
         [...new Set([...keywords, ...trinity])].forEach(ing => {
@@ -686,213 +517,67 @@
         });
         syncCartToBackend(); 
     }
+
+    function renderCart() {
+      let activeHtml = '', dimmedHtml = '';
+      state.cart.forEach((item, index) => {
+        const html = `
+          <div class="list-item-row ${item.checked ? 'checked' : ''} ${item.recent && !item.checked ? 'dimmed' : ''}">
+            <div class="list-item-left" onclick="toggleCartItem(${index})">
+                <div class="checkbox">${item.checked ? '✓' : ''}</div>
+                <div><div class="item-name">${escapeHtml(item.name)}</div>${item.flag ? `<div class="item-flag">🕒 ${item.flag}</div>` : ''}</div>
+            </div>
+            <button class="trash-btn" onclick="executeSoftDelete('cart', '${index}')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+          </div>`;
+        if (item.recent && !item.checked) dimmedHtml += html; else activeHtml += html;
+      });
+      document.getElementById('active-items').innerHTML = activeHtml || '<p class="subtle">No active items.</p>';
+      document.getElementById('dimmed-items').innerHTML = dimmedHtml || '<p class="subtle">No historical items.</p>';
+    }
+
+    function openMasterList() {
+      const lastBought = [], mostlyBought = [], theRest = [];
+      state.masterGrocery.forEach(item => { if(item.freq > 20) mostlyBought.push(item); else theRest.push(item); });
+
+      const renderList = (arr) => arr.map(item => {
+        const inCart = state.cart.some(c => c.name.toLowerCase() === item.name.toLowerCase());
+        return `<div class="list-item-row ${inCart ? 'checked' : ''}"><div class="list-item-left" onclick="toggleMasterItem('${escapeHtml(item.name)}')"><div class="checkbox">${inCart ? '✓' : ''}</div><div><div class="item-name">${escapeHtml(item.name)}</div></div></div><button class="trash-btn" onclick="executeSoftDelete('master', '${escapeHtml(item.name)}')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div>`;
+      }).join('');
+      document.getElementById('ml-content').innerHTML = renderList(theRest.sort((a,b)=>a.name.localeCompare(b.name)));
+      document.getElementById('masterListModal').classList.add('open');
+    }
+
+    function toggleCartItem(index) { state.cart[index].checked = !state.cart[index].checked; renderCart(); syncCartToBackend(); }
+    function clearActiveCart() { state.cart = state.cart.filter(c => !c.checked); renderCart(); syncCartToBackend(); }
+    function addManualCartItem() { const v = document.getElementById('manualCartAdd').value.trim(); if(v) { state.cart.unshift({name: v, checked: true}); document.getElementById('manualCartAdd').value = ''; renderCart(); syncCartToBackend(); } }
+    function toggleMasterItem(name) {
+      const idx = state.cart.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
+      if(idx > -1) state.cart.splice(idx, 1);
+      else state.cart.unshift({ name, checked: true, recent: false, flag: "" });
+      openMasterList(); renderCart(); syncCartToBackend();
+    }
+    function addManualMasterItem() { const v = document.getElementById('newMasterInput').value.trim(); if(v) { state.masterGrocery.push({name: v, freq: 1}); document.getElementById('newMasterInput').value = ''; openMasterList(); fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'addMasterItem', item: v }) }); } }
     
     async function syncCartToBackend() { if(GOOGLE_SHEETS_API_URL.includes("script.google.com")) fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'syncCart', cart: state.cart }) }).catch(e=>e); }
-
-    function openModal(modal) { document.getElementById(modal).classList.add('open'); }
     function closeModal(modal) { document.getElementById(modal).classList.remove('open'); }
-    
     function switchTab(tabId, btn) {
       document.querySelectorAll('.page, .nav-item').forEach(el => el.classList.remove('active'));
       document.getElementById(`page-${tabId}`).classList.add('active'); btn.classList.add('active');
       if(tabId === 'cart') { document.getElementById('openDataBtn').style.display = 'none'; renderCart(); } else { document.getElementById('openDataBtn').style.display = 'flex'; }
     }
 
-    let shoppingQueue = []; let shoppingIndex = 0; let activePlatform = 'swiggy';
-    function startGuidedShopping(platform) {
-      shoppingQueue = state.cart.filter(i => i.checked);
-      if(!shoppingQueue.length) return showToast("Select active entries to initiate sync.");
-      activePlatform = platform; shoppingIndex = 0; updateGuidedUI(); 
-      document.getElementById('guided-overlay').classList.add('active'); launchPlatformLink();
-    }
-    function updateGuidedUI() {
-      document.getElementById('shopping-progress').innerText = `Item ${shoppingIndex + 1} of ${shoppingQueue.length} (${activePlatform.toUpperCase()})`;
-      document.getElementById('shopping-item-name').innerText = escapeHtml(shoppingQueue[shoppingIndex].name);
-    }
-    function launchPlatformLink() {
-        const query = encodeURIComponent(shoppingQueue[shoppingIndex].name);
-        window.location.href = activePlatform === 'swiggy' ? `swiggy://instamart/search?query=${query}` : `https://blinkit.com/s/?q=${query}`;
-    }
-    function markFoundAndNext() {
-      const current = shoppingQueue[shoppingIndex];
-      const dbIdx = state.cart.findIndex(c => c.name.toLowerCase() === current.name.toLowerCase());
-      if(dbIdx > -1) { state.cart[dbIdx].checked = false; state.cart[dbIdx].recent = true; state.cart[dbIdx].flag = "Verified Purchase"; }
-      fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateHistory', items: [current.name] }) }).catch(e=>e);
-      shoppingIndex++;
-      if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); syncCartToBackend(); showToast("Shopping Sequence Terminated Successfully!"); }
-      else { updateGuidedUI(); launchPlatformLink(); }
-    }
-    function markNotFoundAndNext() {
-      shoppingIndex++;
-      if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); syncCartToBackend(); showToast("Shopping Sequence Completed."); }
-      else { updateGuidedUI(); launchPlatformLink(); }
-    }
-    function closeGuidedShopping() { document.getElementById('guided-overlay').classList.remove('active'); renderCart(); }
-
-    function renderSpreadsheetModal() {
-      document.getElementById('countBreakfast').textContent = state.db.breakfast ? state.db.breakfast.length : 0;
-      document.getElementById('countLunch').textContent = state.db.lunch ? state.db.lunch.length : 0;
-      document.getElementById('countDinner').textContent = state.db.dinner ? state.db.dinner.length : 0;
-      document.getElementById('countDessert').textContent = state.db.dessert ? state.db.dessert.length : 0;
-      document.getElementById('countDrinks').textContent = state.db.drinks ? state.db.drinks.length : 0;
-      document.getElementById('countAlcoholic').textContent = state.db.alcoholic ? state.db.alcoholic.length : 0;
-      
-      const ts = document.getElementById('tableSections'); ts.innerHTML = '';
-      ['breakfast','lunch','dinner','dessert','drinks','alcoholic'].forEach(category => {
-        const section = document.createElement('section'); section.className = 'panel data-section'; section.setAttribute('data-section', category);
-        section.innerHTML = `<h5>${category.toUpperCase()} · ${(state.db[category] || []).length}</h5>`;
-        if (!state.db[category] || !state.db[category].length) section.innerHTML += `<p class="subtle">No configurations found.</p>`;
-        else state.db[category].forEach(item => section.innerHTML += `<div class="data-row"><span>${escapeHtml(item)}</span></div>`);
-        ts.appendChild(section);
-      });
-    }
-    document.getElementById('openDataBtn').addEventListener('click', () => { openModal('dataModal'); renderSpreadsheetModal(); });
-    
-    async function processFile(event) {
-        const file = event.target.files[0]; if (!file) return;
-        const statusEl = document.getElementById('uploadStatus'); statusEl.innerText = "Analyzing text data stream...";
-        try {
-            const ext = file.name.split('.').pop().toLowerCase();
-            let rawText = '';
-            if (['jpg', 'jpeg', 'png', 'webp'].includes(ext) || file.type.startsWith('image/')) rawText = (await Tesseract.recognize(file, 'eng')).data.text;
-            else if (ext === 'pdf') {
-                const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
-                for (let i = 1; i <= pdf.numPages; i++) rawText += (await (await pdf.getPage(i)).getTextContent()).items.map(s => s.str).join(' ') + '\n';
-            } else if (ext === 'docx') rawText = (await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() })).value;
-            
-            const matches = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 3 && l.length < 50);
-            if (matches.length > 0) { matches.slice(0, 10).forEach(m => pendingApprovals.push({ category: 'dinner', meal: m })); renderReviewQueue(); statusEl.innerText = `Mapped ${matches.slice(0, 10).length} array elements.`; }
-        } catch(e) { statusEl.innerText = "Processing vector layer failed."; }
-        event.target.value = '';
-    }
-
-    function queueUnifiedEntry() {
-        const m = document.getElementById('unified-meal-input').value.trim();
-        const c = document.getElementById('unified-meal-category').value;
-        if (m) { pendingApprovals.push({ category: c, meal: m }); document.getElementById('unified-meal-input').value = ''; renderReviewQueue(); showToast("Queued for verification."); }
-    }
-    
-    function renderReviewQueue() {
-      const ql = document.getElementById('reviewQueueList'); ql.innerHTML = '';
-      const qp = document.getElementById('reviewQueuePanel');
-      if (!pendingApprovals.length) { qp.style.display = 'none'; return; }
-      qp.style.display = 'block';
-      pendingApprovals.forEach((item, idx) => {
-        const li = document.createElement('li'); li.className = 'review-queue-item';
-        li.innerHTML = `<div style="display:flex; align-items:center; gap:0.75rem; flex-grow:1;"><select class="queue-category-select" data-queue-index="${idx}"><option value="breakfast" ${item.category==='breakfast'?'selected':''}>Breakfast</option><option value="lunch" ${item.category==='lunch'?'selected':''}>Lunch</option><option value="dinner" ${item.category==='dinner'?'selected':''}>Dinner</option><option value="dessert" ${item.category==='dessert'?'selected':''}>Dessert</option><option value="drinks" ${item.category==='drinks'?'selected':''}>Drinks</option><option value="alcoholic" ${item.category==='alcoholic'?'selected':''}>Alcoholic</option></select><span style="font-weight:600; font-family:var(--font-display);">${escapeHtml(item.meal)}</span></div><button class="trash-btn" data-remove-queue="${idx}">🗑️</button>`;
-        ql.appendChild(li);
-      });
-    }
-    
-    document.addEventListener('change', e => { if (e.target.classList.contains('queue-category-select')) pendingApprovals[Number(e.target.dataset.queueIndex)].category = e.target.value; });
-    document.addEventListener('click', e => { const rmBtn = e.target.closest('[data-remove-queue]'); if (rmBtn) { pendingApprovals.splice(Number(rmBtn.dataset.removeQueue), 1); renderReviewQueue(); } });
-    
-    async function submitQueueForApproval() {
-      if (!pendingApprovals.length) return;
-      const btn = document.getElementById('submitApprovalBtn'); btn.innerHTML = `Syncing Database...`;
-      try {
-        const res = await fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'sync_meals', data: JSON.stringify(pendingApprovals) }) });
-        if ((await res.json()).success) {
-            pendingApprovals.forEach(i => { if(state.db[i.category]) state.db[i.category].push(i.meal); });
-            pendingApprovals = []; renderReviewQueue(); renderSpreadsheetModal(); btn.innerHTML = "✓ Synced"; setTimeout(() => btn.innerHTML = "Sync to DB", 2000);
-        } else throw new Error();
-      } catch (err) { btn.innerHTML = "Sync to DB"; alert('Transactional integrity compromised.'); }
-    }
-
-    document.getElementById('suggestions').addEventListener('click', async event => {
-      const btn = event.target.closest('[data-action]'); if (!btn) return;
-      const idx = Number(btn.dataset.index); const action = btn.dataset.action; const card = state.currentSuggestions[idx];
-      
-      if (action === 'toggle-explore') {
-          document.getElementById(`explore-${idx}`).classList.toggle('open');
-      }
-      
-      if (action === 'prev') {
-          if (card.historyIndex > 0) {
-              card.historyIndex--;
-              card.name = card.history[card.historyIndex];
-              card.cookedRecently = !!cookedWithinAWeek(card.name);
-              const article = document.getElementById('suggestions').children[idx];
-              article.innerHTML = getCardInnerHTML(card, idx);
-          }
-      }
-      
-      if (action === 'next') {
-          if (card.historyIndex < card.history.length - 1) {
-              card.historyIndex++;
-              card.name = card.history[card.historyIndex];
-          } else {
-              let pool = [];
-              const tLow = card.time.toLowerCase();
-              if (tLow.includes('breakfast')) pool = state.db.breakfast;
-              else if (tLow.includes('lunch')) pool = state.db.lunch;
-              else if (tLow.includes('dinner')) pool = state.db.dinner;
-              else if (tLow.includes('dessert')) pool = state.db.dessert;
-              else if (tLow.includes('drink')) pool = state.db.drinks;
-              else if (tLow.includes('alcoholic')) pool = state.db.alcoholic;
-              else pool = [...state.db.breakfast, ...state.db.lunch, ...state.db.dinner];
-
-              const newMealName = pickUniqueMeal(pool, card.history);
-              card.history.push(newMealName);
-              card.historyIndex++;
-              card.name = newMealName;
-          }
-          card.cookedRecently = !!cookedWithinAWeek(card.name);
-          const article = document.getElementById('suggestions').children[idx];
-          article.innerHTML = getCardInnerHTML(card, idx);
-      }
-
-      if (action === 'lock') { 
-          card.isLocked = !card.isLocked;
-          if (card.isLocked) { 
-              state.cookingHistory.push({ name: card.name, date: new Date().toISOString() }); 
-              fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'logCooking', mealName: card.name }) }); 
-          } else { 
-              state.cookingHistory = state.cookingHistory.filter(e => e.name.toLowerCase() !== card.name.toLowerCase()); 
-              fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'removeCookingLog', mealName: card.name }) }); 
-          }
-          card.cookedRecently = !!cookedWithinAWeek(card.name);
-          const article = document.getElementById('suggestions').children[idx];
-          article.className = 'meal-card' + (card.isLocked ? ' locked' : ''); 
-          article.innerHTML = getCardInnerHTML(card, idx);
-      }
-      if (action === 'add-to-cart') breakdownRecipeToCart(card.name);
-      if (action === 'google') window.open(`https://www.google.com/search?q=${encodeURIComponent(card.name + ' recipe')}`, '_blank');
-      if (action === 'youtube') window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(card.name + ' recipe')}`, '_blank');
-      if (action === 'whatsapp') window.open(`whatsapp://send?text=${encodeURIComponent("Automated Menu Selection: " + card.name)}`, '_blank');
-      if (action === 'nutrition') window.open(`https://www.google.com/search?q=${encodeURIComponent(card.name + ' nutritional factual information calories')}`, '_blank');
-    });
-
-    document.getElementById('fridgeBtn').addEventListener('click', () => openModal('fridgeModal'));
-
     async function loadFromGoogleSheets() {
       if (!GOOGLE_SHEETS_API_URL || GOOGLE_SHEETS_API_URL.includes("PASTE")) return;
       try {
         const res = await fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAllData' }) });
         const data = (await res.json()).data;
-        if (data.breakfast) state.db.breakfast = data.breakfast; 
-        if (data.lunch) state.db.lunch = data.lunch; 
-        if (data.dinner) state.db.dinner = data.dinner;
-        if (data.dessert) state.db.dessert = data.dessert; 
-        if (data.drinks) state.db.drinks = data.drinks; 
-        if (data.alcoholic) state.db.alcoholic = data.alcoholic;
-        if (data.masterGrocery) state.masterGrocery = data.masterGrocery; 
-        if (data.orderHistory) state.orderHistory = data.orderHistory;
-        if (data.cart) state.cart = data.cart; 
-        if (data.cookingHistory) state.cookingHistory = data.cookingHistory;
-        
-        // Initial setup for Auto-Plan Deck View
-        const initializedDeck = [
-           buildCard('Breakfast Options', pickUniqueMeal(state.db.breakfast, []), 'db'),
-           buildCard('Lunch Options', pickUniqueMeal(state.db.lunch, []), 'db'),
-           buildCard('Dinner Options', pickUniqueMeal(state.db.dinner, []), 'db')
-        ];
-        renderOutputDeck(initializedDeck);
+        Object.assign(state.db, { breakfast: data.breakfast, lunch: data.lunch, dinner: data.dinner, dessert: data.dessert, drinks: data.drinks, alcoholic: data.alcoholic });
+        state.masterGrocery = data.masterGrocery; state.orderHistory = data.orderHistory; state.cart = data.cart; state.cookingHistory = data.cookingHistory;
+        document.getElementById('generateBtn').click(); // Auto-load initial
         document.getElementById('mainLoader').style.display = 'none';
-      } catch (e) { document.getElementById('mainLoader').style.display = 'none'; showToast("Offline Operation Imposed."); }
+      } catch (e) { document.getElementById('mainLoader').style.display = 'none'; showToast("Offline Mode Imposed."); }
     }
     loadFromGoogleSheets();
-    if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
   </script>
 </body>
 </html>
