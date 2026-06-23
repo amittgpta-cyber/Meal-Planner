@@ -51,10 +51,13 @@
     .page.active { display: block; }
     @keyframes fadePeek { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-    .filter-row { display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; padding-bottom: 12px; margin-bottom: 1.5rem; max-width: 100%; box-sizing: border-box; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    /* New Precision Filter Strip */
+    .filter-wrapper { width: 100%; overflow: hidden; margin-bottom: 1.5rem; }
+    .filter-row { display: flex; gap: 12px; overflow-x: auto; white-space: nowrap; padding: 4px 4px 16px 4px; box-sizing: border-box; scrollbar-width: none; -webkit-overflow-scrolling: touch; margin-bottom: 0; }
     .filter-row::-webkit-scrollbar { display: none; }
-    .filter-icon-btn { flex: 0 0 auto; font-size: 1.5rem; padding: 10px 16px; border-radius: 1.25rem; border: 1px solid var(--color-border); background: var(--color-surface); cursor: pointer; transition: 0.2s; box-shadow: var(--shadow-sm); filter: grayscale(100%) opacity(0.35); flex-shrink: 0; }
-    .filter-icon-btn.active { filter: grayscale(0%) opacity(1); border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 15%, var(--color-surface)); transform: scale(1.02); }
+    .filter-icon-btn { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--color-border); background: transparent; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; color: var(--color-text-muted); opacity: 0.5; padding: 0; box-shadow: none; filter: none; }
+    .filter-icon-btn svg { width: 22px; height: 22px; stroke-width: 2; stroke: currentColor; fill: none; }
+    .filter-icon-btn.active { opacity: 1; color: var(--color-primary); border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, transparent); transform: scale(1.05); box-shadow: var(--shadow-sm); filter: none; }
 
     .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1.5rem; width: 100%; }
     .stat { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.85rem 0; background: var(--color-surface); border-radius: 1.25rem; border: 1px solid var(--color-border); cursor: pointer; transition: 0.2s; }
@@ -158,14 +161,30 @@
         <section class="hero">
           <h2 id="hero-title" style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 1rem;">Plan Your Day</h2>
           
-          <div class="filter-row" id="filterRow">
-              <button class="filter-icon-btn active" data-filter="veg" title="Veg">🥬</button>
-              <button class="filter-icon-btn active" data-filter="egg" title="Egg">🥚</button>
-              <button class="filter-icon-btn active" data-filter="indian" title="Indian">🍲</button>
-              <button class="filter-icon-btn active" data-filter="global" title="Global">🌎</button>
-              <button class="filter-icon-btn" data-filter="dessert" title="Dessert">🍰</button>
-              <button class="filter-icon-btn" data-filter="drinks" title="Drinks">🥤</button>
-              <button class="filter-icon-btn" data-filter="alcoholic" title="Alcoholic">🥂</button>
+          <div class="filter-wrapper">
+              <div class="filter-row" id="filterRow">
+                  <button class="filter-icon-btn active" data-filter="veg" title="Veg">
+                      <svg viewBox="0 0 24 24"><path d="M12 22c5.52 0 10-4.48 10-10 0-4.7-3.2-8.66-7.6-9.8C13.2 2 12.6 2 12 2s-1.2 0-2.4.2C5.2 3.34 2 7.3 2 12c0 5.52 4.48 10 10 10z"/><path d="M12 2v20M8 10l4 4 4-4"/></svg>
+                  </button>
+                  <button class="filter-icon-btn active" data-filter="egg" title="Egg">
+                      <svg viewBox="0 0 24 24"><ellipse cx="12" cy="13" rx="7" ry="9"/></svg>
+                  </button>
+                  <button class="filter-icon-btn active" data-filter="indian" title="Indian">
+                      <svg viewBox="0 0 24 24"><path d="M2 12h20M4 12c0 4.42 3.58 8 8 8s8-3.58 8-8M12 4v4M8 5v3M16 5v3"/></svg>
+                  </button>
+                  <button class="filter-icon-btn active" data-filter="global" title="Global">
+                      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                  </button>
+                  <button class="filter-icon-btn" data-filter="dessert" title="Dessert">
+                      <svg viewBox="0 0 24 24"><path d="M12 3a3 3 0 0 0-3 3v2H6a2 2 0 0 0-2 2v2h16v-2a2 2 0 0 0-2-2h-3V6a3 3 0 0 0-3-3z"/><path d="M4 12h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8z"/></svg>
+                  </button>
+                  <button class="filter-icon-btn" data-filter="drinks" title="Drinks">
+                      <svg viewBox="0 0 24 24"><path d="M6 8h12l-1 14H7L6 8zM8 3h8l-1 5H9L8 3zM10 2l1-2h2l1 2"/></svg>
+                  </button>
+                  <button class="filter-icon-btn" data-filter="alcoholic" title="Alcoholic">
+                      <svg viewBox="0 0 24 24"><path d="M8 22h8M12 12v10M3 5l9 7 9-7M3 5l4-3h10l4 3"/></svg>
+                  </button>
+              </div>
           </div>
 
           <div class="action-row">
@@ -306,7 +325,11 @@
   <script>
     const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwvU930ksyyrtTkhXbzOehjo3uh9J1qViq77I_WRPvg25rMNzClScK1MY758xlaDzRRSQ/exec";
 
-    const state = { db: { breakfast: [], lunch: [], dinner: [], dessert: [], drinks: [], alcoholic: [] }, cookingHistory: [], currentSuggestions: [], masterGrocery: [], orderHistory: [], cart: [] };
+    const state = { 
+        db: { breakfast: [], lunch: [], dinner: [], dessert: [], drinks: [], alcoholic: [] }, 
+        apiCache: { chefSpecial: [] },
+        cookingHistory: [], currentSuggestions: [], masterGrocery: [], orderHistory: [], cart: [] 
+    };
     const filters = { veg: true, egg: true, indian: true, global: true, dessert: false, drinks: false, alcoholic: false };
     let pendingApprovals = [];
     let graveyard = [];
@@ -343,27 +366,37 @@
             if (filters[b.dataset.filter]) b.classList.add('active');
             else b.classList.remove('active');
         });
+        
+        state.apiCache.chefSpecial = [];
     });
 
     function passesFilters(mealName) {
-        const nameLower = mealName.toLowerCase();
+        const nameLower = String(mealName).toLowerCase();
         
-        let isNonVeg = ['chicken','fish','mutton','meat','prawn','beef','pork','bacon','prosciutto','proscuto','proscuitto','salmon','tuna','lamb','shrimp','crab','turkey','ham','duck','gosht','murgh','machli','anda'].some(k => nameLower.includes(k));
-        let isEgg = ['egg', 'omelet', 'frittata', 'shakshuka', 'anda', 'bhurji'].some(k => nameLower.includes(k));
-        let isVeg = !isNonVeg && !isEgg;
-        
+        const nonVegRegex = /\b(chicken|fish|mutton|meat|prawn|beef|pork|bacon|prosciutto|salmon|tuna|lamb|shrimp|crab|turkey|ham|duck|gosht|murgh|machli)\b/i;
+        const eggRegex = /\b(egg|eggs|omelet|omelette|frittata|shakshuka|anda|bhurji)\b/i;
+        const indianRegex = /\b(masala|paneer|tikka|curry|dal|roti|naan|chawal|rice|sabzi|bhaji|aloo|mutter|dosa|idli|chutney|poha|khichdi|lassi|halwa|kheer|jamun|upma|sambar|korma|kofta|paratha|puri)\b/i;
+        const globalRegex = /\b(pasta|pizza|burger|sandwich|noodles|spaghetti|tacos|sushi|salad|pie|cake|brownie|cocktail|mojito|waffle|pancake|soup|stir fry|steak)\b/i;
+        const dessertRegex = /\b(cake|ice cream|brownie|sweet|halwa|kheer|jamun|pie|cookie|pastry|dessert|tiramisu|waffle|pudding|tart|mousse)\b/i;
+        const drinkRegex = /\b(smoothie|shake|juice|lassi|tea|coffee|mojito|drink|cooler|mocktail|beverage|soda)\b/i;
+        const alcoRegex = /\b(vodka|rum|whiskey|cocktail|margarita|wine|beer|gin|baileys|alcohol|bourbon|tequila)\b/i;
+
+        const isNonVeg = nonVegRegex.test(nameLower);
+        const isEgg = eggRegex.test(nameLower);
+        const isVeg = !isNonVeg && !isEgg;
+
         if (filters.veg && !isVeg) return false;
         if (filters.egg && isNonVeg) return false;
         if (filters.egg && !isEgg && !isVeg) return false;
-        
-        const isIndian = ['masala', 'paneer', 'tikka', 'curry', 'dal', 'roti', 'naan', 'chawal', 'rice', 'sabzi', 'bhaji', 'aloo', 'mutter', 'dosa', 'idli', 'chutney', 'poha', 'khichdi', 'lassi', 'halwa', 'kheer', 'jamun', 'bhurji', 'upma', 'sambar', 'korma', 'kofta', 'paratha', 'puri'].some(k => nameLower.includes(k));
-        const isGlobal = ['pasta', 'pizza', 'burger', 'sandwich', 'noodles', 'spaghetti', 'tacos', 'sushi', 'salad', 'pie', 'cake', 'brownie', 'cocktail', 'mojito', 'waffle', 'pancake', 'prosciutto', 'sage', 'soup', 'stir'].some(k => nameLower.includes(k));
-        const isDessert = ['cake', 'ice cream', 'brownie', 'sweet', 'halwa', 'kheer', 'jamun', 'pie', 'cookie', 'pastry', 'dessert', 'tiramisu', 'waffle', 'pudding', 'tart', 'mousse'].some(k => nameLower.includes(k));
-        const isDrink = ['smoothie', 'shake', 'juice', 'lassi', 'tea', 'coffee', 'mojito', 'drink', 'cooler', 'mocktail', 'beverage', 'soda'].some(k => nameLower.includes(k));
-        const isAlcoholic = ['vodka', 'rum', 'whiskey', 'cocktail', 'margarita', 'wine', 'beer', 'gin', 'baileys', 'tiramisu', 'alcohol', 'bourbon', 'tequila'].some(k => nameLower.includes(k));
 
+        const isIndian = indianRegex.test(nameLower);
+        const isGlobal = globalRegex.test(nameLower);
         if (filters.indian && !isIndian && isGlobal) return false;
         if (filters.global && !isGlobal && isIndian) return false;
+
+        const isDessert = dessertRegex.test(nameLower);
+        const isDrink = drinkRegex.test(nameLower);
+        const isAlcoholic = alcoRegex.test(nameLower);
 
         if (!filters.dessert && isDessert && !filters.drinks && !filters.alcoholic) return false;
         if (!filters.drinks && isDrink && !filters.dessert && !filters.alcoholic) return false;
@@ -443,8 +476,11 @@
 
     function getMealTag(name) {
       const low = String(name || '').toLowerCase();
-      if (['chicken','fish','mutton','meat','prawn','beef','pork','bacon','prosciutto','proscuto','proscuitto','salmon','tuna','lamb','shrimp','crab','turkey','ham','duck','gosht','murgh','machli'].some(k => low.includes(k))) return { text: 'Non-Veg', cls: 'tag-nonveg' };
-      if (['egg', 'omelet', 'frittata', 'shakshuka', 'anda', 'bhurji'].some(k => low.includes(k))) return { text: 'Egg', cls: 'tag-egg' };
+      const nonVegRegex = /\b(chicken|fish|mutton|meat|prawn|beef|pork|bacon|prosciutto|salmon|tuna|lamb|shrimp|crab|turkey|ham|duck|gosht|murgh|machli)\b/i;
+      const eggRegex = /\b(egg|eggs|omelet|omelette|frittata|shakshuka|anda|bhurji)\b/i;
+      
+      if (nonVegRegex.test(low)) return { text: 'Non-Veg', cls: 'tag-nonveg' };
+      if (eggRegex.test(low)) return { text: 'Egg', cls: 'tag-egg' };
       return { text: 'Veg', cls: 'tag-veg' };
     }
 
@@ -456,8 +492,8 @@
         }); 
     }
 
-    function buildCard(time, name, source, extra = {}) { 
-        return { time, name, source, isLocked: !!extra.isLocked, cookedRecently: !!cookedWithinAWeek(name), history: extra.history || [name], historyIndex: extra.historyIndex || 0 }; 
+    function buildCard(time, name, source, poolContext = null, extra = {}) { 
+        return { time, name, source, poolContext, isLocked: !!extra.isLocked, cookedRecently: !!cookedWithinAWeek(name), history: extra.history || [name], historyIndex: extra.historyIndex || 0 }; 
     }
 
     function getCardInnerHTML(item, index) {
@@ -518,42 +554,60 @@
           else if (filters.alcoholic) { cat = "Alcoholic Drink"; pool = state.db.alcoholic; }
           
           const m = pickUniqueMeal(pool, used);
-          renderOutputDeck([ buildCard(cat, m, 'db') ]);
+          if (m) renderOutputDeck([ buildCard(cat, m, 'db', pool) ]);
+          else renderOutputDeck([]);
       } else {
-          const b = pickUniqueMeal(state.db.breakfast, used); used.push(b);
-          const l = pickUniqueMeal(state.db.lunch, used); used.push(l);
-          const d = pickUniqueMeal(state.db.dinner, used);
-          renderOutputDeck([ buildCard('Breakfast', b, 'db'), buildCard('Lunch', l, 'db'), buildCard('Dinner', d, 'db') ]);
+          const deck = [];
+          const b = pickUniqueMeal(state.db.breakfast, used); 
+          if(b) { used.push(b); deck.push(buildCard('Breakfast', b, 'db', state.db.breakfast)); }
+          
+          const l = pickUniqueMeal(state.db.lunch, used); 
+          if(l) { used.push(l); deck.push(buildCard('Lunch', l, 'db', state.db.lunch)); }
+          
+          const d = pickUniqueMeal(state.db.dinner, used); 
+          if(d) { deck.push(buildCard('Dinner', d, 'db', state.db.dinner)); }
+          
+          renderOutputDeck(deck);
       }
     });
 
     document.getElementById('surpriseBtn').addEventListener('click', async function() {
+      if (state.apiCache && state.apiCache.chefSpecial && state.apiCache.chefSpecial.length >= 3) {
+          let cat = "Specialty";
+          if(!filters.dessert && !filters.drinks && !filters.alcoholic) cat = "Chef Special";
+          renderOutputDeck([
+              buildCard(cat, state.apiCache.chefSpecial.pop(), 'api', 'apiCache'),
+              buildCard(cat, state.apiCache.chefSpecial.pop(), 'api', 'apiCache'),
+              buildCard(cat, state.apiCache.chefSpecial.pop(), 'api', 'apiCache')
+          ]);
+          return;
+      }
+
       const s = document.getElementById('suggestions'); s.innerHTML = '<div class="empty"><h3>Curating Menu Profiles...</h3></div>';
       const loader = document.getElementById('mainLoader'); loader.style.display = 'flex'; loader.querySelector('h2').innerText = "Curating Menu...";
       try {
           const res = await fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'fetchChefSpecial', filters: filters }) });
           const result = await res.json();
-          const meals = result.data || ["Classic Paneer Tikka", "Vegetable Pulao", "Saffron Kheer"];
+          const meals = result.data || ["Classic Paneer Tikka", "Vegetable Pulao", "Saffron Kheer", "Dal Makhani", "Aloo Gobi", "Palak Paneer", "Risotto", "Pasta Primavera", "Falafel Wrap", "Greek Salad", "Margherita Pizza", "Pad Thai", "Chole Bhature", "Caprese Salad", "Vegetable Biryani"];
           
-          const isSpecialtyMode = filters.dessert || filters.drinks || filters.alcoholic;
-          if (isSpecialtyMode) {
-              let cat = "Specialty";
-              if (filters.dessert && filters.alcoholic) cat = "Alcoholic Dessert";
-              else if (filters.dessert) cat = "Dessert";
-              else if (filters.drinks) cat = "Drink";
-              else if (filters.alcoholic) cat = "Alcoholic Drink";
-              renderOutputDeck([ buildCard(cat, meals[0], 'internet') ]);
-          } else {
-              renderOutputDeck([ buildCard("Breakfast", meals[0], 'internet'), buildCard("Lunch", meals[1], 'internet'), buildCard("Dinner", meals[2], 'internet') ]);
-          }
+          state.apiCache.chefSpecial = meals.reverse();
+          
+          let cat = "Specialty";
+          if(!filters.dessert && !filters.drinks && !filters.alcoholic) cat = "Chef Special";
+          
+          renderOutputDeck([
+              buildCard(cat, state.apiCache.chefSpecial.pop() || meals[0], 'api', 'apiCache'),
+              buildCard(cat, state.apiCache.chefSpecial.pop() || meals[1], 'api', 'apiCache'),
+              buildCard(cat, state.apiCache.chefSpecial.pop() || meals[2], 'api', 'apiCache')
+          ]);
       } catch(e) { showToast("API Communication Interrupted"); }
       loader.style.display = 'none';
     });
 
     function pickUniqueMeal(pool, excludedNames = []) {
       const uniquePool = pool.filter(m => !excludedNames.includes(m) && passesFilters(String(m)));
-      const source = uniquePool.length ? uniquePool : (pool.filter(m => passesFilters(String(m))).length ? pool.filter(m => passesFilters(String(m))) : ['Standard Vegetarian Meal']);
-      return source[Math.floor(Math.random() * source.length)];
+      if (uniquePool.length === 0) return null;
+      return uniquePool[Math.floor(Math.random() * uniquePool.length)];
     }
 
     function renderCart() {
@@ -565,7 +619,7 @@
                 <div class="checkbox">${item.checked ? '✓' : ''}</div>
                 <div><div class="item-name">${escapeHtml(item.name)}</div>${item.flag ? `<div class="item-flag">🕒 ${item.flag}</div>` : ''}</div>
             </div>
-            <button class="trash-btn" onclick="executeSoftDelete('cart', '${index}')">🗑️</button>
+            <button class="trash-btn" onclick="executeSoftDelete('cart', '${index}')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
           </div>`;
         if (item.recent && !item.checked) dimmedHtml += html; else activeHtml += html;
       });
@@ -592,7 +646,7 @@
                 <div class="checkbox">${inCart ? '✓' : ''}</div>
                 <div><div class="item-name">${escapeHtml(item.name)}</div></div>
             </div>
-            <button class="trash-btn" onclick="executeSoftDelete('master', '${escapeHtml(item.name)}')">🗑️</button>
+            <button class="trash-btn" onclick="executeSoftDelete('master', '${escapeHtml(item.name)}')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
           </div>`;
       }).join('');
       document.getElementById('ml-last-bought').innerHTML = renderList(lastBought, true) || '<p class="subtle">None</p>';
@@ -811,7 +865,6 @@
           if (card.historyIndex > 0) {
               card.historyIndex--;
               card.name = card.history[card.historyIndex];
-              card.cookedRecently = !!cookedWithinAWeek(card.name);
               const article = document.getElementById('suggestions').children[idx];
               article.innerHTML = getCardInnerHTML(card, idx);
           }
@@ -822,20 +875,30 @@
               card.historyIndex++;
               card.name = card.history[card.historyIndex];
           } else {
-              let pool = [];
-              const tLow = card.time.toLowerCase();
-              if (tLow.includes('breakfast')) pool = state.db.breakfast;
-              else if (tLow.includes('lunch')) pool = state.db.lunch;
-              else if (tLow.includes('dinner')) pool = state.db.dinner;
-              else if (tLow.includes('dessert')) pool = state.db.dessert;
-              else if (tLow.includes('drink')) pool = state.db.drinks;
-              else if (tLow.includes('alcoholic')) pool = state.db.alcoholic;
-              else pool = [...state.db.breakfast, ...state.db.lunch, ...state.db.dinner];
+              let newMealName = null;
+              if (card.poolContext === 'apiCache') {
+                  if(state.apiCache.chefSpecial.length > 0) newMealName = state.apiCache.chefSpecial.pop();
+                  else { showToast("API Cache exhausted. Hit Chef Special again."); return; }
+              } else if (Array.isArray(card.poolContext)) {
+                  newMealName = pickUniqueMeal(card.poolContext, card.history);
+              } else {
+                  let pool = [];
+                  const tLow = card.time.toLowerCase();
+                  if (tLow.includes('breakfast')) pool = state.db.breakfast;
+                  else if (tLow.includes('lunch')) pool = state.db.lunch;
+                  else if (tLow.includes('dinner')) pool = state.db.dinner;
+                  else if (tLow.includes('dessert')) pool = state.db.dessert;
+                  else if (tLow.includes('drink')) pool = state.db.drinks;
+                  else if (tLow.includes('alcoholic')) pool = state.db.alcoholic;
+                  else pool = [...state.db.breakfast, ...state.db.lunch, ...state.db.dinner];
+                  newMealName = pickUniqueMeal(pool, card.history);
+              }
 
-              const newMealName = pickUniqueMeal(pool, card.history);
-              card.history.push(newMealName);
-              card.historyIndex++;
-              card.name = newMealName;
+              if (newMealName) {
+                  card.history.push(newMealName);
+                  card.historyIndex++;
+                  card.name = newMealName;
+              } else { showToast("No more items in this local pool."); return; }
           }
           card.cookedRecently = !!cookedWithinAWeek(card.name);
           const article = document.getElementById('suggestions').children[idx];
@@ -859,8 +922,8 @@
       if (action === 'add-to-cart') breakdownRecipeToCart(card.name);
       if (action === 'google') window.open(`https://www.google.com/search?q=${encodeURIComponent(card.name + ' recipe')}`, '_blank');
       if (action === 'youtube') window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(card.name + ' recipe')}`, '_blank');
-      if (action === 'whatsapp') window.open(`whatsapp://send?text=${encodeURIComponent("Automated Menu Selection: " + card.name)}`, '_blank');
       if (action === 'nutrition') window.open(`https://www.google.com/search?q=${encodeURIComponent(card.name + ' nutritional factual information calories')}`, '_blank');
+      if (action === 'whatsapp') window.open(`whatsapp://send?text=${encodeURIComponent("Automated Menu Selection: " + card.name)}`, '_blank');
     });
 
     document.getElementById('fridgeBtn').addEventListener('click', () => openModal('fridgeModal'));
@@ -881,13 +944,12 @@
         if (data.cart) state.cart = data.cart; 
         if (data.cookingHistory) state.cookingHistory = data.cookingHistory;
         
-        // Initial setup for Auto-Plan Deck View
-        const initializedDeck = [
-           buildCard('Breakfast Options', pickUniqueMeal(state.db.breakfast, []), 'db'),
-           buildCard('Lunch Options', pickUniqueMeal(state.db.lunch, []), 'db'),
-           buildCard('Dinner Options', pickUniqueMeal(state.db.dinner, []), 'db')
-        ];
-        renderOutputDeck(initializedDeck);
+        const initializedDeck = [];
+        const b = pickUniqueMeal(state.db.breakfast, []); if (b) initializedDeck.push(buildCard('Breakfast Options', b, 'db', state.db.breakfast));
+        const l = pickUniqueMeal(state.db.lunch, []); if (l) initializedDeck.push(buildCard('Lunch Options', l, 'db', state.db.lunch));
+        const d = pickUniqueMeal(state.db.dinner, []); if (d) initializedDeck.push(buildCard('Dinner Options', d, 'db', state.db.dinner));
+        
+        if (initializedDeck.length > 0) renderOutputDeck(initializedDeck);
         document.getElementById('mainLoader').style.display = 'none';
       } catch (e) { document.getElementById('mainLoader').style.display = 'none'; showToast("Offline Operation Imposed."); }
     }
