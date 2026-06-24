@@ -9,7 +9,6 @@
   <title>Meal Planner Pro</title>
   
   <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=boska@400,500,700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
   
   <style>
     :root, [data-theme="light"] {
@@ -61,34 +60,30 @@
     .category-pill:active { transform: scale(0.95); }
 
     .cards { display: grid; gap: 1.5rem; }
-    
-    /* Full Bleed Glassmorphism Card CSS */
-    .meal-card { background-size: cover; background-position: center; border: 1px solid var(--card-border, var(--color-border)); border-radius: 2rem; display: flex; flex-direction: column; overflow: hidden; animation: slideUpFade 0.6s var(--ease-spring) backwards; position: relative; transition: border-color 0.5s; }
+    .meal-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 2rem; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; animation: slideUpFade 0.6s var(--ease-spring) backwards; position: relative; }
     .meal-card.locked { border-color: color-mix(in oklab, var(--color-success) 50%, transparent); box-shadow: 0 0 20px color-mix(in oklab, var(--color-success) 10%, transparent); }
-    
-    .card-overlay { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); width: 100%; height: 100%; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
     
     .card-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
     .card-header-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .eyebrow { font-size: 0.8rem; text-transform: uppercase; color: #fff; font-weight: 700; letter-spacing: 0.1em; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-    .badge { padding: 4px 12px; border-radius: 2rem; font-size: 0.75rem; font-weight: 700; background: color-mix(in oklab, var(--color-success) 30%, rgba(0,0,0,0.5)); color: #fff; border: 1px solid var(--color-success); backdrop-filter: blur(4px); }
-    .badge.tag-nonveg { background: color-mix(in oklab, var(--color-error) 40%, rgba(0,0,0,0.5)); border-color: var(--color-error); }
-    .badge.tag-egg { background: color-mix(in oklab, var(--color-warning) 40%, rgba(0,0,0,0.5)); border-color: var(--color-warning); }
-    .badge.warning { background: color-mix(in oklab, var(--color-secondary) 40%, rgba(0,0,0,0.5)); border-color: var(--color-secondary); }
+    .eyebrow { font-size: 0.8rem; text-transform: uppercase; color: var(--color-text-muted); font-weight: 700; letter-spacing: 0.1em; }
+    .badge { padding: 4px 12px; border-radius: 2rem; font-size: 0.75rem; font-weight: 700; background: color-mix(in oklab, var(--color-success) 15%, transparent); color: var(--color-success); border: 1px solid color-mix(in oklab, var(--color-success) 20%, transparent); }
+    .badge.tag-nonveg { background: color-mix(in oklab, var(--color-error) 15%, transparent); color: var(--color-error); border-color: color-mix(in oklab, var(--color-error) 20%, transparent); }
+    .badge.tag-egg { background: color-mix(in oklab, var(--color-warning) 15%, transparent); color: var(--color-warning); border-color: color-mix(in oklab, var(--color-warning) 20%, transparent); }
+    .badge.warning { background: color-mix(in oklab, var(--color-secondary) 15%, transparent); color: var(--color-secondary); border-color: color-mix(in oklab, var(--color-secondary) 20%, transparent); }
     
-    .meal-title { font-family: var(--font-display); font-size: 2.1rem; line-height: 1.1; font-weight: 600; margin: 0.25rem 0; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,0.6); }
+    .meal-title { font-family: var(--font-display); font-size: 2.1rem; line-height: 1.1; font-weight: 600; margin: 0.25rem 0; color: var(--color-text); }
     
     .top-actions { display: flex; gap: 8px; flex-direction: column; }
-    .icon-circle { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.2); cursor: pointer; transition: 0.2s; color: #fff; }
+    .icon-circle { width: 36px; height: 36px; border-radius: 50%; background: var(--color-surface-2); display: flex; align-items: center; justify-content: center; border: 1px solid var(--color-border); cursor: pointer; transition: 0.2s; color: var(--color-text); }
     .icon-circle:active { transform: scale(0.9); }
     
-    .card-action { min-height: 52px; font-weight: 600; border: 1px solid rgba(255,255,255,0.2); border-radius: 1.25rem; background: var(--card-btn-bg, rgba(255,255,255,0.1)); color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0.5rem 1rem; transition: 0.2s; backdrop-filter: blur(4px); text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
-    .card-action.locked { background: var(--color-success); border-color: var(--color-success); }
+    .card-action { min-height: 52px; font-weight: 600; border: 1px solid var(--color-border); border-radius: 1.25rem; background: var(--color-surface-2); color: var(--color-text); display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0.5rem 1rem; transition: 0.2s; }
+    .card-action.locked { background: var(--color-success); color: var(--color-bg); border-color: var(--color-success); }
     .card-action:disabled { opacity: 0.3; cursor: not-allowed; }
     
     .explore-area { display: flex; justify-content: space-around; align-items: center; max-height: 0; opacity: 0; overflow: hidden; transition: 0.3s var(--ease-spring); margin-top: -10px; width: 100%; }
-    .explore-area.open { max-height: 100px; opacity: 1; margin-top: 5px; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.1); }
-    .explore-icon { width: 56px; height: 56px; border-radius: 1rem; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; transition: 0.2s; flex-shrink: 0; color: #fff; flex-direction: column; font-size: 0.65rem; font-weight: bold; gap: 4px; backdrop-filter: blur(4px); }
+    .explore-area.open { max-height: 100px; opacity: 1; margin-top: 5px; padding: 12px 0; border-top: 1px solid var(--color-divider); }
+    .explore-icon { width: 56px; height: 56px; border-radius: 1rem; background: var(--color-surface); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; transition: 0.2s; flex-shrink: 0; color: var(--color-text); flex-direction: column; font-size: 0.65rem; font-weight: bold; gap: 4px; }
     .explore-icon svg { width: 20px; height: 20px; }
     .explore-icon:active { transform: scale(0.9); }
     
@@ -125,17 +120,17 @@
     
     .review-queue-list { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
     .review-queue-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--color-surface-2); border-radius: 1rem; justify-content: space-between; }
+    .data-row { display: flex; justify-content: space-between; gap: 0.75rem; align-items: center; padding: 1rem 1.5rem; border: 1px solid var(--color-border); border-radius: 1.25rem; background: var(--color-surface); font-size: 1rem; margin-bottom: 8px; width: 100%; }
   </style>
 </head>
 <body>
   
-  <div class="sync-indicator" id="syncIndicator"><div class="sync-spinner"></div> Core Sync...</div>
+  <div class="sync-indicator" id="syncIndicator"><div class="sync-spinner"></div> Cloud Sync...</div>
 
   <div class="topbar-wrapper">
     <div class="topbar-main">
       <div class="brand"><div class="brand-logo">MP</div><h1>Meal Planner</h1></div>
       
-      <!-- Contextual Topbar Actions -->
       <div class="header-actions" id="topbar-plan-actions">
         <button class="icon-btn" data-theme-toggle></button>
         <button class="ghost-btn" id="openDataBtn" onclick="openCookbook()">
@@ -145,7 +140,6 @@
 
       <div class="header-actions" id="topbar-cart-actions" style="display:none;">
         <button class="ghost-btn" id="undoBtn" style="opacity: 0.3; pointer-events: none; padding: 0 12px; border:none; background:transparent; color:var(--color-primary);" onclick="undoDelete()">⟲ Undo</button>
-        <button class="ghost-btn" style="border-radius: 2rem; padding: 8px 16px;" onclick="openMasterList()">List ▾</button>
       </div>
     </div>
   </div>
@@ -163,6 +157,7 @@
               <button class="category-pill" data-cat="Drinks">🥤 Drinks</button>
               <button class="category-pill" data-cat="Alcoholic">🥂 Alcoholic</button>
           </div>
+          <button class="ghost-btn" style="width: 100%; margin-bottom: 1rem;" onclick="triggerCloudFactory()">⚡ Fetch New Meals</button>
         </section>
         <section class="section"><div id="suggestions" class="cards" aria-live="polite"></div></section>
       </div>
@@ -170,7 +165,10 @@
       <div id="page-cart" class="page">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
           <h2 style="font-family:var(--font-display); font-size:2rem; font-weight:600;">Grocery Cart</h2>
-          <button class="primary-btn" style="border-radius: 2rem; padding: 8px 16px; font-size: 0.85rem;" onclick="shareCartToWhatsApp()">💬 Share</button>
+          <div style="display:flex; gap:8px;">
+            <button class="primary-btn" style="border-radius: 2rem; padding: 8px 16px; font-size: 0.85rem;" onclick="shareCartToWhatsApp()">💬 Share</button>
+            <button class="ghost-btn" style="border-radius: 2rem; padding: 8px 16px;" onclick="openMasterList()">List ▾</button>
+          </div>
         </div>
         <div class="cart-tools"><input id="manualCartAdd" placeholder="Add custom item..."><button class="primary-btn" style="border-radius: 1.5rem; padding: 0 20px; height: 48px;" onclick="addManualCartItem()">+</button></div>
         <div style="display:flex; justify-content:space-between; align-items:center;"><div class="section-title">Ready to Buy</div><button class="ghost-btn" style="border-radius: 1.5rem; padding: 6px 12px; font-size: 12px; height: 32px;" onclick="clearActiveCart()">🗑️ Clear</button></div>
@@ -239,11 +237,9 @@
     
     let pendingApprovals = [];
     let graveyard = [];
-    let colorThief = new ColorThief();
 
     function escapeHtml(str) { return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 
-    // Missing UI Function injected perfectly
     function openModal(modalId) { document.getElementById(modalId).classList.add('open'); }
     function closeModal(modalId) { document.getElementById(modalId).classList.remove('open'); }
 
@@ -320,11 +316,9 @@
         }); 
     }
 
-    // Dynamic Image Fetching built directly into the factory builder
     function buildCard(time, name, source, poolContext = null, extra = {}) { 
         return { 
             time, name, source, poolContext, 
-            image: extra.image || `https://image.pollinations.io/prompt/food%20${encodeURIComponent(name)}?width=400&height=600&nologo=true`, 
             isLocked: !!extra.isLocked, cookedRecently: !!cookedWithinAWeek(name), 
             history: extra.history || [name], historyIndex: extra.historyIndex || 0 
         }; 
@@ -332,59 +326,40 @@
 
     function getCardInnerHTML(item, index) {
       const tag = getMealTag(item.name);
+      
+      const bookmarkHtml = item.source !== 'db' ? `<div class="icon-circle" data-action="queue-meal" data-index="${index}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>` : '';
+
       return `
-        <div class="card-overlay">
-            <!-- Hidden Image for ColorThief computation -->
-            <img id="img-${index}" src="${item.image}" crossorigin="anonymous" style="display:none;" onload="applyCardStyle(this, 'card-${index}')">
-            
-            <div class="card-header-row">
-                <div class="card-header-left">
-                    <span class="eyebrow">${item.time}</span>
-                    <span class="badge ${tag.cls}">${tag.text}</span>
-                    ${item.cookedRecently ? '<span class="badge warning">Cooked recently</span>' : ''}
-                </div>
-                <div class="top-actions">
-                    <div class="icon-circle" data-action="add-to-cart" data-index="${index}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div>
-                    <div class="icon-circle" data-action="queue-meal" data-index="${index}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>
-                </div>
+        <div class="card-header-row">
+            <div class="card-header-left">
+                <span class="eyebrow">${item.time}</span>
+                <span class="badge ${tag.cls}">${tag.text}</span>
+                ${item.cookedRecently ? '<span class="badge warning">Cooked recently</span>' : ''}
             </div>
-            
-            <div style="flex-grow: 1;"></div>
-            
-            <div class="meal-title">${escapeHtml(item.name)}</div>
-            
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                <button class="card-action" data-action="prev" data-index="${index}" ${item.historyIndex > 0 && !item.isLocked ? '' : 'disabled'}><svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg></button>
-                <button class="card-action" data-action="next" data-index="${index}" ${item.isLocked ? 'disabled' : ''}><svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg></button>
-            </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button class="card-action ${item.isLocked ? 'locked' : ''}" data-action="lock" data-index="${index}">${item.isLocked ? '✓ Locked' : 'Cook This'}</button>
-                <button class="card-action" data-action="toggle-explore" data-index="${index}">⋮ More</button>
-            </div>
-            
-            <div id="explore-${index}" class="explore-area">
-              <button class="explore-icon" data-action="google" data-index="${index}"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 24c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 21.53 7.7 24 12 24z"/><path fill="#FBBC05" d="M5.84 15.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V8.06H2.18C1.43 9.55 1 11.22 1 13s.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 4.84c1.61 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.63 14.97 0 12 0 7.7 0 3.99 2.47 2.18 6.06l3.66 2.84c.87-2.6 3.3-4.06 6.16-4.06z"/></svg>Recipe</button>
-              <button class="explore-icon" data-action="youtube" data-index="${index}"><svg viewBox="0 0 24 24"><path fill="#FF0000" d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>Video</button>
-              <button class="explore-icon" data-action="nutrition" data-index="${index}"><svg fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>Stats</button>
-              <button class="explore-icon" data-action="share-card" data-index="${index}"><svg fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>Share</button>
+            <div class="top-actions">
+                <div class="icon-circle" data-action="add-to-cart" data-index="${index}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div>
+                ${bookmarkHtml}
             </div>
         </div>
+        
+        <div class="meal-title">${escapeHtml(item.name)}</div>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <button class="card-action" data-action="prev" data-index="${index}" ${item.historyIndex > 0 && !item.isLocked ? '' : 'disabled'}><svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg></button>
+            <button class="card-action" data-action="next" data-index="${index}" ${item.isLocked ? 'disabled' : ''}><svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg></button>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <button class="card-action ${item.isLocked ? 'locked' : ''}" data-action="lock" data-index="${index}">${item.isLocked ? '✓ Locked' : 'Cook This'}</button>
+            <button class="card-action" data-action="toggle-explore" data-index="${index}">⋮ More</button>
+        </div>
+        
+        <div id="explore-${index}" class="explore-area">
+          <button class="explore-icon" data-action="google" data-index="${index}"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 24c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 21.53 7.7 24 12 24z"/><path fill="#FBBC05" d="M5.84 15.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V8.06H2.18C1.43 9.55 1 11.22 1 13s.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 4.84c1.61 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.63 14.97 0 12 0 7.7 0 3.99 2.47 2.18 6.06l3.66 2.84c.87-2.6 3.3-4.06 6.16-4.06z"/></svg>Recipe</button>
+          <button class="explore-icon" data-action="youtube" data-index="${index}"><svg viewBox="0 0 24 24"><path fill="#FF0000" d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>Video</button>
+          <button class="explore-icon" data-action="nutrition" data-index="${index}"><svg fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>Stats</button>
+          <button class="explore-icon" data-action="share-card" data-index="${index}"><svg fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>Share</button>
+        </div>
       `;
-    }
-
-    // Dynamic Color extraction to stylize buttons inside the card based on image
-    function applyCardStyle(imgEl, cardId) {
-        const card = document.getElementById(cardId);
-        if (!card) return;
-        card.style.backgroundImage = `url(${imgEl.src})`;
-        try {
-            if(!imgEl.src.includes('dicebear')) {
-                const rgb = colorThief.getColor(imgEl);
-                const hex = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
-                card.style.setProperty('--card-btn-bg', `color-mix(in oklab, ${hex} 40%, rgba(0,0,0,0.4))`);
-                card.style.setProperty('--card-border', `color-mix(in oklab, ${hex} 50%, rgba(255,255,255,0.2))`);
-            }
-        } catch(e) {}
     }
 
     function renderOutputDeck(schema) {
@@ -401,7 +376,6 @@
       checkAIWatermark();
     }
 
-    // The Watchdog: Constantly verifies 50 items exist per category
     function checkAIWatermark() {
         const categories = ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Drinks', 'Alcoholic'];
         for (let cat of categories) {
@@ -417,7 +391,7 @@
             if(res.data && res.data.added && res.data.added.length > 0) {
                 state.aiDiscoveryPool = [...state.aiDiscoveryPool, ...res.data.added];
                 saveStateLocally();
-                setTimeout(checkAIWatermark, 1000); // Re-run watchdog
+                setTimeout(checkAIWatermark, 1000); 
             }
         }).catch(e=>{});
     }
@@ -435,7 +409,6 @@
       renderOutputDeck(deck);
     });
 
-    // Synergy: Active Specialty Pill forces exactly 1 card of that type
     document.getElementById('surpriseBtn').addEventListener('click', () => {
       document.getElementById('specialtyBar').classList.add('active');
       const activePill = document.querySelector('.category-pill.active');
@@ -445,7 +418,7 @@
           const pool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === cat.toLowerCase());
           if(pool.length > 0) {
               const m = pool[Math.floor(Math.random() * pool.length)];
-              renderOutputDeck([ buildCard(cat, m.name, 'api', cat.toLowerCase(), { image: m.image_url }) ]);
+              renderOutputDeck([ buildCard(cat, m.name, 'api', cat.toLowerCase()) ]);
           } else {
               const lPool = state.db[cat.toLowerCase()] || []; const lm = pickUniqueMeal(lPool, []);
               if(lm) renderOutputDeck([ buildCard(cat, lm, 'db', cat.toLowerCase()) ]);
@@ -453,15 +426,14 @@
           return;
       }
       
-      // No Pill Active = Full 3-Meal Generation from Pre-fetched API Database
       const bPool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'breakfast');
       const lPool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'lunch');
       const dPool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'dinner');
       
       const deck = [];
-      if(bPool.length) { const m = bPool[Math.floor(Math.random()*bPool.length)]; deck.push(buildCard('Breakfast', m.name, 'api', 'breakfast', {image: m.image_url})); }
-      if(lPool.length) { const m = lPool[Math.floor(Math.random()*lPool.length)]; deck.push(buildCard('Lunch', m.name, 'api', 'lunch', {image: m.image_url})); }
-      if(dPool.length) { const m = dPool[Math.floor(Math.random()*dPool.length)]; deck.push(buildCard('Dinner', m.name, 'api', 'dinner', {image: m.image_url})); }
+      if(bPool.length) { const m = bPool[Math.floor(Math.random()*bPool.length)]; deck.push(buildCard('Breakfast', m.name, 'api', 'breakfast')); }
+      if(lPool.length) { const m = lPool[Math.floor(Math.random()*lPool.length)]; deck.push(buildCard('Lunch', m.name, 'api', 'lunch')); }
+      if(dPool.length) { const m = dPool[Math.floor(Math.random()*dPool.length)]; deck.push(buildCard('Dinner', m.name, 'api', 'dinner')); }
       
       if(deck.length > 0) renderOutputDeck(deck);
       else document.getElementById('generateBtn').click(); 
@@ -487,11 +459,9 @@
       if (action === 'toggle-explore') document.getElementById(`explore-${idx}`).classList.toggle('open');
       
       if (action === 'queue-meal') {
-          // Identify category from time label and queue it
           const catMap = { 'Breakfast': 'breakfast', 'Lunch': 'lunch', 'Dinner': 'dinner', 'Dessert': 'dessert', 'Drinks': 'drinks', 'Alcoholic': 'alcoholic' };
           pendingApprovals.push({ category: catMap[card.time] || 'dinner', meal: card.name });
           renderReviewQueue(); 
-          // Re-render cookbook badge instantly 
           document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="var(--color-primary)" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
       }
 
@@ -517,12 +487,12 @@
               } else {
                   const pool = state.db[card.poolContext] || [];
                   const nm = pickUniqueMeal(pool, card.history);
-                  if(nm) newMeal = { name: nm, image_url: `https://image.pollinations.io/prompt/food%20${encodeURIComponent(nm)}?width=400&height=600&nologo=true` };
+                  if(nm) newMeal = { name: nm };
               }
 
               if (newMeal) { 
                   card.history.push(newMeal.name); card.historyIndex++; 
-                  card.name = newMeal.name; card.image = newMeal.image_url || card.image;
+                  card.name = newMeal.name; 
               } else { return; }
           }
           card.cookedRecently = !!cookedWithinAWeek(card.name);
@@ -564,8 +534,7 @@
       if (action === 'share-card') {
           const gUrl = `https://www.google.com/search?q=${encodeURIComponent(card.name + ' recipe')}`;
           const yUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(card.name + ' recipe')}`;
-          const iUrl = `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(card.name)}`;
-          const text = `🍽️ *${card.name}*%0A%0A📸 Images: ${iUrl}%0A🔍 Recipe: ${gUrl}%0A📺 Video: ${yUrl}`;
+          const text = `🍽️ *${card.name}*%0A%0A🔍 Recipe: ${gUrl}%0A📺 Video: ${yUrl}`;
           window.open(`whatsapp://send?text=${text}`, '_blank');
       }
 
@@ -574,7 +543,6 @@
       if (action === 'nutrition') window.open(`https://www.google.com/search?q=${encodeURIComponent(card.name + ' nutritional factual information calories')}`, '_blank');
     });
 
-    // Dimmed Cart Logic Execution
     function pushToCartLocally(ingredients) {
         const now = new Date();
         const recentNames = state.orderHistory
@@ -647,7 +615,6 @@
       document.querySelectorAll('.page, .nav-item').forEach(el => el.classList.remove('active'));
       document.getElementById(`page-${tabId}`).classList.add('active'); btn.classList.add('active');
       
-      // Dynamic Contextual Topbar
       if(tabId === 'cart') { 
           document.getElementById('topbar-plan-actions').style.display = 'none';
           document.getElementById('topbar-cart-actions').style.display = 'flex';
@@ -671,6 +638,17 @@
         else state.db[category].forEach(item => section.innerHTML += `<div class="data-row"><span>${escapeHtml(item)}</span></div>`);
         ts.appendChild(section);
       });
+    }
+
+    function triggerCloudFactory() {
+        document.getElementById('syncIndicator').classList.add('active');
+        fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'runCloudFactory', count: 15 }) })
+        .then(r=>r.json()).then(res => {
+            if(res.data && res.data.length > 0) {
+                state.aiDiscoveryPool = [...state.aiDiscoveryPool, ...res.data]; saveStateLocally();
+            } 
+            document.getElementById('syncIndicator').classList.remove('active');
+        }).catch(e=>{ document.getElementById('syncIndicator').classList.remove('active'); });
     }
 
     function queueUnifiedEntry() {
@@ -702,7 +680,6 @@
             pendingApprovals.forEach(i => { if(state.db[i.category]) state.db[i.category].push(i.meal); });
             pendingApprovals = []; renderReviewQueue(); renderSpreadsheetModal(); saveStateLocally();
             
-            // Revert Cookbook badge visually
             document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
             
             btn.innerHTML = "✓ Synced"; setTimeout(() => btn.innerHTML = "Push to Cloud", 2000);
@@ -724,7 +701,6 @@
       
       if (!GOOGLE_SHEETS_API_URL || GOOGLE_SHEETS_API_URL.includes("PASTE")) return;
       
-      // Parallel Boot Fetch
       fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAllData' }) })
         .then(res => res.json())
         .then(parsed => {
