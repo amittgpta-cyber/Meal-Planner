@@ -69,7 +69,6 @@
     
     .meal-title { font-family: var(--font-display); font-size: 2.1rem; line-height: 1.1; font-weight: 600; margin: 0.25rem 0; color: var(--color-text); }
     
-    /* FIX: Top-actions layout */
     .top-actions { display: flex; gap: 8px; flex-direction: row; }
     .icon-circle { width: 36px; height: 36px; border-radius: 50%; background: var(--color-surface-2); display: flex; align-items: center; justify-content: center; border: 1px solid var(--color-border); cursor: pointer; transition: 0.2s; color: var(--color-text); }
     .icon-circle:active { transform: scale(0.9); }
@@ -348,20 +347,19 @@
             time, name, source, poolContext, 
             isLocked: !!extra.isLocked, cookedRecently: !!cookedWithinAWeek(name), 
             history: extra.history || [name], historyIndex: extra.historyIndex || 0,
-            isQueued: false // Local state tracking for the reactive bookmark
+            isQueued: false 
         }; 
     }
 
     function getCardInnerHTML(item, index) {
       const tag = getMealTag(item.name);
       
-      // Conditional Cart: Only show cart if meal is from AI pool
       const cartHtml = item.source !== 'db' ? `<div class="icon-circle" data-action="add-to-cart" data-index="${index}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div>` : '';
       
-      // Reactive Bookmark
       const bookmarkColor = item.isQueued ? 'var(--color-success)' : 'none';
       const bookmarkStroke = item.isQueued ? 'var(--color-success)' : 'currentColor';
-      const bookmarkHtml = `<div class="icon-circle" data-action="queue-meal" data-index="${index}"><svg id="bookmark-${index}" style="pointer-events:none; transition: 0.3s;" width="20" height="20" viewBox="0 0 24 24" fill="${bookmarkColor}" stroke="${bookmarkStroke}" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>`;
+      // Completely hide the Bookmark SVG if the item is already from the local db
+      const bookmarkHtml = item.source !== 'db' ? `<div class="icon-circle" data-action="queue-meal" data-index="${index}"><svg id="bookmark-${index}" style="pointer-events:none; transition: 0.3s;" width="20" height="20" viewBox="0 0 24 24" fill="${bookmarkColor}" stroke="${bookmarkStroke}" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>` : '';
 
       return `
         <div class="card-header-row">
@@ -480,20 +478,17 @@
       
       if (action === 'toggle-explore') document.getElementById(`explore-${idx}`).classList.toggle('open');
       
-      // Reactive Queue Toggle Logic
       if (action === 'queue-meal') {
           const catMap = { 'Breakfast': 'Breakfast', 'Lunch': 'Lunch', 'Dinner': 'Dinner', 'Dessert': 'Dessert', 'Drinks': 'Drinks', 'Cocktails': 'Cocktails' };
           const defaultCat = catMap[card.time] || 'Dinner';
           const bookmarkSvg = document.getElementById(`bookmark-${idx}`);
           
           if (card.isQueued) {
-              // Deselect
               card.isQueued = false;
               pendingApprovals = pendingApprovals.filter(p => p.meal !== card.name);
               bookmarkSvg.setAttribute('fill', 'none');
               bookmarkSvg.setAttribute('stroke', 'currentColor');
           } else {
-              // Select
               card.isQueued = true;
               pendingApprovals.push({ category: defaultCat, meal: card.name });
               bookmarkSvg.setAttribute('fill', 'var(--color-success)');
@@ -565,7 +560,6 @@
       const gUrl = `https://www.google.com/search?q=${searchQ}`;
       const yUrl = `https://www.youtube.com/results?search_query=${searchQ}`;
 
-      // Premium WhatsApp Formatting Action
       if (action === 'share-card') {
           const text = `🍽️ *${card.name.trim()}*\n\n🔍 *Recipe Search:* _${gUrl}_\n\n📺 *Video Search:* _${yUrl}_`;
           window.open(`whatsapp://send?text=${encodeURIComponent(text)}`, '_blank');
