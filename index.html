@@ -50,7 +50,6 @@
     .page.active { display: block; }
     @keyframes fadePeek { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Edge-to-Edge Filters */
     .specialty-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem; width: 100%; }
     .category-pill { flex: 1 1 calc(33.333% - 8px); padding: 14px 8px; border-radius: 1.25rem; border: 1px solid var(--color-border); background: var(--color-surface); font-weight: 600; font-size: 0.95rem; color: var(--color-text); cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .category-pill.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-bg); transform: scale(1.03); }
@@ -70,7 +69,8 @@
     
     .meal-title { font-family: var(--font-display); font-size: 2.1rem; line-height: 1.1; font-weight: 600; margin: 0.25rem 0; color: var(--color-text); }
     
-    .top-actions { display: flex; gap: 8px; flex-direction: column; }
+    /* FIX: Top-actions layout */
+    .top-actions { display: flex; gap: 8px; flex-direction: row; }
     .icon-circle { width: 36px; height: 36px; border-radius: 50%; background: var(--color-surface-2); display: flex; align-items: center; justify-content: center; border: 1px solid var(--color-border); cursor: pointer; transition: 0.2s; color: var(--color-text); }
     .icon-circle:active { transform: scale(0.9); }
     
@@ -86,7 +86,6 @@
     
     .empty { padding: 3rem 2rem; background: var(--color-surface); border-radius: 2rem; border: 1px solid var(--color-border); color: var(--color-text-muted); text-align: center; width: 100%; }
     
-    /* Asymmetrical Bottom Nav */
     .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; display: flex; gap: 12px; padding: 16px 20px calc(16px + env(safe-area-inset-bottom)); background: color-mix(in oklab, var(--color-bg) 85%, transparent); backdrop-filter: blur(24px); border-top: 1px solid var(--color-border); z-index: 1000; align-items: center; }
 
     .cart-tools { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -247,7 +246,6 @@
                <ul class="review-queue-list" id="reviewQueueList"></ul>
             </div>
             
-            <!-- Dynamic output for selected cookbook category -->
             <div id="cookbookOutput"></div>
         </section>
       </div>
@@ -349,13 +347,21 @@
         return { 
             time, name, source, poolContext, 
             isLocked: !!extra.isLocked, cookedRecently: !!cookedWithinAWeek(name), 
-            history: extra.history || [name], historyIndex: extra.historyIndex || 0 
+            history: extra.history || [name], historyIndex: extra.historyIndex || 0,
+            isQueued: false // Local state tracking for the reactive bookmark
         }; 
     }
 
     function getCardInnerHTML(item, index) {
       const tag = getMealTag(item.name);
-      const bookmarkHtml = item.source !== 'db' ? `<div class="icon-circle" data-action="queue-meal" data-index="${index}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>` : '';
+      
+      // Conditional Cart: Only show cart if meal is from AI pool
+      const cartHtml = item.source !== 'db' ? `<div class="icon-circle" data-action="add-to-cart" data-index="${index}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div>` : '';
+      
+      // Reactive Bookmark
+      const bookmarkColor = item.isQueued ? 'var(--color-success)' : 'none';
+      const bookmarkStroke = item.isQueued ? 'var(--color-success)' : 'currentColor';
+      const bookmarkHtml = `<div class="icon-circle" data-action="queue-meal" data-index="${index}"><svg id="bookmark-${index}" style="pointer-events:none; transition: 0.3s;" width="20" height="20" viewBox="0 0 24 24" fill="${bookmarkColor}" stroke="${bookmarkStroke}" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>`;
 
       return `
         <div class="card-header-row">
@@ -365,7 +371,7 @@
                 ${item.cookedRecently ? '<span class="badge warning">Cooked recently</span>' : ''}
             </div>
             <div class="top-actions">
-                <div class="icon-circle" data-action="add-to-cart" data-index="${index}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div>
+                ${cartHtml}
                 ${bookmarkHtml}
             </div>
         </div>
@@ -474,9 +480,25 @@
       
       if (action === 'toggle-explore') document.getElementById(`explore-${idx}`).classList.toggle('open');
       
+      // Reactive Queue Toggle Logic
       if (action === 'queue-meal') {
           const catMap = { 'Breakfast': 'Breakfast', 'Lunch': 'Lunch', 'Dinner': 'Dinner', 'Dessert': 'Dessert', 'Drinks': 'Drinks', 'Cocktails': 'Cocktails' };
-          pendingApprovals.push({ category: catMap[card.time] || 'Dinner', meal: card.name });
+          const defaultCat = catMap[card.time] || 'Dinner';
+          const bookmarkSvg = document.getElementById(`bookmark-${idx}`);
+          
+          if (card.isQueued) {
+              // Deselect
+              card.isQueued = false;
+              pendingApprovals = pendingApprovals.filter(p => p.meal !== card.name);
+              bookmarkSvg.setAttribute('fill', 'none');
+              bookmarkSvg.setAttribute('stroke', 'currentColor');
+          } else {
+              // Select
+              card.isQueued = true;
+              pendingApprovals.push({ category: defaultCat, meal: card.name });
+              bookmarkSvg.setAttribute('fill', 'var(--color-success)');
+              bookmarkSvg.setAttribute('stroke', 'var(--color-success)');
+          }
           renderReviewQueue(); 
           document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="var(--color-primary)" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
       }
@@ -537,22 +559,15 @@
           if (aiMeal && aiMeal.ingredients && aiMeal.ingredients !== '[]') {
               try { pushToCartLocally(JSON.parse(aiMeal.ingredients), card.name); return; } catch(e) {}
           }
-          document.getElementById('syncIndicator').classList.add('active');
-          try {
-            const res = await fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'breakdownRecipe', mealName: card.name }) });
-            const result = await res.json();
-            if (result.data && result.data.length > 0) pushToCartLocally(result.data, card.name);
-            else throw new Error();
-          } catch(e) { pushToCartLocally(["Onions", "Tomatoes", "Salt", "Spices", "Oil"], card.name); }
-          document.getElementById('syncIndicator').classList.remove('active');
       }
       
       const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
       const gUrl = `https://www.google.com/search?q=${searchQ}`;
       const yUrl = `https://www.youtube.com/results?search_query=${searchQ}`;
 
+      // Premium WhatsApp Formatting Action
       if (action === 'share-card') {
-          const text = `🍽️ *${card.name.trim()}*\n\n🔍 Recipe: ${gUrl}\n📺 Video: ${yUrl}`;
+          const text = `🍽️ *${card.name.trim()}*\n\n🔍 *Recipe Search:* _${gUrl}_\n\n📺 *Video Search:* _${yUrl}_`;
           window.open(`whatsapp://send?text=${encodeURIComponent(text)}`, '_blank');
       }
       if (action === 'google') window.open(gUrl, '_blank');
@@ -670,15 +685,6 @@
     function switchTab(tabId) {
       document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
       document.getElementById(`page-${tabId}`).classList.add('active');
-      
-      if(tabId === 'cart') { 
-          document.getElementById('topbar-plan-actions').style.display = 'none';
-          document.getElementById('topbar-cart-actions').style.display = 'flex';
-          renderCart(); 
-      } else {
-          document.getElementById('topbar-cart-actions').style.display = 'none';
-          document.getElementById('topbar-plan-actions').style.display = 'flex';
-      }
     }
 
     function toggleMainView() {
