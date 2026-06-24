@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
   
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Meal Planner Pro</title>
   
@@ -49,13 +50,9 @@
     .page.active { display: block; }
     @keyframes fadePeek { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-    .action-row { display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
-    .action-row button { flex: 1; min-width: 100px; font-size: 0.9rem; height: 48px; }
-
-    /* Permanent Icon Specialty Bar */
-    .specialty-bar { display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; padding-bottom: 16px; margin-bottom: 1rem; scrollbar-width: none; }
-    .category-pill { flex: 0 0 auto; padding: 10px 24px; border-radius: 2rem; border: 1px solid var(--color-border); background: var(--color-surface); font-weight: 600; font-size: 1.25rem; color: var(--color-text); cursor: pointer; transition: 0.2s; }
-    .category-pill.active { background: var(--color-primary); border-color: var(--color-primary); transform: scale(1.05); }
+    .specialty-bar { display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; padding-bottom: 16px; margin-bottom: 0.5rem; scrollbar-width: none; }
+    .category-pill { flex: 0 0 auto; padding: 10px 20px; border-radius: 2rem; border: 1px solid var(--color-border); background: var(--color-surface); font-weight: 600; font-size: 1rem; color: var(--color-text); cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
+    .category-pill.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-bg); transform: scale(1.05); }
     .category-pill:active { transform: scale(0.95); }
 
     .cards { display: grid; gap: 1.5rem; }
@@ -97,7 +94,6 @@
     .cart-tools input { flex: 1; padding: 14px 20px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); }
     .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); font-weight: bold; margin: 24px 0 12px; }
     
-    /* Contextual Grouping Cart UI */
     .cart-group-header { font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; color: var(--color-primary); margin: 24px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-divider); }
     
     .list-item-row { display: flex; align-items: center; justify-content: space-between; background: var(--color-surface); padding: 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); margin-bottom: 12px; transition: 0.3s; width: 100%; }
@@ -122,7 +118,7 @@
     
     .review-queue-list { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
     .review-queue-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--color-surface-2); border-radius: 1rem; justify-content: space-between; }
-    .review-queue-item select { padding: 6px; border-radius: 8px; background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); font-weight: bold; }
+    .review-queue-item select { padding: 6px; border-radius: 8px; background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); font-family: var(--font-body); font-weight: bold; height: 36px; }
     
     .guided-overlay { position: fixed; inset: 0; background: var(--color-bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 24px; text-align: center; }
     .guided-overlay.active { opacity: 1; pointer-events: auto; }
@@ -156,15 +152,16 @@
     <main id="main">
       <div id="page-plan" class="page active">
         <section class="hero">
-          <div class="action-row">
-            <button id="generateBtn" class="primary-btn">🎲 Plan</button>
-            <button id="surpriseBtn" class="accent-btn">✨ Chef Special</button>
+          
+          <div class="specialty-bar" id="specialtyBar">
+              <button class="category-pill" data-cat="MyMeals" title="My Meals">👤 My Meals</button>
+              <button class="category-pill" data-cat="Dessert" title="Dessert">🍰 Dessert</button>
+              <button class="category-pill" data-cat="Drinks" title="Drinks">🥤 Drinks</button>
+              <button class="category-pill" data-cat="Cocktails" title="Cocktails">🥂 Cocktails</button>
           </div>
-          <div id="specialtyBar" class="specialty-bar">
-              <button class="category-pill" data-cat="Dessert" title="Dessert">🍰</button>
-              <button class="category-pill" data-cat="Drinks" title="Drinks">🥤</button>
-              <button class="category-pill" data-cat="Cocktails" title="Cocktails">🥂</button>
-          </div>
+          
+          <button id="generateBtn" class="primary-btn" style="width: 100%; height: 56px; font-size: 1.1rem; border-radius: 1.5rem; margin-bottom: 1rem;">🎲 Generate</button>
+          
         </section>
         <section class="section"><div id="suggestions" class="cards" aria-live="polite"></div></section>
       </div>
@@ -186,7 +183,6 @@
             <button class="ghost-btn" style="border-radius: 1.5rem; padding: 6px 12px; font-size: 12px; height: 32px;" onclick="clearActiveCart()">🗑️ Clear Active</button>
         </div>
         
-        <!-- Contextual Grouped Cart Output -->
         <div id="unified-cart-items"></div>
         
         <div style="display:flex; gap:10px; margin-top:30px; margin-bottom:24px;">
@@ -228,7 +224,7 @@
       <div class="dialog-body" id="cookBookScrollArea">
         <div class="stats" style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1rem;">
             <article class="stat" style="text-align:center; padding:10px; border-radius:1rem; border:1px solid var(--color-border);"><span class="subtle" style="font-size:0.6rem; color:var(--color-text-muted);">Core Meals</span><br><strong id="countCore" style="font-size:1.5rem;">0</strong></article>
-            <article class="stat" style="text-align:center; padding:10px; border-radius:1rem; border:1px solid var(--color-border);"><span class="subtle" style="font-size:0.6rem; color:var(--color-text-muted);">AI Prefetch</span><br><strong id="countAI" style="font-size:1.5rem;">0</strong></article>
+            <article class="stat" style="text-align:center; padding:10px; border-radius:1rem; border:1px solid var(--color-border);"><span class="subtle" style="font-size:0.6rem; color:var(--color-text-muted);">AI Pool</span><br><strong id="countAI" style="font-size:1.5rem;">0</strong></article>
             <article class="stat" style="text-align:center; padding:10px; border-radius:1rem; border:1px solid var(--color-border);"><span class="subtle" style="font-size:0.6rem; color:var(--color-text-muted);">Master List</span><br><strong id="countMaster" style="font-size:1.5rem;">0</strong></article>
         </div>
 
@@ -237,10 +233,12 @@
                 <h5 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: .12em; color: var(--color-primary); margin-bottom: 1.25rem;">Add Manual Entry</h5>
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; width: 100%;">
                     <input class="ghost-btn" style="flex: 1; min-width: 0; text-align: left; border-radius: 1.25rem; padding: 14px 16px;" id="unified-meal-input" placeholder="Type meal name...">
-                    <select class="ghost-btn" style="flex: 0 0 auto; min-width: 100px; border-radius: 1.25rem; padding: 14px 8px;" id="unified-meal-category">
+                    
+                    <select style="flex: 0 0 auto; min-width: 110px; border-radius: 1.25rem; padding: 0 12px; height: 48px; font-family: var(--font-body); font-size: 16px; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); -webkit-appearance: none; appearance: none; outline: none;" id="unified-meal-category">
                         <option value="Breakfast">Breakfast</option><option value="Lunch">Lunch</option><option value="Dinner">Dinner</option>
                         <option value="Dessert">Dessert</option><option value="Drinks">Drinks</option><option value="Cocktails">Cocktails</option>
                     </select>
+                    
                     <button class="primary-btn" style="flex-shrink: 0; border-radius: 1.25rem; padding: 0 20px; height: 48px;" onclick="queueUnifiedEntry()">+</button>
                 </div>
             </div>
@@ -255,7 +253,7 @@
   </div>
 
   <script>
-    const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzNOXoxn17I3d4-inuxiEqhdPxOQokGlSGCYW8buwLTcO6YJxbvcHBH0dZ1d-fBDzwl/exec";
+    const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzNOXoxn17I3d4-inuxiEqhdPxOQokGlSGCYW8buwLTcO6YJxbvcHBH0dZ1d-fBDzwl/exec"; // Updated Deployment URL
 
     let state = { 
         db: { breakfast: [], lunch: [], dinner: [], dessert: [], drinks: [], cocktails: [] }, 
@@ -354,8 +352,6 @@
 
     function getCardInnerHTML(item, index) {
       const tag = getMealTag(item.name);
-      
-      // Bookmark explicitly locked to API-generated cards
       const bookmarkHtml = item.source !== 'db' ? `<div class="icon-circle" data-action="queue-meal" data-index="${index}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>` : '';
 
       return `
@@ -394,7 +390,7 @@
     function renderOutputDeck(schema) {
       state.currentSuggestions = structuredClone(schema);
       const s = document.getElementById('suggestions'); s.innerHTML = '';
-      if (!schema.length) { s.innerHTML = `<div class="empty"><h3>Empty Pool</h3><p class="subtle">Add items to this category to plan.</p></div>`; return; }
+      if (!schema.length) { s.innerHTML = `<div class="empty"><h3>Empty Pool</h3><p class="subtle">No meals found for this selection.</p></div>`; return; }
       schema.forEach((item, index) => {
         const article = document.createElement('article');
         article.className = 'meal-card' + (item.isLocked ? ' locked' : '');
@@ -404,58 +400,64 @@
       });
     }
 
-    document.getElementById('generateBtn').addEventListener('click', () => {
-      document.querySelectorAll('.category-pill').forEach(b => b.classList.remove('active'));
-      const bPool = state.db.breakfast || []; const lPool = state.db.lunch || []; const dPool = state.db.dinner || [];
-      const m1 = pickUniqueMeal(bPool, []); const m2 = pickUniqueMeal(lPool, []); const m3 = pickUniqueMeal(dPool, []);
-      
-      const deck = [];
-      if(m1) deck.push(buildCard('Breakfast', m1, 'db', 'breakfast'));
-      if(m2) deck.push(buildCard('Lunch', m2, 'db', 'lunch'));
-      if(m3) deck.push(buildCard('Dinner', m3, 'db', 'dinner'));
-      renderOutputDeck(deck);
-    });
-
-    document.getElementById('surpriseBtn').addEventListener('click', () => {
-      const activePill = document.querySelector('.category-pill.active');
-      
-      if (activePill) { 
-          const cat = activePill.dataset.cat;
-          const pool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === cat.toLowerCase());
-          if(pool.length > 0) {
-              const m = pool[Math.floor(Math.random() * pool.length)];
-              renderOutputDeck([ buildCard(cat, m.name, 'api', cat.toLowerCase()) ]);
-          } else {
-              const lPool = state.db[cat.toLowerCase()] || []; const lm = pickUniqueMeal(lPool, []);
-              if(lm) renderOutputDeck([ buildCard(cat, lm, 'db', cat.toLowerCase()) ]);
-          }
-          return;
-      }
-      
-      const bPool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'breakfast');
-      const lPool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'lunch');
-      const dPool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'dinner');
-      
-      const deck = [];
-      if(bPool.length) { const m = bPool[Math.floor(Math.random()*bPool.length)]; deck.push(buildCard('Breakfast', m.name, 'api', 'breakfast')); }
-      if(lPool.length) { const m = lPool[Math.floor(Math.random()*lPool.length)]; deck.push(buildCard('Lunch', m.name, 'api', 'lunch')); }
-      if(dPool.length) { const m = dPool[Math.floor(Math.random()*dPool.length)]; deck.push(buildCard('Dinner', m.name, 'api', 'dinner')); }
-      
-      if(deck.length > 0) renderOutputDeck(deck);
-      else document.getElementById('generateBtn').click(); 
-    });
-
     // Toggleable Filter Logic
     document.getElementById('specialtyBar').addEventListener('click', (e) => {
         const btn = e.target.closest('.category-pill'); if (!btn) return;
-        
         if (btn.classList.contains('active')) {
-            btn.classList.remove('active'); // Deselect if already active
+            btn.classList.remove('active'); 
         } else {
             document.querySelectorAll('.category-pill').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active'); // Select new
+            btn.classList.add('active'); 
         }
-        document.getElementById('surpriseBtn').click(); // Auto-trigger update
+    });
+
+    // UNIFIED GENERATE BUTTON LOGIC
+    document.getElementById('generateBtn').addEventListener('click', () => {
+        const activePill = document.querySelector('.category-pill.active');
+        const deck = [];
+
+        if (activePill) {
+            const cat = activePill.dataset.cat;
+
+            if (cat === 'MyMeals') {
+                // Pull strictly from user's local database
+                const bPool = state.db.breakfast || []; const lPool = state.db.lunch || []; const dPool = state.db.dinner || [];
+                const m1 = pickUniqueMeal(bPool, []); const m2 = pickUniqueMeal(lPool, []); const m3 = pickUniqueMeal(dPool, []);
+                if(m1) deck.push(buildCard('Breakfast', m1, 'db', 'breakfast'));
+                if(m2) deck.push(buildCard('Lunch', m2, 'db', 'lunch'));
+                if(m3) deck.push(buildCard('Dinner', m3, 'db', 'dinner'));
+            } else {
+                // Pull strictly 1 specific item from AI Pool
+                const pool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === cat.toLowerCase());
+                if(pool.length > 0) {
+                    const m = pool[Math.floor(Math.random() * pool.length)];
+                    deck.push(buildCard(cat, m.name, 'api', cat.toLowerCase()));
+                } else {
+                    const lPool = state.db[cat.toLowerCase()] || []; const lm = pickUniqueMeal(lPool, []);
+                    if(lm) deck.push(buildCard(cat, lm, 'db', cat.toLowerCase()));
+                }
+            }
+        } else {
+            // NO FILTER ACTIVE -> Pull 3 daily meals from AI Pool
+            const bPool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'breakfast');
+            const lPool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'lunch');
+            const dPool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'dinner');
+            
+            if(bPool.length) { const m = bPool[Math.floor(Math.random()*bPool.length)]; deck.push(buildCard('Breakfast', m.name, 'api', 'breakfast')); }
+            if(lPool.length) { const m = lPool[Math.floor(Math.random()*lPool.length)]; deck.push(buildCard('Lunch', m.name, 'api', 'lunch')); }
+            if(dPool.length) { const m = dPool[Math.floor(Math.random()*dPool.length)]; deck.push(buildCard('Dinner', m.name, 'api', 'dinner')); }
+            
+            // Fallback to local DB if AI pool is completely empty
+            if(deck.length === 0) {
+                const lbPool = state.db.breakfast || []; const llPool = state.db.lunch || []; const ldPool = state.db.dinner || [];
+                const m1 = pickUniqueMeal(lbPool, []); const m2 = pickUniqueMeal(llPool, []); const m3 = pickUniqueMeal(ldPool, []);
+                if(m1) deck.push(buildCard('Breakfast', m1, 'db', 'breakfast'));
+                if(m2) deck.push(buildCard('Lunch', m2, 'db', 'lunch'));
+                if(m3) deck.push(buildCard('Dinner', m3, 'db', 'dinner'));
+            }
+        }
+        
+        renderOutputDeck(deck);
     });
 
     function pickUniqueMeal(pool, excludedNames = []) {
@@ -543,7 +545,6 @@
           document.getElementById('syncIndicator').classList.remove('active');
       }
       
-      // Contextual programmatic search execution
       const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
       const gUrl = `https://www.google.com/search?q=${searchQ}`;
       const yUrl = `https://www.youtube.com/results?search_query=${searchQ}`;
@@ -557,7 +558,6 @@
       if (action === 'nutrition') window.open(`https://www.google.com/search?q=${searchQ}+nutritional+factual+information+calories`, '_blank');
     });
 
-    // Contextual Grouping Cart Push
     function pushToCartLocally(ingredients, mealContext = "Uncategorized") {
         const now = new Date();
         const recentNames = state.orderHistory
@@ -583,7 +583,6 @@
         switchTab('cart', document.querySelectorAll('.nav-item')[1]);
     }
 
-    // Contextual WhatsApp Grouped Sharing
     function shareCartToWhatsApp() {
         const groups = {};
         state.cart.filter(i => i.checked).forEach(item => {
@@ -605,7 +604,6 @@
         window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
     }
 
-    // Advanced Grouped Cart Rendering
     function renderCart() {
       const groups = {};
       state.cart.forEach((item, index) => {
@@ -646,6 +644,7 @@
 
     function toggleCartItem(index) { 
         state.cart[index].checked = !state.cart[index].checked; 
+        if(state.cart[index].checked) { state.cart[index].recent = false; state.cart[index].flag = ''; }
         renderCart(); saveStateLocally(); syncCartToBackend(); 
     }
     function clearActiveCart() { state.cart = state.cart.filter(c => !c.checked); renderCart(); saveStateLocally(); syncCartToBackend(); }
@@ -697,7 +696,6 @@
         if (m) { pendingApprovals.push({ category: c, meal: m }); document.getElementById('unified-meal-input').value = ''; renderReviewQueue(); }
     }
     
-    // Category Modification inside Review Queue
     function renderReviewQueue() {
       const ql = document.getElementById('reviewQueueList'); ql.innerHTML = '';
       const qp = document.getElementById('reviewQueuePanel');
@@ -786,8 +784,8 @@
       const cached = localStorage.getItem('mp_data');
       if (cached) {
           state = JSON.parse(cached);
-          // Auto migrate legacy cart items without a meal context safely
           state.cart.forEach(c => { if(!c.mealContext) c.mealContext = "Uncategorized"; });
+          // Automatically trigger UI population on boot
           document.getElementById('generateBtn').click();
       } else {
           document.getElementById('syncIndicator').classList.add('active');
