@@ -15,15 +15,14 @@
       --color-border: #e0deda; --color-divider: #e0deda; --color-text: #161514; --color-text-muted: #6b6965; 
       --color-primary: #01696f; --color-secondary: #e8af34; --color-success: #38661c; --color-warning: #c26502; --color-error: #8f266d;
       --font-body: 'General Sans', sans-serif; --font-display: 'Boska', serif;
-      --shadow-sm: 0 4px 12px rgba(0,0,0,0.05); --shadow-md: 0 12px 32px rgba(0,0,0,0.1);
-      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --shadow-md: 0 12px 32px rgba(0,0,0,0.1); --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     [data-theme="dark"] {
       --color-bg: #000000; --color-surface: #121110; --color-surface-2: #1a1918; 
       --color-border: rgba(255, 255, 255, 0.05); --color-divider: rgba(255, 255, 255, 0.08); 
       --color-text: #e8e6e3; --color-text-muted: #918f8b; 
       --color-primary: #80c7d2; --color-secondary: #e6c57a; --color-success: #78a85d; --color-warning: #e39d5b; --color-error: #e57373;
-      --shadow-sm: 0 8px 24px rgba(0,0,0, 0.8); --shadow-md: 0 16px 40px rgba(0,0,0, 1);
+      --shadow-md: 0 16px 40px rgba(0,0,0, 1);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html { scroll-behavior: smooth; }
@@ -49,15 +48,15 @@
     .page.active { display: block; }
     @keyframes fadePeek { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Category Pill Row (Replaces Fragile Regex Filters) */
-    .filter-wrapper { width: 100%; overflow: hidden; margin-bottom: 1.5rem; }
-    .filter-row { display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; padding: 4px 4px 16px 4px; box-sizing: border-box; scrollbar-width: none; -webkit-overflow-scrolling: touch; margin-bottom: 0; }
-    .filter-row::-webkit-scrollbar { display: none; }
-    .category-pill { flex: 0 0 auto; padding: 10px 20px; border-radius: 2rem; border: 1px solid var(--color-border); background: var(--color-surface); font-weight: 600; font-size: 0.9rem; color: var(--color-text-muted); cursor: pointer; transition: 0.2s; }
-    .category-pill.active { background: var(--color-primary); color: var(--color-bg); border-color: var(--color-primary); }
-
-    .action-row { display: flex; gap: 10px; margin-bottom: 2rem; flex-wrap: wrap; }
+    .action-row { display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
     .action-row button { flex: 1; min-width: 100px; font-size: 0.9rem; height: 48px; }
+
+    /* Dynamic Specialty Filter Bar */
+    .specialty-bar { display: none; gap: 10px; overflow-x: auto; white-space: nowrap; padding-bottom: 16px; margin-bottom: 1rem; scrollbar-width: none; animation: slideDown 0.3s var(--ease-spring); }
+    .specialty-bar.active { display: flex; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    .category-pill { flex: 0 0 auto; padding: 10px 20px; border-radius: 2rem; border: 1px solid var(--color-border); background: var(--color-surface); font-weight: 600; font-size: 0.9rem; color: var(--color-text); cursor: pointer; transition: 0.2s; }
+    .category-pill:active { transform: scale(0.95); }
 
     .cards { display: grid; gap: 1.5rem; }
     .meal-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 2rem; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; animation: slideUpFade 0.6s var(--ease-spring) backwards; position: relative; }
@@ -66,21 +65,17 @@
     .card-header-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .eyebrow { font-size: 0.8rem; text-transform: uppercase; color: var(--color-text-muted); font-weight: 700; letter-spacing: 0.1em; }
     .badge { padding: 4px 12px; border-radius: 2rem; font-size: 0.75rem; font-weight: 700; background: color-mix(in oklab, var(--color-success) 15%, transparent); color: var(--color-success); border: 1px solid color-mix(in oklab, var(--color-success) 20%, transparent); }
+    .badge.tag-nonveg { background: color-mix(in oklab, var(--color-error) 15%, transparent); color: var(--color-error); border-color: color-mix(in oklab, var(--color-error) 20%, transparent); }
     .badge.warning { background: color-mix(in oklab, var(--color-secondary) 15%, transparent); color: var(--color-secondary); border-color: color-mix(in oklab, var(--color-secondary) 20%, transparent); }
     .meal-title { font-family: var(--font-display); font-size: 2.1rem; line-height: 1.1; font-weight: 600; margin: 0.25rem 0; }
     
     .top-actions { display: flex; gap: 8px; }
     .icon-circle { width: 44px; height: 44px; border-radius: 50%; background: var(--color-surface-2); display: flex; align-items: center; justify-content: center; border: 1px solid var(--color-border); cursor: pointer; transition: 0.2s; color: var(--color-text); }
-    .icon-circle.active { background: color-mix(in oklab, var(--color-success) 20%, transparent); color: var(--color-success); border-color: var(--color-success); }
+    .icon-circle:active { transform: scale(0.9); }
     
     .card-action { min-height: 52px; font-weight: 600; border: 1px solid var(--color-border); border-radius: 1.25rem; background: var(--color-surface-2); color: var(--color-text); display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0.5rem 1rem; transition: 0.2s; }
     .card-action.locked { background: var(--color-success); color: var(--color-bg); border-color: var(--color-success); }
     .card-action:disabled { opacity: 0.3; cursor: not-allowed; }
-    
-    .explore-area { display: flex; justify-content: space-around; align-items: center; max-height: 0; opacity: 0; overflow: hidden; transition: 0.3s var(--ease-spring); margin-top: -10px; width: 100%; }
-    .explore-area.open { max-height: 100px; opacity: 1; margin-top: 5px; padding: 12px 0; border-top: 1px solid var(--color-divider); }
-    .explore-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--color-surface); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; transition: 0.2s; flex-shrink: 0; color: var(--color-text); }
-    .explore-icon:active { transform: scale(0.9); }
     
     .empty { padding: 3rem 2rem; background: var(--color-surface); border-radius: 2rem; border: 1px solid var(--color-border); color: var(--color-text-muted); text-align: center; width: 100%; }
     .empty h3 { color: var(--color-text); font-family: var(--font-display); font-size: 2rem; margin-bottom: 0.5rem; }
@@ -100,8 +95,7 @@
     .list-item-row.checked .checkbox { background: var(--color-primary); color: var(--color-bg); }
     .item-name { font-size: 1.125rem; font-weight: 600; text-transform: capitalize; color: var(--color-text); }
     .item-flag { font-size: 0.75rem; color: var(--color-warning); font-weight: 600; margin-top: 4px; }
-    .trash-btn { background: none; border: none; font-size: 1.25rem; color: var(--color-error); padding: 8px; border-radius: 50%; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
-    .trash-btn:active { background: color-mix(in oklab, var(--color-error) 20%, transparent); }
+    .trash-btn { background: none; border: none; font-size: 1.25rem; color: var(--color-error); padding: 8px; border-radius: 50%; cursor: pointer; }
     
     .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 2000; }
     .modal.open { display: flex; }
@@ -109,11 +103,6 @@
     .dialog-head { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); flex-shrink: 0; }
     .dialog-body { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; }
     
-    .toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--color-surface-2); border: 1px solid var(--color-border); padding: 14px 24px; border-radius: 2rem; font-weight: bold; z-index: 3000; transition: 0.3s var(--ease-spring); box-shadow: var(--shadow-md); color: var(--color-text); display: flex; align-items: center; gap: 15px; }
-    .toast.show { top: 20px; }
-    .undo-link { color: var(--color-primary); text-transform: uppercase; cursor: pointer; font-size: 0.9rem; padding: 4px 10px; border-radius: 8px; background: color-mix(in oklab, var(--color-primary) 12%, transparent); font-weight: 700; }
-
-    /* The Blocking Loader is Gone. Replaced with an unobtrusive sync indicator */
     .sync-indicator { position: fixed; top: 10px; right: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: bold; color: var(--color-text-muted); background: var(--color-surface-2); padding: 6px 12px; border-radius: 2rem; opacity: 0; transition: 0.3s; z-index: 9999; }
     .sync-indicator.active { opacity: 1; }
     .sync-spinner { width: 12px; height: 12px; border: 2px solid var(--color-text-muted); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; }
@@ -127,21 +116,20 @@
     
     .review-queue-list { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
     .review-queue-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--color-surface-2); border-radius: 1rem; justify-content: space-between; }
-    .review-queue-item select { background: var(--color-surface); padding: 6px; border-radius: 0.5rem; border: 1px solid var(--color-border); color: var(--color-text); font-weight: 600; }
     .data-row { display: flex; justify-content: space-between; gap: 0.75rem; align-items: center; padding: 1rem 1.5rem; border: 1px solid var(--color-border); border-radius: 1.25rem; background: var(--color-surface); font-size: 1rem; margin-bottom: 8px; width: 100%; }
   </style>
 </head>
 <body>
   
   <div class="sync-indicator" id="syncIndicator"><div class="sync-spinner"></div> Syncing Data...</div>
-  <div class="toast" id="toast"></div>
 
   <div class="topbar-wrapper">
     <div class="topbar-main">
       <div class="brand"><div class="brand-logo">MP</div><h1>Meal Planner</h1></div>
       <div class="header-actions">
+        <button class="ghost-btn" id="undoBtn" style="opacity: 0.3; pointer-events: none; padding: 0 12px;" onclick="undoDelete()">⟲ Undo</button>
         <button class="icon-btn" data-theme-toggle></button>
-        <button class="ghost-btn" id="openDataBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></button>
+        <button class="ghost-btn" id="openDataBtn"><svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></button>
       </div>
     </div>
   </div>
@@ -150,23 +138,14 @@
     <main id="main">
       <div id="page-plan" class="page active">
         <section class="hero">
-          <h2 id="hero-title" style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 1rem;">Curation Categories</h2>
-          
-          <div class="filter-wrapper">
-              <div class="filter-row" id="categoryTabs">
-                  <!-- Clean Deterministic Routing. No Regex Guesses -->
-                  <button class="category-pill active" data-cat="Dinner">Dinner</button>
-                  <button class="category-pill" data-cat="Lunch">Lunch</button>
-                  <button class="category-pill" data-cat="Breakfast">Breakfast</button>
-                  <button class="category-pill" data-cat="Dessert">Dessert</button>
-                  <button class="category-pill" data-cat="Drinks">Drinks</button>
-                  <button class="category-pill" data-cat="Alcoholic">Alcoholic</button>
-              </div>
-          </div>
-
           <div class="action-row">
             <button id="generateBtn" class="primary-btn">🎲 Auto-Plan Core</button>
-            <button id="surpriseBtn" class="accent-btn">✨ Chef Special (AI)</button>
+            <button id="surpriseBtn" class="accent-btn">✨ Chef Special</button>
+          </div>
+          <div id="specialtyBar" class="specialty-bar">
+              <button class="category-pill" data-cat="Dessert">🍰 Dessert</button>
+              <button class="category-pill" data-cat="Drinks">🥤 Drinks</button>
+              <button class="category-pill" data-cat="Alcoholic">🥂 Alcoholic</button>
           </div>
         </section>
         <section class="section"><div id="suggestions" class="cards" aria-live="polite"></div></section>
@@ -175,7 +154,10 @@
       <div id="page-cart" class="page">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
           <h2 style="font-family:var(--font-display); font-size:2rem; font-weight:600;">Grocery Cart</h2>
-          <button class="ghost-btn" style="border-radius: 2rem; padding: 8px 16px;" onclick="openMasterList()">List ▾</button>
+          <div style="display:flex; gap:8px;">
+            <button class="primary-btn" style="border-radius: 2rem; padding: 8px 16px;" onclick="shareCartToWhatsApp()">💬 Share</button>
+            <button class="ghost-btn" style="border-radius: 2rem; padding: 8px 16px;" onclick="openMasterList()">List ▾</button>
+          </div>
         </div>
         <div class="cart-tools"><input id="manualCartAdd" placeholder="Add custom item..."><button class="primary-btn" style="border-radius: 1.5rem; padding: 0 20px; height: 48px;" onclick="addManualCartItem()">+</button></div>
         <div style="display:flex; justify-content:space-between; align-items:center;"><div class="section-title">Ready to Buy</div><button class="ghost-btn" style="border-radius: 1.5rem; padding: 6px 12px; font-size: 12px; height: 32px;" onclick="clearActiveCart()">🗑️ Clear</button></div>
@@ -191,8 +173,8 @@
   </div>
 
   <div class="bottom-nav" id="bottomNav">
-    <button class="nav-item active" onclick="switchTab('plan', this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> Plan</button>
-    <button class="nav-item" onclick="switchTab('cart', this)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg> Cart</button>
+    <button class="nav-item active" onclick="switchTab('plan', this)"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> Plan</button>
+    <button class="nav-item" onclick="switchTab('cart', this)"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg> Cart</button>
   </div>
 
   <div class="guided-overlay" id="guided-overlay">
@@ -219,11 +201,6 @@
     <section class="dialog">
       <div class="dialog-head"><h4 style="font-family: var(--font-display); font-size: 1.5rem;">Core Database</h4><button class="icon-btn" style="border-radius: 50%;" onclick="closeModal('dataModal')"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
       <div class="dialog-body" id="cookBookScrollArea">
-        <div class="stats">
-            <article class="stat"><span class="subtle">Core Meals</span><strong id="countCore">0</strong></article>
-            <article class="stat"><span class="subtle">AI Pre-Fetch</span><strong id="countAI">0</strong></article>
-            <article class="stat"><span class="subtle">Master List</span><strong id="countMaster">0</strong></article>
-        </div>
         <section id="dashboardView">
             <div style="background: var(--color-surface-2); padding: 1.5rem; border-radius: 2rem; border: 1px solid var(--color-border); margin-bottom: 20px;">
                 <h5 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: .12em; color: var(--color-primary); margin-bottom: 1.25rem;">Add Manual Entry</h5>
@@ -247,23 +224,19 @@
   </div>
 
   <script>
-    // System Constants
     const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwvU930ksyyrtTkhXbzOehjo3uh9J1qViq77I_WRPvg25rMNzClScK1MY758xlaDzRRSQ/exec";
 
-    // Application State
     let state = { 
         db: { breakfast: [], lunch: [], dinner: [], dessert: [], drinks: [], alcoholic: [] }, 
-        aiDiscoveryPool: [], // Pre-computed ETL Array
+        aiDiscoveryPool: [], 
         cookingHistory: [], currentSuggestions: [], masterGrocery: [], orderHistory: [], cart: [] 
     };
     
-    let activeCategory = 'Dinner'; // Default UI Tab
     let pendingApprovals = [];
     let graveyard = [];
 
     function escapeHtml(str) { return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 
-    // Theme Engine
     (() => {
       const themeBtn = document.querySelector('[data-theme-toggle]');
       const root = document.documentElement;
@@ -274,23 +247,17 @@
       themeBtn.addEventListener('click', () => { theme = theme === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', theme); renderThemeIcon(); });
     })();
 
-    // UI: Category Pills (Deterministic Routing)
-    document.getElementById('categoryTabs').addEventListener('click', (e) => {
-        const btn = e.target.closest('.category-pill');
-        if (!btn) return;
-        if(navigator.vibrate) navigator.vibrate(15);
-        
-        document.querySelectorAll('.category-pill').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        activeCategory = btn.dataset.cat;
-    });
-
-    // Graveyard Undo Cache
-    function showToast(msg, isUndo = false) {
-        const t = document.getElementById('toast');
-        t.innerHTML = isUndo ? `<span>${msg}</span> <span class="undo-link" onclick="undoDelete()">Undo</span>` : `<span>${msg}</span>`;
-        if(!isUndo) setTimeout(() => t.classList.remove('show'), 3000);
-        t.classList.add('show');
+    function updateUndoButton() {
+        const btn = document.getElementById('undoBtn');
+        if (graveyard.length > 0) {
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto';
+            btn.innerHTML = `⟲ Undo (${graveyard.length})`;
+        } else {
+            btn.style.opacity = '0.3';
+            btn.style.pointerEvents = 'none';
+            btn.innerHTML = `⟲ Undo`;
+        }
     }
 
     function executeSoftDelete(context, key) {
@@ -299,13 +266,13 @@
             const idx = Number(key);
             const deletedItem = state.cart.splice(idx, 1)[0];
             graveyard.push({ context: 'cart', item: deletedItem, originalIndex: idx });
-            renderCart(); saveStateLocally(); showToast("Item removed.", true);
+            renderCart(); saveStateLocally(); updateUndoButton();
         } else if (context === 'master') {
             const idx = state.masterGrocery.findIndex(i => i.name === key);
             if (idx > -1) {
                 const deletedItem = state.masterGrocery.splice(idx, 1)[0];
                 graveyard.push({ context: 'master', item: deletedItem, originalIndex: idx });
-                openMasterList(); saveStateLocally(); showToast("Master item removed.", true);
+                openMasterList(); saveStateLocally(); updateUndoButton();
             }
         }
     }
@@ -316,8 +283,7 @@
         if (lastDeleted.context === 'cart') { state.cart.splice(lastDeleted.originalIndex, 0, lastDeleted.item); renderCart(); } 
         else if (lastDeleted.context === 'master') { state.masterGrocery.splice(lastDeleted.originalIndex, 0, lastDeleted.item); openMasterList(); }
         saveStateLocally();
-        if (!graveyard.length) document.getElementById('toast').classList.remove('show');
-        else showToast("Item restored. Items left: " + graveyard.length, true);
+        updateUndoButton();
     }
 
     function flushGraveyardCache() {
@@ -325,13 +291,12 @@
         graveyard.forEach(cached => {
             if (cached.context === 'master') fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteMasterItem', item: cached.item.name }) }).catch(e=>e);
         });
-        syncCartToBackend(); graveyard = [];
+        syncCartToBackend(); graveyard = []; updateUndoButton();
     }
 
     window.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushGraveyardCache(); });
     window.addEventListener("pagehide", flushGraveyardCache);
 
-    // Card Generation Engine
     function cookedWithinAWeek(mealName) { 
         const now = Date.now(); 
         return state.cookingHistory.some(e => {
@@ -346,23 +311,25 @@
 
     function getCardInnerHTML(item, index) {
       let badgeHTML = item.source === 'api' ? `<span class="badge" style="background:var(--color-primary); color:var(--color-bg); border:none;">Chef Special AI</span>` : `<span class="badge tag-veg">Core Database</span>`;
+      if(item.source === 'mealdb') badgeHTML = `<span class="badge" style="background:#e8af34; color:#000; border:none;">Global Recipe</span>`;
+
       return `
         <div class="card-header-row">
             <div class="card-header-left"><span class="eyebrow">${item.time}</span>${badgeHTML}${item.cookedRecently ? '<span class="badge warning">Cooked recently</span>' : ''}</div>
-            <div class="top-actions"><div class="icon-circle" data-action="add-to-cart" data-index="${index}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div></div>
+            <div class="top-actions"><div class="icon-circle" data-action="add-to-cart" data-index="${index}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div></div>
         </div>
         <div class="meal-title">${escapeHtml(item.name)}</div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-            <button class="card-action" data-action="prev" data-index="${index}" ${item.historyIndex > 0 && !item.isLocked ? '' : 'disabled'}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg></button>
-            <button class="card-action" data-action="next" data-index="${index}" ${item.isLocked ? 'disabled' : ''}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg></button>
+            <button class="card-action" data-action="prev" data-index="${index}" ${item.historyIndex > 0 && !item.isLocked ? '' : 'disabled'}><svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg></button>
+            <button class="card-action" data-action="next" data-index="${index}" ${item.isLocked ? 'disabled' : ''}><svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg></button>
         </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
             <button class="card-action ${item.isLocked ? 'locked' : ''}" data-action="lock" data-index="${index}">${item.isLocked ? '✓ Locked' : 'Cook This'}</button>
-            <button class="card-action" data-action="toggle-explore" data-index="${index}"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+            <button class="card-action" data-action="google" data-index="${index}">🔍 Recipe</button>
         </div>
-        <div id="explore-${index}" class="explore-area">
-          <button class="explore-icon" data-action="google" data-index="${index}"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 24c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 21.53 7.7 24 12 24z"/><path fill="#FBBC05" d="M5.84 15.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V8.06H2.18C1.43 9.55 1 11.22 1 13s.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 4.84c1.61 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.63 14.97 0 12 0 7.7 0 3.99 2.47 2.18 6.06l3.66 2.84c.87-2.6 3.3-4.06 6.16-4.06z"/></svg></button>
-          <button class="explore-icon" data-action="youtube" data-index="${index}"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#FF0000" d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg></button>
+        <div style="display:flex; gap: 10px;">
+            <button class="card-action" data-action="nutrition" data-index="${index}" style="flex:1;">📊 Info</button>
+            <button class="card-action" data-action="whatsapp" data-index="${index}" style="flex:1;">💬 Share</button>
         </div>
       `;
     }
@@ -379,36 +346,76 @@
       });
     }
 
-    // Auto-Plan: Strictly pulls from your defined local category (Zero Latency)
-    document.getElementById('generateBtn').addEventListener('click', () => {
-      let pool = state.db[activeCategory.toLowerCase()] || [];
-      const m1 = pickUniqueMeal(pool, []);
-      const m2 = pickUniqueMeal(pool, m1 ? [m1] : []);
-      const m3 = pickUniqueMeal(pool, m1 && m2 ? [m1, m2] : []);
+    async function fetchMealDBFallback(timeLabel) {
+      try {
+        const res = await fetch('https://www.themealdb.com/api/json/v1/1/random.php');
+        const data = await res.json();
+        const meal = data.meals[0];
+        const ingredients = [];
+        for(let i=1; i<=20; i++) { if(meal[`strIngredient${i}`]) ingredients.push(meal[`strIngredient${i}`]); }
+        return { name: meal.strMeal, ingredients: ingredients, source: 'mealdb', timeLabel: timeLabel };
+      } catch(e) { return null; }
+    }
+
+    document.getElementById('generateBtn').addEventListener('click', async () => {
+      document.getElementById('specialtyBar').classList.remove('active');
+      const bPool = state.db.breakfast || []; const lPool = state.db.lunch || []; const dPool = state.db.dinner || [];
+      const m1 = pickUniqueMeal(bPool, []); const m2 = pickUniqueMeal(lPool, []); const m3 = pickUniqueMeal(dPool, []);
       
       const deck = [];
-      if(m1) deck.push(buildCard(`Core ${activeCategory}`, m1, 'db', activeCategory.toLowerCase()));
-      if(m2) deck.push(buildCard(`Core ${activeCategory}`, m2, 'db', activeCategory.toLowerCase()));
-      if(m3) deck.push(buildCard(`Core ${activeCategory}`, m3, 'db', activeCategory.toLowerCase()));
+      if(m1) deck.push(buildCard('Breakfast', m1, 'db', 'breakfast'));
+      if(m2) deck.push(buildCard('Lunch', m2, 'db', 'lunch'));
+      if(m3) deck.push(buildCard('Dinner', m3, 'db', 'dinner'));
       
+      if(deck.length === 0) {
+          document.getElementById('syncIndicator').classList.add('active');
+          const fallback = await fetchMealDBFallback('Global Meal');
+          document.getElementById('syncIndicator').classList.remove('active');
+          if(fallback) {
+              const card = buildCard(fallback.timeLabel, fallback.name, 'mealdb', 'mealdb');
+              card.fallbackIngredients = fallback.ingredients;
+              renderOutputDeck([card]); return;
+          }
+      }
       renderOutputDeck(deck);
     });
 
-    // Chef Special: Pulls instantly from pre-computed Nightly ETL Pool (Zero Latency)
-    document.getElementById('surpriseBtn').addEventListener('click', () => {
-      const aiPool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === activeCategory.toLowerCase());
+    document.getElementById('surpriseBtn').addEventListener('click', async () => {
+      document.getElementById('specialtyBar').classList.add('active');
+      const meals = state.aiDiscoveryPool.filter(m => ["Breakfast", "Lunch", "Dinner"].includes(m.category));
       
-      if (aiPool.length === 0) {
-          showToast(`No pre-computed AI items for ${activeCategory}. Try another category or run ETL.`);
-          return;
+      if (meals.length >= 3) {
+          renderOutputDeck([
+              buildCard(meals[0].category, meals[0].name, 'api', meals[0].category),
+              buildCard(meals[1].category, meals[1].name, 'api', meals[1].category),
+              buildCard(meals[2].category, meals[2].name, 'api', meals[2].category)
+          ]);
+      } else {
+          document.getElementById('syncIndicator').classList.add('active');
+          const f1 = await fetchMealDBFallback('Lunch');
+          const f2 = await fetchMealDBFallback('Dinner');
+          document.getElementById('syncIndicator').classList.remove('active');
+          const deck = [];
+          if(f1) { const c = buildCard(f1.timeLabel, f1.name, 'mealdb', 'mealdb'); c.fallbackIngredients = f1.ingredients; deck.push(c); }
+          if(f2) { const c = buildCard(f2.timeLabel, f2.name, 'mealdb', 'mealdb'); c.fallbackIngredients = f2.ingredients; deck.push(c); }
+          renderOutputDeck(deck);
       }
-      
-      const m1 = aiPool[Math.floor(Math.random() * aiPool.length)];
-      const m2 = aiPool[Math.floor(Math.random() * aiPool.length)];
-      const deck = [ buildCard(`AI ${activeCategory}`, m1.name, 'api', activeCategory.toLowerCase()) ];
-      if(m1.name !== m2.name) deck.push(buildCard(`AI ${activeCategory}`, m2.name, 'api', activeCategory.toLowerCase()));
-      
-      renderOutputDeck(deck);
+    });
+
+    document.getElementById('specialtyBar').addEventListener('click', (e) => {
+        const btn = e.target.closest('.category-pill'); if (!btn) return;
+        const cat = btn.dataset.cat;
+        const pool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === cat.toLowerCase());
+        if(pool.length > 0) {
+            const m = pool[Math.floor(Math.random() * pool.length)];
+            renderOutputDeck([ buildCard(cat, m.name, 'api', cat.toLowerCase()) ]);
+        } else {
+            const localPool = state.db[cat.toLowerCase()] || [];
+            if(localPool.length > 0) {
+                 const m = pickUniqueMeal(localPool, []);
+                 renderOutputDeck([ buildCard(cat, m, 'db', cat.toLowerCase()) ]);
+            }
+        }
     });
 
     function pickUniqueMeal(pool, excludedNames = []) {
@@ -421,12 +428,11 @@
       const btn = event.target.closest('[data-action]'); if (!btn) return;
       const idx = Number(btn.dataset.index); const action = btn.dataset.action; const card = state.currentSuggestions[idx];
       
-      if (action === 'toggle-explore') document.getElementById(`explore-${idx}`).classList.toggle('open');
-      
       if (action === 'prev') {
           if (card.historyIndex > 0) {
               card.historyIndex--;
               card.name = card.history[card.historyIndex];
+              card.cookedRecently = !!cookedWithinAWeek(card.name); 
               const article = document.getElementById('suggestions').children[idx];
               article.innerHTML = getCardInnerHTML(card, idx);
           }
@@ -439,15 +445,20 @@
           } else {
               let newMealName = null;
               if (card.source === 'api') {
-                  const pool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === card.poolContext);
+                  const pool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === card.poolContext.toLowerCase());
                   if(pool.length > 0) newMealName = pool[Math.floor(Math.random() * pool.length)].name;
+              } else if (card.source === 'mealdb') {
+                  document.getElementById('syncIndicator').classList.add('active');
+                  const f = await fetchMealDBFallback(card.time);
+                  document.getElementById('syncIndicator').classList.remove('active');
+                  if(f) { newMealName = f.name; card.fallbackIngredients = f.ingredients; }
               } else {
                   const pool = state.db[card.poolContext] || [];
                   newMealName = pickUniqueMeal(pool, card.history);
               }
 
               if (newMealName) { card.history.push(newMealName); card.historyIndex++; card.name = newMealName; } 
-              else { showToast("No more items in this pool."); return; }
+              else { return; }
           }
           card.cookedRecently = !!cookedWithinAWeek(card.name);
           const article = document.getElementById('suggestions').children[idx];
@@ -463,36 +474,33 @@
               state.cookingHistory = state.cookingHistory.filter(e => e.name.toLowerCase() !== card.name.toLowerCase()); saveStateLocally();
               fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'removeCookingLog', mealName: card.name }) }); 
           }
+          card.cookedRecently = !!cookedWithinAWeek(card.name);
           const article = document.getElementById('suggestions').children[idx];
           article.className = 'meal-card' + (card.isLocked ? ' locked' : ''); 
           article.innerHTML = getCardInnerHTML(card, idx);
       }
       
       if (action === 'add-to-cart') {
-          // Check if AI pre-computed it
+          if (card.source === 'mealdb' && card.fallbackIngredients) {
+              pushToCartLocally(card.fallbackIngredients); return;
+          }
           const aiMeal = state.aiDiscoveryPool.find(m => m.name.toLowerCase() === card.name.toLowerCase());
           if (aiMeal && aiMeal.ingredients) {
-              try {
-                  const ingredients = JSON.parse(aiMeal.ingredients);
-                  pushToCartLocally(ingredients);
-                  return;
-              } catch(e) {}
+              try { pushToCartLocally(JSON.parse(aiMeal.ingredients)); return; } catch(e) {}
           }
-          // Else Fallback to Fetch
+          
           document.getElementById('syncIndicator').classList.add('active');
           try {
             const res = await fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'breakdownRecipe', mealName: card.name }) });
             const result = await res.json();
             if (result.data && result.data.length > 0) pushToCartLocally(result.data);
             else throw new Error();
-          } catch(e) {
-              showToast("Applying basic structural ingredients.");
-              pushToCartLocally(["Onions", "Tomatoes", "Green Chilies"]);
-          }
+          } catch(e) { pushToCartLocally(["Onions", "Tomatoes", "Salt", "Spices", "Oil"]); }
           document.getElementById('syncIndicator').classList.remove('active');
       }
       if (action === 'google') window.open(`https://www.google.com/search?q=${encodeURIComponent(card.name + ' recipe')}`, '_blank');
-      if (action === 'youtube') window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(card.name + ' recipe')}`, '_blank');
+      if (action === 'nutrition') window.open(`https://www.google.com/search?q=${encodeURIComponent(card.name + ' nutritional factual information calories')}`, '_blank');
+      if (action === 'whatsapp') window.open(`whatsapp://send?text=${encodeURIComponent("Automated Menu Selection: " + card.name)}`, '_blank');
     });
 
     function pushToCartLocally(ingredients) {
@@ -506,7 +514,12 @@
         });
         renderCart(); saveStateLocally(); syncCartToBackend();
         switchTab('cart', document.querySelectorAll('.nav-item')[1]);
-        showToast("Ingredients Added to Cart");
+    }
+
+    function shareCartToWhatsApp() {
+        const activeItems = state.cart.filter(i => i.checked).map(i => `- ${i.name}`).join('%0A');
+        if(!activeItems) return;
+        window.open(`whatsapp://send?text=🛒 *Grocery List:*%0A${activeItems}`, '_blank');
     }
 
     function renderCart() {
@@ -518,7 +531,7 @@
                 <div class="checkbox">${item.checked ? '✓' : ''}</div>
                 <div><div class="item-name">${escapeHtml(item.name)}</div>${item.flag ? `<div class="item-flag">🕒 ${item.flag}</div>` : ''}</div>
             </div>
-            <button class="trash-btn" onclick="executeSoftDelete('cart', '${index}')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+            <button class="trash-btn" onclick="executeSoftDelete('cart', '${index}')"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
           </div>`;
         if (item.recent && !item.checked) dimmedHtml += html; else activeHtml += html;
       });
@@ -529,7 +542,7 @@
     function openMasterList() {
       const renderList = (arr) => arr.map(item => {
         const inCart = state.cart.some(c => c.name.toLowerCase() === item.name.toLowerCase());
-        return `<div class="list-item-row ${inCart ? 'checked' : ''}"><div class="list-item-left" onclick="toggleMasterItem('${escapeHtml(item.name)}')"><div class="checkbox">${inCart ? '✓' : ''}</div><div><div class="item-name">${escapeHtml(item.name)}</div></div></div><button class="trash-btn" onclick="executeSoftDelete('master', '${escapeHtml(item.name)}')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div>`;
+        return `<div class="list-item-row ${inCart ? 'checked' : ''}"><div class="list-item-left" onclick="toggleMasterItem('${escapeHtml(item.name)}')"><div class="checkbox">${inCart ? '✓' : ''}</div><div><div class="item-name">${escapeHtml(item.name)}</div></div></div><button class="trash-btn" onclick="executeSoftDelete('master', '${escapeHtml(item.name)}')"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div>`;
       }).join('');
       document.getElementById('ml-content').innerHTML = renderList(state.masterGrocery.sort((a,b)=>a.name.localeCompare(b.name)));
       document.getElementById('masterListModal').classList.add('open');
@@ -547,6 +560,7 @@
     function addManualMasterItem() { const v = document.getElementById('newMasterInput').value.trim(); if(v) { state.masterGrocery.push({name: v, freq: 1}); document.getElementById('newMasterInput').value = ''; openMasterList(); saveStateLocally(); fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'addMasterItem', item: v }) }); } }
     
     async function syncCartToBackend() { if(GOOGLE_SHEETS_API_URL.includes("script.google.com")) fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'syncCart', cart: state.cart }) }).catch(e=>e); }
+    
     function closeModal(modal) { document.getElementById(modal).classList.remove('open'); }
     function switchTab(tabId, btn) {
       document.querySelectorAll('.page, .nav-item').forEach(el => el.classList.remove('active'));
@@ -557,7 +571,7 @@
     let shoppingQueue = []; let shoppingIndex = 0; let activePlatform = 'swiggy';
     function startGuidedShopping(platform) {
       shoppingQueue = state.cart.filter(i => i.checked);
-      if(!shoppingQueue.length) return showToast("Select active entries to initiate sync.");
+      if(!shoppingQueue.length) return;
       activePlatform = platform; shoppingIndex = 0; updateGuidedUI(); 
       document.getElementById('guided-overlay').classList.add('active'); launchPlatformLink();
     }
@@ -575,21 +589,17 @@
       if(dbIdx > -1) { state.cart[dbIdx].checked = false; state.cart[dbIdx].recent = true; state.cart[dbIdx].flag = "Verified Purchase"; }
       fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateHistory', items: [current.name] }) }).catch(e=>e);
       shoppingIndex++;
-      if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); saveStateLocally(); syncCartToBackend(); showToast("Shopping Sequence Terminated Successfully!"); }
+      if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); saveStateLocally(); syncCartToBackend(); }
       else { updateGuidedUI(); launchPlatformLink(); }
     }
     function markNotFoundAndNext() {
       shoppingIndex++;
-      if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); saveStateLocally(); syncCartToBackend(); showToast("Shopping Sequence Completed."); }
+      if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); saveStateLocally(); syncCartToBackend(); }
       else { updateGuidedUI(); launchPlatformLink(); }
     }
     function closeGuidedShopping() { document.getElementById('guided-overlay').classList.remove('active'); renderCart(); }
 
     function renderSpreadsheetModal() {
-      document.getElementById('countCore').textContent = (state.db.breakfast.length + state.db.lunch.length + state.db.dinner.length + state.db.dessert.length + state.db.drinks.length + state.db.alcoholic.length);
-      document.getElementById('countAI').textContent = state.aiDiscoveryPool.length;
-      document.getElementById('countMaster').textContent = state.masterGrocery.length;
-      
       const ts = document.getElementById('tableSections'); ts.innerHTML = '';
       ['breakfast','lunch','dinner','dessert','drinks','alcoholic'].forEach(category => {
         const section = document.createElement('section'); section.className = 'panel data-section';
@@ -599,12 +609,13 @@
         ts.appendChild(section);
       });
     }
-    document.getElementById('openDataBtn').addEventListener('click', () => { openModal('dataModal'); renderSpreadsheetModal(); });
+    
+    document.getElementById('openDataBtn').onclick = () => { openModal('dataModal'); renderSpreadsheetModal(); };
 
     function queueUnifiedEntry() {
         const m = document.getElementById('unified-meal-input').value.trim();
         const c = document.getElementById('unified-meal-category').value;
-        if (m) { pendingApprovals.push({ category: c, meal: m }); document.getElementById('unified-meal-input').value = ''; renderReviewQueue(); showToast("Queued for cloud sync."); }
+        if (m) { pendingApprovals.push({ category: c, meal: m }); document.getElementById('unified-meal-input').value = ''; renderReviewQueue(); }
     }
     
     function renderReviewQueue() {
@@ -631,39 +642,42 @@
             pendingApprovals = []; renderReviewQueue(); renderSpreadsheetModal(); saveStateLocally();
             btn.innerHTML = "✓ Synced"; setTimeout(() => btn.innerHTML = "Push to Cloud", 2000);
         } else throw new Error();
-      } catch (err) { btn.innerHTML = "Push to Cloud"; alert('Sync failed.'); }
+      } catch (err) { btn.innerHTML = "Push to Cloud"; }
     }
 
-    // --- OPTIMISTIC UI INSTANT BOOT LOGIC ---
     function saveStateLocally() { localStorage.setItem('mp_data', JSON.stringify(state)); }
 
     function init() {
       const cached = localStorage.getItem('mp_data');
       if (cached) {
           state = JSON.parse(cached);
-          document.getElementById('generateBtn').click(); // Instant Render
+          document.getElementById('generateBtn').click();
       } else {
-          document.getElementById('syncIndicator').classList.add('active'); // Show spinner on first ever load
+          document.getElementById('syncIndicator').classList.add('active');
       }
       
-      // Silent Background Sync
       if (!GOOGLE_SHEETS_API_URL || GOOGLE_SHEETS_API_URL.includes("PASTE")) return;
-      document.getElementById('syncIndicator').classList.add('active');
+      
+      // Parallel Boot Fetch
       fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAllData' }) })
         .then(res => res.json())
         .then(parsed => {
             const data = parsed.data;
             Object.assign(state.db, { breakfast: data.breakfast, lunch: data.lunch, dinner: data.dinner, dessert: data.dessert, drinks: data.drinks, alcoholic: data.alcoholic });
-            state.aiDiscoveryPool = data.aiDiscoveryPool || [];
             state.masterGrocery = data.masterGrocery; state.orderHistory = data.orderHistory; state.cart = data.cart; state.cookingHistory = data.cookingHistory;
             saveStateLocally();
-            document.getElementById('syncIndicator').classList.remove('active');
             if(!cached) document.getElementById('generateBtn').click();
-        })
-        .catch(e => {
             document.getElementById('syncIndicator').classList.remove('active');
-            showToast("Offline Mode Imposed. Using Local Cache.");
-        });
+            
+            // Trigger AI prefetch seamlessly
+            fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'fetchParallelPrefetch' }) })
+            .then(r=>r.json()).then(aiRes => {
+                if(aiRes.data && aiRes.data.length > 0) {
+                    state.aiDiscoveryPool = [...state.aiDiscoveryPool, ...aiRes.data];
+                    saveStateLocally();
+                }
+            });
+        }).catch(e => { document.getElementById('syncIndicator').classList.remove('active'); });
     }
 
     init();
