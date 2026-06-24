@@ -52,11 +52,10 @@
     .action-row { display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
     .action-row button { flex: 1; min-width: 100px; font-size: 0.9rem; height: 48px; }
 
-    .specialty-bar { display: none; gap: 10px; overflow-x: auto; white-space: nowrap; padding-bottom: 16px; margin-bottom: 1rem; scrollbar-width: none; animation: slideDown 0.3s var(--ease-spring); }
-    .specialty-bar.active { display: flex; }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    .category-pill { flex: 0 0 auto; padding: 10px 20px; border-radius: 2rem; border: 1px solid var(--color-border); background: var(--color-surface); font-weight: 600; font-size: 0.9rem; color: var(--color-text); cursor: pointer; transition: 0.2s; }
-    .category-pill.active { background: var(--color-primary); color: var(--color-bg); border-color: var(--color-primary); }
+    /* Permanent Icon Specialty Bar */
+    .specialty-bar { display: flex; gap: 10px; overflow-x: auto; white-space: nowrap; padding-bottom: 16px; margin-bottom: 1rem; scrollbar-width: none; }
+    .category-pill { flex: 0 0 auto; padding: 10px 24px; border-radius: 2rem; border: 1px solid var(--color-border); background: var(--color-surface); font-weight: 600; font-size: 1.25rem; color: var(--color-text); cursor: pointer; transition: 0.2s; }
+    .category-pill.active { background: var(--color-primary); border-color: var(--color-primary); transform: scale(1.05); }
     .category-pill:active { transform: scale(0.95); }
 
     .cards { display: grid; gap: 1.5rem; }
@@ -98,6 +97,7 @@
     .cart-tools input { flex: 1; padding: 14px 20px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); }
     .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); font-weight: bold; margin: 24px 0 12px; }
     
+    /* Single Unified Cart List CSS */
     .list-item-row { display: flex; align-items: center; justify-content: space-between; background: var(--color-surface); padding: 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); margin-bottom: 12px; transition: 0.3s; width: 100%; }
     .list-item-row.dimmed { opacity: 0.45; background: transparent; }
     .list-item-left { display: flex; align-items: center; gap: 16px; flex: 1; cursor: pointer; }
@@ -120,7 +120,13 @@
     
     .review-queue-list { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
     .review-queue-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--color-surface-2); border-radius: 1rem; justify-content: space-between; }
-    .data-row { display: flex; justify-content: space-between; gap: 0.75rem; align-items: center; padding: 1rem 1.5rem; border: 1px solid var(--color-border); border-radius: 1.25rem; background: var(--color-surface); font-size: 1rem; margin-bottom: 8px; width: 100%; }
+    .review-queue-item select { padding: 6px; border-radius: 8px; background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); font-weight: bold; }
+    
+    .guided-overlay { position: fixed; inset: 0; background: var(--color-bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 24px; text-align: center; }
+    .guided-overlay.active { opacity: 1; pointer-events: auto; }
+    .shopping-progress { color: var(--color-text-muted); font-size: 16px; margin-bottom: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+    .shopping-item-name { font-size: 36px; font-weight: bold; margin-bottom: 48px; color: var(--color-text); text-transform: capitalize; font-family: var(--font-display); }
+    .close-shopping { position: absolute; top: 40px; right: 24px; font-size: 24px; color: var(--color-text-muted); background: none; border: none; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -153,11 +159,11 @@
             <button id="surpriseBtn" class="accent-btn">✨ Chef Special</button>
           </div>
           <div id="specialtyBar" class="specialty-bar">
-              <button class="category-pill" data-cat="Dessert">🍰 Dessert</button>
-              <button class="category-pill" data-cat="Drinks">🥤 Drinks</button>
-              <button class="category-pill" data-cat="Alcoholic">🥂 Alcoholic</button>
+              <button class="category-pill" data-cat="Dessert" title="Dessert">🍰</button>
+              <button class="category-pill" data-cat="Drinks" title="Drinks">🥤</button>
+              <button class="category-pill" data-cat="Alcoholic" title="Alcoholic">🥂</button>
           </div>
-          <button class="ghost-btn" style="width: 100%; margin-bottom: 1rem;" onclick="triggerCloudFactory()">⚡ Fetch New Meals</button>
+          <button class="ghost-btn" style="width: 100%; margin-bottom: 1rem;" onclick="triggerCloudFactory()">⚡ Refill AI Pool (Manual)</button>
         </section>
         <section class="section"><div id="suggestions" class="cards" aria-live="polite"></div></section>
       </div>
@@ -166,15 +172,22 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
           <h2 style="font-family:var(--font-display); font-size:2rem; font-weight:600;">Grocery Cart</h2>
           <div style="display:flex; gap:8px;">
-            <button class="primary-btn" style="border-radius: 2rem; padding: 8px 16px; font-size: 0.85rem;" onclick="shareCartToWhatsApp()">💬 Share</button>
+            <button class="icon-btn" onclick="shareCartToWhatsApp()">
+                <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20" height="20"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
+            </button>
             <button class="ghost-btn" style="border-radius: 2rem; padding: 8px 16px;" onclick="openMasterList()">List ▾</button>
           </div>
         </div>
         <div class="cart-tools"><input id="manualCartAdd" placeholder="Add custom item..."><button class="primary-btn" style="border-radius: 1.5rem; padding: 0 20px; height: 48px;" onclick="addManualCartItem()">+</button></div>
         <div style="display:flex; justify-content:space-between; align-items:center;"><div class="section-title">Ready to Buy</div><button class="ghost-btn" style="border-radius: 1.5rem; padding: 6px 12px; font-size: 12px; height: 32px;" onclick="clearActiveCart()">🗑️ Clear</button></div>
-        <div id="active-items"></div>
-        <div class="section-title" style="margin-top: 30px;">Recently Bought</div>
-        <div id="dimmed-items"></div>
+        
+        <div id="unified-cart-items"></div>
+        
+        <!-- Restored App Platform Links -->
+        <div style="display:flex; gap:10px; margin-top:30px; margin-bottom:24px;">
+            <button class="primary-btn" style="flex: 1; background: #fc8019;" onclick="startGuidedShopping('swiggy')">🛒 Swiggy</button>
+            <button class="primary-btn" style="flex: 1; background: #f8cb46; color: #000;" onclick="startGuidedShopping('blinkit')">🛒 Blinkit</button>
+        </div>
       </div>
     </main>
   </div>
@@ -182,6 +195,16 @@
   <div class="bottom-nav" id="bottomNav">
     <button class="nav-item active" onclick="switchTab('plan', this)"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> Plan</button>
     <button class="nav-item" onclick="switchTab('cart', this)"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg> Cart</button>
+  </div>
+
+  <div class="guided-overlay" id="guided-overlay">
+    <button class="close-shopping" onclick="closeGuidedShopping()">✕</button>
+    <div class="shopping-progress" id="shopping-progress">Item 1 of X</div>
+    <div class="shopping-item-name" id="shopping-item-name">Item Name</div>
+    <div style="display:flex; flex-direction:column; gap:10px; width: 100%; max-width: 350px;">
+        <button class="primary-btn" style="background:var(--color-success); border-radius: 1.5rem; padding: 18px;" onclick="markFoundAndNext()">✓ Found (Next)</button>
+        <button class="ghost-btn" style="border-radius: 1.5rem; padding: 18px; border-color: var(--color-error); color: var(--color-error);" onclick="markNotFoundAndNext()">✕ Not Found (Keep in list)</button>
+    </div>
   </div>
 
   <div class="modal" id="masterListModal">
@@ -300,7 +323,7 @@
 
     function getMealTag(name) {
       const low = String(name || '').toLowerCase();
-      const nonVegRegex = /\b(chicken|fish|mutton|meat|prawn|beef|pork|bacon|prosciutto|salmon|tuna|lamb|shrimp|crab|turkey|ham|duck|gosht|murgh|machli)\b/i;
+      const nonVegRegex = /\b(chicken|fish|mutton|meat|prawn|beef|pork|bacon|prosciutto|salmon|tuna|lamb|shrimp|crab|turkey|ham|duck|gosht|murgh|machli|sausage)\b/i;
       const eggRegex = /\b(egg|eggs|omelet|omelette|frittata|shakshuka|anda|bhurji)\b/i;
       
       if (nonVegRegex.test(low)) return { text: 'Non-Veg', cls: 'tag-nonveg' };
@@ -311,7 +334,7 @@
     function cookedWithinAWeek(mealName) { 
         const now = Date.now(); 
         return state.cookingHistory.some(e => {
-            if(e.name.toLowerCase() !== mealName.toLowerCase()) return false;
+            if(e.name.toLowerCase().trim() !== mealName.toLowerCase().trim()) return false;
             return (now - new Date(e.date).getTime()) < 7 * 24 * 60 * 60 * 1000;
         }); 
     }
@@ -397,7 +420,6 @@
     }
 
     document.getElementById('generateBtn').addEventListener('click', () => {
-      document.getElementById('specialtyBar').classList.remove('active');
       document.querySelectorAll('.category-pill').forEach(b => b.classList.remove('active'));
       const bPool = state.db.breakfast || []; const lPool = state.db.lunch || []; const dPool = state.db.dinner || [];
       const m1 = pickUniqueMeal(bPool, []); const m2 = pickUniqueMeal(lPool, []); const m3 = pickUniqueMeal(dPool, []);
@@ -410,7 +432,6 @@
     });
 
     document.getElementById('surpriseBtn').addEventListener('click', () => {
-      document.getElementById('specialtyBar').classList.add('active');
       const activePill = document.querySelector('.category-pill.active');
       
       if (activePill) { 
@@ -439,11 +460,17 @@
       else document.getElementById('generateBtn').click(); 
     });
 
+    // Toggleable Filter Logic
     document.getElementById('specialtyBar').addEventListener('click', (e) => {
         const btn = e.target.closest('.category-pill'); if (!btn) return;
-        document.querySelectorAll('.category-pill').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('surpriseBtn').click();
+        
+        if (btn.classList.contains('active')) {
+            btn.classList.remove('active'); // Deselect if already active
+        } else {
+            document.querySelectorAll('.category-pill').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active'); // Select new
+        }
+        document.getElementById('surpriseBtn').click(); // Auto-trigger update
     });
 
     function pickUniqueMeal(pool, excludedNames = []) {
@@ -517,7 +544,9 @@
       }
       
       if (action === 'add-to-cart') {
-          const aiMeal = state.aiDiscoveryPool.find(m => m.name.toLowerCase() === card.name.toLowerCase());
+          // Strict Case-Insensitive Matching for Fast Track
+          const targetName = card.name.toLowerCase().trim();
+          const aiMeal = state.aiDiscoveryPool.find(m => m.name.toLowerCase().trim() === targetName);
           if (aiMeal && aiMeal.ingredients && aiMeal.ingredients !== '[]') {
               try { pushToCartLocally(JSON.parse(aiMeal.ingredients)); return; } catch(e) {}
           }
@@ -531,27 +560,31 @@
           document.getElementById('syncIndicator').classList.remove('active');
       }
       
+      const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.poolContext || '').trim() + ' recipe');
+      const gUrl = `https://www.google.com/search?q=${searchQ}`;
+      const yUrl = `https://www.youtube.com/results?search_query=${searchQ}`;
+
       if (action === 'share-card') {
-          const gUrl = `https://www.google.com/search?q=${encodeURIComponent(card.name + ' recipe')}`;
-          const yUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(card.name + ' recipe')}`;
-          const text = `🍽️ *${card.name}*%0A%0A🔍 Recipe: ${gUrl}%0A📺 Video: ${yUrl}`;
+          const text = `🍽️ *${card.name.trim()}*%0A%0A🔍 Recipe: ${gUrl}%0A📺 Video: ${yUrl}`;
           window.open(`whatsapp://send?text=${text}`, '_blank');
       }
-
-      if (action === 'google') window.open(`https://www.google.com/search?q=${encodeURIComponent(card.name + ' recipe')}`, '_blank');
-      if (action === 'youtube') window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(card.name + ' recipe')}`, '_blank');
+      if (action === 'google') window.open(gUrl, '_blank');
+      if (action === 'youtube') window.open(yUrl, '_blank');
       if (action === 'nutrition') window.open(`https://www.google.com/search?q=${encodeURIComponent(card.name + ' nutritional factual information calories')}`, '_blank');
     });
 
+    // Dimmed Checked/Unchecked Cart Logic
     function pushToCartLocally(ingredients) {
         const now = new Date();
         const recentNames = state.orderHistory
             .filter(h => (now - new Date(h.date)) < 14*24*60*60*1000)
-            .map(h => h.item.toLowerCase());
+            .map(h => h.item.toLowerCase().trim());
             
         ingredients.reverse().forEach(ing => {
-          const isRecent = recentNames.includes(ing.toLowerCase());
-          if(!state.cart.some(c => c.name.toLowerCase() === ing.toLowerCase())) {
+          const safeIng = ing.toLowerCase().trim();
+          const isRecent = recentNames.includes(safeIng);
+          if(!state.cart.some(c => c.name.toLowerCase().trim() === safeIng)) {
+            // If recent, push as unchecked (dimmed). If not, push as checked (active).
             state.cart.unshift({ name: ing, checked: !isRecent, recent: isRecent, flag: isRecent ? "Recently Bought" : "" });
           }
         });
@@ -567,25 +600,25 @@
     }
 
     function renderCart() {
-      let activeHtml = '', dimmedHtml = '';
+      let html = '';
+      if(state.cart.length === 0) { html = '<p class="subtle">Cart is empty.</p>'; }
       state.cart.forEach((item, index) => {
-        const html = `
-          <div class="list-item-row ${item.checked ? 'checked' : ''} ${item.recent && !item.checked ? 'dimmed' : ''}">
+        // Unchecked = Dimmed. Checked = Active.
+        html += `
+          <div class="list-item-row ${item.checked ? 'checked' : 'dimmed'}">
             <div class="list-item-left" onclick="toggleCartItem(${index})">
                 <div class="checkbox">${item.checked ? '✓' : ''}</div>
-                <div><div class="item-name">${escapeHtml(item.name)}</div>${item.flag ? `<div class="item-flag">🕒 ${item.flag}</div>` : ''}</div>
+                <div><div class="item-name">${escapeHtml(item.name)}</div>${item.flag && !item.checked ? `<div class="item-flag">🕒 ${item.flag}</div>` : ''}</div>
             </div>
             <button class="trash-btn" onclick="executeSoftDelete('cart', '${index}')"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
           </div>`;
-        if (item.recent && !item.checked) dimmedHtml += html; else activeHtml += html;
       });
-      document.getElementById('active-items').innerHTML = activeHtml || '<p class="subtle">No active items.</p>';
-      document.getElementById('dimmed-items').innerHTML = dimmedHtml || '<p class="subtle">No historical items.</p>';
+      document.getElementById('unified-cart-items').innerHTML = html;
     }
 
     function openMasterList() {
       const renderList = (arr) => arr.map(item => {
-        const inCart = state.cart.some(c => c.name.toLowerCase() === item.name.toLowerCase());
+        const inCart = state.cart.some(c => c.name.toLowerCase().trim() === item.name.toLowerCase().trim());
         return `<div class="list-item-row ${inCart ? 'checked' : ''}"><div class="list-item-left" onclick="toggleMasterItem('${escapeHtml(item.name)}')"><div class="checkbox">${inCart ? '✓' : ''}</div><div><div class="item-name">${escapeHtml(item.name)}</div></div></div><button class="trash-btn" onclick="executeSoftDelete('master', '${escapeHtml(item.name)}')"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div>`;
       }).join('');
       document.getElementById('ml-content').innerHTML = renderList(state.masterGrocery.sort((a,b)=>a.name.localeCompare(b.name)));
@@ -594,13 +627,12 @@
 
     function toggleCartItem(index) { 
         state.cart[index].checked = !state.cart[index].checked; 
-        if(state.cart[index].checked) { state.cart[index].recent = false; state.cart[index].flag = ''; }
         renderCart(); saveStateLocally(); syncCartToBackend(); 
     }
     function clearActiveCart() { state.cart = state.cart.filter(c => !c.checked); renderCart(); saveStateLocally(); syncCartToBackend(); }
     function addManualCartItem() { const v = document.getElementById('manualCartAdd').value.trim(); if(v) { state.cart.unshift({name: v, checked: true, recent: false}); document.getElementById('manualCartAdd').value = ''; renderCart(); saveStateLocally(); syncCartToBackend(); } }
     function toggleMasterItem(name) {
-      const idx = state.cart.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
+      const idx = state.cart.findIndex(c => c.name.toLowerCase().trim() === name.toLowerCase().trim());
       if(idx > -1) state.cart.splice(idx, 1);
       else state.cart.unshift({ name, checked: true, recent: false, flag: "" });
       openMasterList(); renderCart(); saveStateLocally(); syncCartToBackend();
@@ -657,6 +689,7 @@
         if (m) { pendingApprovals.push({ category: c, meal: m }); document.getElementById('unified-meal-input').value = ''; renderReviewQueue(); }
     }
     
+    // Category Modification inside Review Queue
     function renderReviewQueue() {
       const ql = document.getElementById('reviewQueueList'); ql.innerHTML = '';
       const qp = document.getElementById('reviewQueuePanel');
@@ -664,7 +697,23 @@
       qp.style.display = 'block';
       pendingApprovals.forEach((item, idx) => {
         const li = document.createElement('li'); li.className = 'review-queue-item';
-        li.innerHTML = `<div style="display:flex; align-items:center; gap:0.75rem; flex-grow:1;"><span style="font-weight:600; font-family:var(--font-display);">${escapeHtml(item.meal)}</span> <span class="badge" style="background:transparent; border:1px solid var(--color-border); color:var(--color-text-muted);">${item.category}</span></div><button class="trash-btn" data-remove-queue="${idx}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
+        
+        const catSelect = `
+        <select onchange="pendingApprovals[${idx}].category = this.value">
+            <option value="Breakfast" ${item.category.toLowerCase()==='breakfast'?'selected':''}>Breakfast</option>
+            <option value="Lunch" ${item.category.toLowerCase()==='lunch'?'selected':''}>Lunch</option>
+            <option value="Dinner" ${item.category.toLowerCase()==='dinner'?'selected':''}>Dinner</option>
+            <option value="Dessert" ${item.category.toLowerCase()==='dessert'?'selected':''}>Dessert</option>
+            <option value="Drinks" ${item.category.toLowerCase()==='drinks'?'selected':''}>Drinks</option>
+            <option value="Alcoholic" ${item.category.toLowerCase()==='alcoholic'?'selected':''}>Alcoholic</option>
+        </select>`;
+
+        li.innerHTML = `
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-grow:1;">
+            <span style="font-weight:600; font-family:var(--font-display);">${escapeHtml(item.meal)}</span> 
+            ${catSelect}
+        </div>
+        <button class="trash-btn" data-remove-queue="${idx}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
         ql.appendChild(li);
       });
     }
@@ -677,7 +726,10 @@
       try {
         const res = await fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'sync_meals', data: JSON.stringify(pendingApprovals) }) });
         if ((await res.json()).success) {
-            pendingApprovals.forEach(i => { if(state.db[i.category]) state.db[i.category].push(i.meal); });
+            pendingApprovals.forEach(i => { 
+                const catLower = i.category.toLowerCase();
+                if(state.db[catLower]) state.db[catLower].push(i.meal); 
+            });
             pendingApprovals = []; renderReviewQueue(); renderSpreadsheetModal(); saveStateLocally();
             
             document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
@@ -686,6 +738,40 @@
         } else throw new Error();
       } catch (err) { btn.innerHTML = "Push to Cloud"; }
     }
+
+    // Swiggy / Blinkit Checkout Pipeline
+    let shoppingQueue = []; let shoppingIndex = 0; let activePlatform = 'swiggy';
+    function startGuidedShopping(platform) {
+      shoppingQueue = state.cart.filter(i => i.checked); // Only processes active items
+      if(!shoppingQueue.length) { 
+          alert("Please check at least one item to shop."); return; 
+      }
+      activePlatform = platform; shoppingIndex = 0; updateGuidedUI(); 
+      document.getElementById('guided-overlay').classList.add('active'); launchPlatformLink();
+    }
+    function updateGuidedUI() {
+      document.getElementById('shopping-progress').innerText = `Item ${shoppingIndex + 1} of ${shoppingQueue.length} (${activePlatform.toUpperCase()})`;
+      document.getElementById('shopping-item-name').innerText = escapeHtml(shoppingQueue[shoppingIndex].name);
+    }
+    function launchPlatformLink() {
+        const query = encodeURIComponent(shoppingQueue[shoppingIndex].name);
+        window.location.href = activePlatform === 'swiggy' ? `swiggy://instamart/search?query=${query}` : `https://blinkit.com/s/?q=${query}`;
+    }
+    function markFoundAndNext() {
+      const current = shoppingQueue[shoppingIndex];
+      const dbIdx = state.cart.findIndex(c => c.name.toLowerCase().trim() === current.name.toLowerCase().trim());
+      if(dbIdx > -1) { state.cart[dbIdx].checked = false; state.cart[dbIdx].recent = true; state.cart[dbIdx].flag = "Verified Purchase"; }
+      fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateHistory', items: [current.name] }) }).catch(e=>e);
+      shoppingIndex++;
+      if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); saveStateLocally(); syncCartToBackend(); }
+      else { updateGuidedUI(); launchPlatformLink(); }
+    }
+    function markNotFoundAndNext() {
+      shoppingIndex++;
+      if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); saveStateLocally(); syncCartToBackend(); }
+      else { updateGuidedUI(); launchPlatformLink(); }
+    }
+    function closeGuidedShopping() { document.getElementById('guided-overlay').classList.remove('active'); renderCart(); }
 
     function saveStateLocally() { localStorage.setItem('mp_data', JSON.stringify(state)); }
 
