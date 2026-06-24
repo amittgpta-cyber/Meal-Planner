@@ -97,7 +97,9 @@
     .cart-tools input { flex: 1; padding: 14px 20px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); }
     .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); font-weight: bold; margin: 24px 0 12px; }
     
-    /* Single Unified Cart List CSS */
+    /* Contextual Grouping Cart UI */
+    .cart-group-header { font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; color: var(--color-primary); margin: 24px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-divider); }
+    
     .list-item-row { display: flex; align-items: center; justify-content: space-between; background: var(--color-surface); padding: 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); margin-bottom: 12px; transition: 0.3s; width: 100%; }
     .list-item-row.dimmed { opacity: 0.45; background: transparent; }
     .list-item-left { display: flex; align-items: center; gap: 16px; flex: 1; cursor: pointer; }
@@ -131,7 +133,7 @@
 </head>
 <body>
   
-  <div class="sync-indicator" id="syncIndicator"><div class="sync-spinner"></div> Cloud Sync...</div>
+  <div class="sync-indicator" id="syncIndicator"><div class="sync-spinner"></div> System Sync...</div>
 
   <div class="topbar-wrapper">
     <div class="topbar-main">
@@ -161,9 +163,8 @@
           <div id="specialtyBar" class="specialty-bar">
               <button class="category-pill" data-cat="Dessert" title="Dessert">🍰</button>
               <button class="category-pill" data-cat="Drinks" title="Drinks">🥤</button>
-              <button class="category-pill" data-cat="Alcoholic" title="Alcoholic">🥂</button>
+              <button class="category-pill" data-cat="Cocktails" title="Cocktails">🥂</button>
           </div>
-          <button class="ghost-btn" style="width: 100%; margin-bottom: 1rem;" onclick="triggerCloudFactory()">⚡ Refill AI Pool (Manual)</button>
         </section>
         <section class="section"><div id="suggestions" class="cards" aria-live="polite"></div></section>
       </div>
@@ -178,12 +179,16 @@
             <button class="ghost-btn" style="border-radius: 2rem; padding: 8px 16px;" onclick="openMasterList()">List ▾</button>
           </div>
         </div>
-        <div class="cart-tools"><input id="manualCartAdd" placeholder="Add custom item..."><button class="primary-btn" style="border-radius: 1.5rem; padding: 0 20px; height: 48px;" onclick="addManualCartItem()">+</button></div>
-        <div style="display:flex; justify-content:space-between; align-items:center;"><div class="section-title">Ready to Buy</div><button class="ghost-btn" style="border-radius: 1.5rem; padding: 6px 12px; font-size: 12px; height: 32px;" onclick="clearActiveCart()">🗑️ Clear</button></div>
         
+        <div class="cart-tools"><input id="manualCartAdd" placeholder="Add custom item..."><button class="primary-btn" style="border-radius: 1.5rem; padding: 0 20px; height: 48px;" onclick="addManualCartItem()">+</button></div>
+        
+        <div style="display:flex; justify-content:flex-end; margin-bottom: 12px;">
+            <button class="ghost-btn" style="border-radius: 1.5rem; padding: 6px 12px; font-size: 12px; height: 32px;" onclick="clearActiveCart()">🗑️ Clear Active</button>
+        </div>
+        
+        <!-- Contextual Grouped Cart Output -->
         <div id="unified-cart-items"></div>
         
-        <!-- Restored App Platform Links -->
         <div style="display:flex; gap:10px; margin-top:30px; margin-bottom:24px;">
             <button class="primary-btn" style="flex: 1; background: #fc8019;" onclick="startGuidedShopping('swiggy')">🛒 Swiggy</button>
             <button class="primary-btn" style="flex: 1; background: #f8cb46; color: #000;" onclick="startGuidedShopping('blinkit')">🛒 Blinkit</button>
@@ -233,8 +238,8 @@
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; width: 100%;">
                     <input class="ghost-btn" style="flex: 1; min-width: 0; text-align: left; border-radius: 1.25rem; padding: 14px 16px;" id="unified-meal-input" placeholder="Type meal name...">
                     <select class="ghost-btn" style="flex: 0 0 auto; min-width: 100px; border-radius: 1.25rem; padding: 14px 8px;" id="unified-meal-category">
-                        <option value="breakfast">Breakfast</option><option value="lunch">Lunch</option><option value="dinner">Dinner</option>
-                        <option value="dessert">Dessert</option><option value="drinks">Drinks</option><option value="alcoholic">Alcoholic</option>
+                        <option value="Breakfast">Breakfast</option><option value="Lunch">Lunch</option><option value="Dinner">Dinner</option>
+                        <option value="Dessert">Dessert</option><option value="Drinks">Drinks</option><option value="Cocktails">Cocktails</option>
                     </select>
                     <button class="primary-btn" style="flex-shrink: 0; border-radius: 1.25rem; padding: 0 20px; height: 48px;" onclick="queueUnifiedEntry()">+</button>
                 </div>
@@ -253,7 +258,7 @@
     const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwvU930ksyyrtTkhXbzOehjo3uh9J1qViq77I_WRPvg25rMNzClScK1MY758xlaDzRRSQ/exec";
 
     let state = { 
-        db: { breakfast: [], lunch: [], dinner: [], dessert: [], drinks: [], alcoholic: [] }, 
+        db: { breakfast: [], lunch: [], dinner: [], dessert: [], drinks: [], cocktails: [] }, 
         aiDiscoveryPool: [], 
         cookingHistory: [], currentSuggestions: [], masterGrocery: [], orderHistory: [], cart: [] 
     };
@@ -350,6 +355,7 @@
     function getCardInnerHTML(item, index) {
       const tag = getMealTag(item.name);
       
+      // Bookmark explicitly locked to API-generated cards
       const bookmarkHtml = item.source !== 'db' ? `<div class="icon-circle" data-action="queue-meal" data-index="${index}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>` : '';
 
       return `
@@ -396,27 +402,6 @@
         article.innerHTML = getCardInnerHTML(item, index);
         s.appendChild(article);
       });
-      checkAIWatermark();
-    }
-
-    function checkAIWatermark() {
-        const categories = ['Breakfast', 'Lunch', 'Dinner', 'Dessert', 'Drinks', 'Alcoholic'];
-        for (let cat of categories) {
-            const count = state.aiDiscoveryPool.filter(m => m.category === cat).length;
-            if (count < 25) { triggerBackgroundRefill(cat); break; }
-        }
-    }
-
-    function triggerBackgroundRefill(cat) {
-        if (!GOOGLE_SHEETS_API_URL || GOOGLE_SHEETS_API_URL.includes("PASTE")) return;
-        fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'checkAndRefillPool', category: cat }) })
-        .then(r=>r.json()).then(res => {
-            if(res.data && res.data.added && res.data.added.length > 0) {
-                state.aiDiscoveryPool = [...state.aiDiscoveryPool, ...res.data.added];
-                saveStateLocally();
-                setTimeout(checkAIWatermark, 1000); 
-            }
-        }).catch(e=>{});
     }
 
     document.getElementById('generateBtn').addEventListener('click', () => {
@@ -486,8 +471,8 @@
       if (action === 'toggle-explore') document.getElementById(`explore-${idx}`).classList.toggle('open');
       
       if (action === 'queue-meal') {
-          const catMap = { 'Breakfast': 'breakfast', 'Lunch': 'lunch', 'Dinner': 'dinner', 'Dessert': 'dessert', 'Drinks': 'drinks', 'Alcoholic': 'alcoholic' };
-          pendingApprovals.push({ category: catMap[card.time] || 'dinner', meal: card.name });
+          const catMap = { 'Breakfast': 'Breakfast', 'Lunch': 'Lunch', 'Dinner': 'Dinner', 'Dessert': 'Dessert', 'Drinks': 'Drinks', 'Cocktails': 'Cocktails' };
+          pendingApprovals.push({ category: catMap[card.time] || 'Dinner', meal: card.name });
           renderReviewQueue(); 
           document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="var(--color-primary)" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
       }
@@ -525,7 +510,6 @@
           card.cookedRecently = !!cookedWithinAWeek(card.name);
           const article = document.getElementById('suggestions').children[idx];
           article.innerHTML = getCardInnerHTML(card, idx);
-          checkAIWatermark();
       }
 
       if (action === 'lock') { 
@@ -544,37 +528,37 @@
       }
       
       if (action === 'add-to-cart') {
-          // Strict Case-Insensitive Matching for Fast Track
           const targetName = card.name.toLowerCase().trim();
           const aiMeal = state.aiDiscoveryPool.find(m => m.name.toLowerCase().trim() === targetName);
           if (aiMeal && aiMeal.ingredients && aiMeal.ingredients !== '[]') {
-              try { pushToCartLocally(JSON.parse(aiMeal.ingredients)); return; } catch(e) {}
+              try { pushToCartLocally(JSON.parse(aiMeal.ingredients), card.name); return; } catch(e) {}
           }
           document.getElementById('syncIndicator').classList.add('active');
           try {
             const res = await fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'breakdownRecipe', mealName: card.name }) });
             const result = await res.json();
-            if (result.data && result.data.length > 0) pushToCartLocally(result.data);
+            if (result.data && result.data.length > 0) pushToCartLocally(result.data, card.name);
             else throw new Error();
-          } catch(e) { pushToCartLocally(["Onions", "Tomatoes", "Salt", "Spices", "Oil"]); }
+          } catch(e) { pushToCartLocally(["Onions", "Tomatoes", "Salt", "Spices", "Oil"], card.name); }
           document.getElementById('syncIndicator').classList.remove('active');
       }
       
-      const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.poolContext || '').trim() + ' recipe');
+      // Contextual programmatic search execution
+      const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
       const gUrl = `https://www.google.com/search?q=${searchQ}`;
       const yUrl = `https://www.youtube.com/results?search_query=${searchQ}`;
 
       if (action === 'share-card') {
-          const text = `🍽️ *${card.name.trim()}*%0A%0A🔍 Recipe: ${gUrl}%0A📺 Video: ${yUrl}`;
-          window.open(`whatsapp://send?text=${text}`, '_blank');
+          const text = `🍽️ *${card.name.trim()}*\n\n🔍 Recipe: ${gUrl}\n📺 Video: ${yUrl}`;
+          window.open(`whatsapp://send?text=${encodeURIComponent(text)}`, '_blank');
       }
       if (action === 'google') window.open(gUrl, '_blank');
       if (action === 'youtube') window.open(yUrl, '_blank');
-      if (action === 'nutrition') window.open(`https://www.google.com/search?q=${encodeURIComponent(card.name + ' nutritional factual information calories')}`, '_blank');
+      if (action === 'nutrition') window.open(`https://www.google.com/search?q=${searchQ}+nutritional+factual+information+calories`, '_blank');
     });
 
-    // Dimmed Checked/Unchecked Cart Logic
-    function pushToCartLocally(ingredients) {
+    // Contextual Grouping Cart Push
+    function pushToCartLocally(ingredients, mealContext = "Uncategorized") {
         const now = new Date();
         const recentNames = state.orderHistory
             .filter(h => (now - new Date(h.date)) < 14*24*60*60*1000)
@@ -583,9 +567,15 @@
         ingredients.reverse().forEach(ing => {
           const safeIng = ing.toLowerCase().trim();
           const isRecent = recentNames.includes(safeIng);
-          if(!state.cart.some(c => c.name.toLowerCase().trim() === safeIng)) {
-            // If recent, push as unchecked (dimmed). If not, push as checked (active).
-            state.cart.unshift({ name: ing, checked: !isRecent, recent: isRecent, flag: isRecent ? "Recently Bought" : "" });
+          
+          if(!state.cart.some(c => c.name.toLowerCase().trim() === safeIng && c.mealContext === mealContext)) {
+            state.cart.unshift({ 
+                name: ing, 
+                checked: !isRecent, 
+                recent: isRecent, 
+                flag: isRecent ? "Recently Bought" : "", 
+                mealContext: mealContext 
+            });
           }
         });
         
@@ -593,26 +583,55 @@
         switchTab('cart', document.querySelectorAll('.nav-item')[1]);
     }
 
+    // Contextual WhatsApp Grouped Sharing
     function shareCartToWhatsApp() {
-        const activeItems = state.cart.filter(i => i.checked).map(i => `- ${i.name}`).join('%0A');
-        if(!activeItems) return;
-        window.open(`whatsapp://send?text=🛒 *Grocery List:*%0A${activeItems}`, '_blank');
+        const groups = {};
+        state.cart.filter(i => i.checked).forEach(item => {
+           const ctx = item.mealContext || "Uncategorized";
+           if (!groups[ctx]) groups[ctx] = [];
+           groups[ctx].push(item.name);
+        });
+        
+        if (Object.keys(groups).length === 0) return;
+        
+        let text = "🛒 *Grocery List:*\n\n";
+        for (const [ctx, items] of Object.entries(groups)) {
+            if (ctx !== 'Uncategorized') text += `*For ${ctx}:*\n`;
+            else text += `*General:*\n`;
+            items.forEach(i => text += `- ${i}\n`);
+            text += `\n`;
+        }
+        
+        window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
     }
 
+    // Advanced Grouped Cart Rendering
     function renderCart() {
-      let html = '';
-      if(state.cart.length === 0) { html = '<p class="subtle">Cart is empty.</p>'; }
+      const groups = {};
       state.cart.forEach((item, index) => {
-        // Unchecked = Dimmed. Checked = Active.
-        html += `
-          <div class="list-item-row ${item.checked ? 'checked' : 'dimmed'}">
-            <div class="list-item-left" onclick="toggleCartItem(${index})">
-                <div class="checkbox">${item.checked ? '✓' : ''}</div>
-                <div><div class="item-name">${escapeHtml(item.name)}</div>${item.flag && !item.checked ? `<div class="item-flag">🕒 ${item.flag}</div>` : ''}</div>
-            </div>
-            <button class="trash-btn" onclick="executeSoftDelete('cart', '${index}')"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
-          </div>`;
+         const ctx = item.mealContext || "Uncategorized";
+         if (!groups[ctx]) groups[ctx] = [];
+         groups[ctx].push({ ...item, originalIndex: index });
       });
+
+      let html = '';
+      if (state.cart.length === 0) { html = '<p class="subtle">Cart is empty.</p>'; }
+
+      for (const [ctx, items] of Object.entries(groups)) {
+         if(ctx !== "Uncategorized") html += `<div class="cart-group-header">🛒 For ${escapeHtml(ctx)}</div>`;
+         else html += `<div class="cart-group-header">🛒 General Master List</div>`;
+         
+         items.forEach(item => {
+             html += `
+              <div class="list-item-row ${item.checked ? 'checked' : 'dimmed'}">
+                <div class="list-item-left" onclick="toggleCartItem(${item.originalIndex})">
+                    <div class="checkbox">${item.checked ? '✓' : ''}</div>
+                    <div><div class="item-name">${escapeHtml(item.name)}</div>${item.flag && !item.checked ? `<div class="item-flag">🕒 ${item.flag}</div>` : ''}</div>
+                </div>
+                <button class="trash-btn" onclick="executeSoftDelete('cart', '${item.originalIndex}')"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+              </div>`;
+         });
+      }
       document.getElementById('unified-cart-items').innerHTML = html;
     }
 
@@ -630,11 +649,11 @@
         renderCart(); saveStateLocally(); syncCartToBackend(); 
     }
     function clearActiveCart() { state.cart = state.cart.filter(c => !c.checked); renderCart(); saveStateLocally(); syncCartToBackend(); }
-    function addManualCartItem() { const v = document.getElementById('manualCartAdd').value.trim(); if(v) { state.cart.unshift({name: v, checked: true, recent: false}); document.getElementById('manualCartAdd').value = ''; renderCart(); saveStateLocally(); syncCartToBackend(); } }
+    function addManualCartItem() { const v = document.getElementById('manualCartAdd').value.trim(); if(v) { state.cart.unshift({name: v, checked: true, recent: false, mealContext: 'Uncategorized'}); document.getElementById('manualCartAdd').value = ''; renderCart(); saveStateLocally(); syncCartToBackend(); } }
     function toggleMasterItem(name) {
       const idx = state.cart.findIndex(c => c.name.toLowerCase().trim() === name.toLowerCase().trim());
       if(idx > -1) state.cart.splice(idx, 1);
-      else state.cart.unshift({ name, checked: true, recent: false, flag: "" });
+      else state.cart.unshift({ name, checked: true, recent: false, flag: "", mealContext: 'Uncategorized' });
       openMasterList(); renderCart(); saveStateLocally(); syncCartToBackend();
     }
     function addManualMasterItem() { const v = document.getElementById('newMasterInput').value.trim(); if(v) { state.masterGrocery.push({name: v, freq: 1}); document.getElementById('newMasterInput').value = ''; openMasterList(); saveStateLocally(); fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'addMasterItem', item: v }) }); } }
@@ -659,28 +678,17 @@
 
     function renderSpreadsheetModal() {
       const ts = document.getElementById('tableSections'); ts.innerHTML = '';
-      document.getElementById('countCore').textContent = (state.db.breakfast.length + state.db.lunch.length + state.db.dinner.length + state.db.dessert.length + state.db.drinks.length + state.db.alcoholic.length);
+      document.getElementById('countCore').textContent = (state.db.breakfast.length + state.db.lunch.length + state.db.dinner.length + state.db.dessert.length + state.db.drinks.length + state.db.cocktails.length);
       document.getElementById('countAI').textContent = state.aiDiscoveryPool.length;
       document.getElementById('countMaster').textContent = state.masterGrocery.length;
 
-      ['breakfast','lunch','dinner','dessert','drinks','alcoholic'].forEach(category => {
+      ['breakfast','lunch','dinner','dessert','drinks','cocktails'].forEach(category => {
         const section = document.createElement('section'); section.className = 'panel data-section';
         section.innerHTML = `<h5>${category.toUpperCase()} · ${(state.db[category] || []).length}</h5>`;
         if (!state.db[category] || !state.db[category].length) section.innerHTML += `<p class="subtle">No configurations found.</p>`;
         else state.db[category].forEach(item => section.innerHTML += `<div class="data-row"><span>${escapeHtml(item)}</span></div>`);
         ts.appendChild(section);
       });
-    }
-
-    function triggerCloudFactory() {
-        document.getElementById('syncIndicator').classList.add('active');
-        fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'runCloudFactory', count: 15 }) })
-        .then(r=>r.json()).then(res => {
-            if(res.data && res.data.length > 0) {
-                state.aiDiscoveryPool = [...state.aiDiscoveryPool, ...res.data]; saveStateLocally();
-            } 
-            document.getElementById('syncIndicator').classList.remove('active');
-        }).catch(e=>{ document.getElementById('syncIndicator').classList.remove('active'); });
     }
 
     function queueUnifiedEntry() {
@@ -705,7 +713,7 @@
             <option value="Dinner" ${item.category.toLowerCase()==='dinner'?'selected':''}>Dinner</option>
             <option value="Dessert" ${item.category.toLowerCase()==='dessert'?'selected':''}>Dessert</option>
             <option value="Drinks" ${item.category.toLowerCase()==='drinks'?'selected':''}>Drinks</option>
-            <option value="Alcoholic" ${item.category.toLowerCase()==='alcoholic'?'selected':''}>Alcoholic</option>
+            <option value="Cocktails" ${item.category.toLowerCase()==='cocktails'?'selected':''}>Cocktails</option>
         </select>`;
 
         li.innerHTML = `
@@ -739,10 +747,9 @@
       } catch (err) { btn.innerHTML = "Push to Cloud"; }
     }
 
-    // Swiggy / Blinkit Checkout Pipeline
     let shoppingQueue = []; let shoppingIndex = 0; let activePlatform = 'swiggy';
     function startGuidedShopping(platform) {
-      shoppingQueue = state.cart.filter(i => i.checked); // Only processes active items
+      shoppingQueue = state.cart.filter(i => i.checked); 
       if(!shoppingQueue.length) { 
           alert("Please check at least one item to shop."); return; 
       }
@@ -759,7 +766,7 @@
     }
     function markFoundAndNext() {
       const current = shoppingQueue[shoppingIndex];
-      const dbIdx = state.cart.findIndex(c => c.name.toLowerCase().trim() === current.name.toLowerCase().trim());
+      const dbIdx = state.cart.findIndex(c => c.name.toLowerCase().trim() === current.name.toLowerCase().trim() && c.mealContext === current.mealContext);
       if(dbIdx > -1) { state.cart[dbIdx].checked = false; state.cart[dbIdx].recent = true; state.cart[dbIdx].flag = "Verified Purchase"; }
       fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateHistory', items: [current.name] }) }).catch(e=>e);
       shoppingIndex++;
@@ -779,6 +786,8 @@
       const cached = localStorage.getItem('mp_data');
       if (cached) {
           state = JSON.parse(cached);
+          // Auto migrate legacy cart items without a meal context safely
+          state.cart.forEach(c => { if(!c.mealContext) c.mealContext = "Uncategorized"; });
           document.getElementById('generateBtn').click();
       } else {
           document.getElementById('syncIndicator').classList.add('active');
@@ -791,7 +800,7 @@
         .then(res => res.json())
         .then(parsed => {
             const data = parsed.data;
-            Object.assign(state.db, { breakfast: data.breakfast, lunch: data.lunch, dinner: data.dinner, dessert: data.dessert, drinks: data.drinks, alcoholic: data.alcoholic });
+            Object.assign(state.db, { breakfast: data.breakfast, lunch: data.lunch, dinner: data.dinner, dessert: data.dessert, drinks: data.drinks, cocktails: data.cocktails });
             state.masterGrocery = data.masterGrocery; state.orderHistory = data.orderHistory; state.cart = data.cart; state.cookingHistory = data.cookingHistory;
             
             if(data.aiDiscoveryPool && data.aiDiscoveryPool.length > state.aiDiscoveryPool.length) state.aiDiscoveryPool = data.aiDiscoveryPool;
@@ -800,7 +809,6 @@
             if(!cached) document.getElementById('generateBtn').click();
             document.getElementById('syncIndicator').classList.remove('active');
             
-            checkAIWatermark();
         }).catch(e => { document.getElementById('syncIndicator').classList.remove('active'); });
     }
 
