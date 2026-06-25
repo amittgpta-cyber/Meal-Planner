@@ -869,7 +869,8 @@
     }
 
     function updateCookbookStats() {
-        document.getElementById('cb-mymeals').innerText = (state.myVegMeals||[]).length + (state.myNonVegMeals||[]).length;
+        const activeMyMealsPool = appSettings.diet === 'non-veg' ? (state.myNonVegMeals || []) : (state.myVegMeals || []);
+        document.getElementById('cb-mymeals').innerText = activeMyMealsPool.length;
         
         const activeAiPool = appSettings.diet === 'non-veg' ? (state.aiNonVegPool || []) : state.aiDiscoveryPool;
         document.getElementById('cb-global').innerText = activeAiPool.filter(m => ['breakfast', 'lunch', 'dinner'].includes(m.category.toLowerCase())).length;
