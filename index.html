@@ -53,8 +53,11 @@
     .page.active { display: block; }
     @keyframes fadePeek { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
+    /* Layout Updates: Top Row (50%), Bottom Row (33.3%) */
     .specialty-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem; width: 100%; }
-    .category-pill { flex: 1 1 calc(33.333% - 8px); padding: 14px 8px; border-radius: 1.25rem; border: 1px solid var(--color-border); background: var(--color-surface); font-weight: 600; font-size: 0.95rem; color: var(--color-text); cursor: pointer; transition: 0.2s var(--ease-fluid); display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .category-pill { padding: 14px 8px; border-radius: 1.25rem; border: 1px solid var(--color-border); background: var(--color-surface); font-weight: 600; font-size: 0.95rem; color: var(--color-text); cursor: pointer; transition: 0.2s var(--ease-fluid); display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .category-pill.top-row { flex: 1 1 calc(50% - 4px); }
+    .category-pill.bottom-row { flex: 1 1 calc(33.333% - 6px); }
     .category-pill.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-bg); transform: scale(1.02); }
     .category-pill:active { transform: scale(0.95); }
 
@@ -113,7 +116,6 @@
         box-shadow: var(--shadow-md); 
     }
 
-    /* BillSplit Styled Floating Share FAB */
     .floating-share-fab {
         position: fixed;
         bottom: 100px;
@@ -185,6 +187,13 @@
     .diet-btn { flex: 1; padding: 12px; font-weight: 600; border-radius: 1.5rem; text-align: center; color: var(--color-text-muted); transition: 0.3s var(--ease-fluid); }
     .diet-btn.active.veg { background: var(--color-success); color: var(--color-bg); }
     .diet-btn.active.nonveg { background: var(--color-error); color: var(--color-bg); }
+
+    /* Cookbook Stats Active Classes */
+    .stat-btn { height: auto; padding: 16px; flex-direction: column; border-radius: 1.5rem; transition: 0.2s var(--ease-fluid); }
+    .stat-num { font-size: 1.5rem; margin-bottom: 4px; font-weight: bold; }
+    .stat-title { font-size: 0.8rem; color: var(--color-text-muted); transition: 0.2s; }
+    .stat-btn.active { background: var(--color-primary); border-color: var(--color-primary); transform: scale(1.02); }
+    .stat-btn.active .stat-num, .stat-btn.active .stat-title { color: var(--color-bg); }
   </style>
 </head>
 <body>
@@ -209,11 +218,11 @@
       <div id="page-plan" class="page active">
         <section class="hero">
           <div class="specialty-bar" id="specialtyBar">
-              <button class="category-pill" data-cat="MyMeals">👤 My Meals</button>
-              <button class="category-pill" data-cat="Global">🧑‍🍳 Global</button>
-              <button class="category-pill" data-cat="Dessert">🍰 Dessert</button>
-              <button class="category-pill" data-cat="Drinks">🥤 Drinks</button>
-              <button class="category-pill" data-cat="Cocktails">🥂 Cocktails</button>
+              <button class="category-pill top-row" data-cat="MyMeals">👤 My Meals</button>
+              <button class="category-pill top-row" data-cat="Global">🧑‍🍳 Global</button>
+              <button class="category-pill bottom-row" data-cat="Dessert">🍰 Dessert</button>
+              <button class="category-pill bottom-row" data-cat="Drinks">🥤 Drinks</button>
+              <button class="category-pill bottom-row" data-cat="Cocktails">🥂 Cocktails</button>
           </div>
         </section>
         <section class="section"><div id="suggestions" class="cards" aria-live="polite"></div></section>
@@ -289,11 +298,11 @@
         <button class="primary-btn" style="width: 100%; border-radius: 1.5rem; padding: 16px; margin-bottom: 24px; font-size: 1.1rem;" onclick="forceRefill()" id="refillBtn">⚡ Refill</button>
           
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
-            <button class="ghost-btn" style="height:auto; padding:16px; flex-direction:column; border-radius:1.5rem;" onclick="renderCookbookList('MyMeals')"><span style="font-size:1.5rem; margin-bottom:4px;" id="cb-mymeals">0</span><span style="font-size:0.8rem; color:var(--color-text-muted);">👤 My Meals</span></button>
-            <button class="ghost-btn" style="height:auto; padding:16px; flex-direction:column; border-radius:1.5rem;" onclick="renderCookbookList('Global')"><span style="font-size:1.5rem; margin-bottom:4px;" id="cb-global">0</span><span style="font-size:0.8rem; color:var(--color-text-muted);">🧑‍🍳 Global</span></button>
-            <button class="ghost-btn" style="height:auto; padding:16px; flex-direction:column; border-radius:1.5rem;" onclick="renderCookbookList('Dessert')"><span style="font-size:1.5rem; margin-bottom:4px;" id="cb-dessert">0</span><span style="font-size:0.8rem; color:var(--color-text-muted);">🍰 Dessert</span></button>
-            <button class="ghost-btn" style="height:auto; padding:16px; flex-direction:column; border-radius:1.5rem;" onclick="renderCookbookList('Drinks')"><span style="font-size:1.5rem; margin-bottom:4px;" id="cb-drinks">0</span><span style="font-size:0.8rem; color:var(--color-text-muted);">🥤 Drinks</span></button>
-            <button class="ghost-btn" style="height:auto; padding:16px; flex-direction:column; border-radius:1.5rem; grid-column: span 2;" onclick="renderCookbookList('Cocktails')"><span style="font-size:1.5rem; margin-bottom:4px;" id="cb-cocktails">0</span><span style="font-size:0.8rem; color:var(--color-text-muted);">🥂 Cocktails</span></button>
+            <button class="ghost-btn stat-btn" data-cbcat="MyMeals" onclick="renderCookbookList('MyMeals')"><span class="stat-num" id="cb-mymeals">0</span><span class="stat-title">👤 My Meals</span></button>
+            <button class="ghost-btn stat-btn" data-cbcat="Global" onclick="renderCookbookList('Global')"><span class="stat-num" id="cb-global">0</span><span class="stat-title">🧑‍🍳 Global</span></button>
+            <button class="ghost-btn stat-btn" data-cbcat="Dessert" onclick="renderCookbookList('Dessert')"><span class="stat-num" id="cb-dessert">0</span><span class="stat-title">🍰 Dessert</span></button>
+            <button class="ghost-btn stat-btn" data-cbcat="Drinks" onclick="renderCookbookList('Drinks')"><span class="stat-num" id="cb-drinks">0</span><span class="stat-title">🥤 Drinks</span></button>
+            <button class="ghost-btn stat-btn" data-cbcat="Cocktails" onclick="renderCookbookList('Cocktails')" style="grid-column: span 2;"><span class="stat-num" id="cb-cocktails">0</span><span class="stat-title">🥂 Cocktails</span></button>
         </div>
 
         <section id="dashboardView">
@@ -367,6 +376,10 @@
         document.getElementById('toggleNonVeg').classList.toggle('active', pref === 'non-veg');
         saveStateLocally();
         updateCookbookStats();
+        
+        // Re-render the active cookbook list when diet toggles
+        const activeBtn = document.querySelector('.stat-btn.active');
+        if(activeBtn) renderCookbookList(activeBtn.dataset.cbcat);
     }
 
     function updateUndoButton() {
@@ -607,7 +620,11 @@
               bookmarkSvg.setAttribute('stroke', 'var(--color-success)');
           }
           renderReviewQueue(); 
-          document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="var(--color-primary)" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
+          if(pendingApprovals.length > 0) {
+              document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="var(--color-primary)" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
+          } else {
+              document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
+          }
       }
 
       if (action === 'prev') {
@@ -881,26 +898,47 @@
     }
 
     function renderCookbookList(cat) {
+        document.querySelectorAll('.stat-btn').forEach(b => b.classList.remove('active'));
+        const activeBtn = document.querySelector(`.stat-btn[data-cbcat="${cat}"]`);
+        if(activeBtn) activeBtn.classList.add('active');
+
         let items = [];
         const isNonVegMode = appSettings.diet === 'non-veg';
         const activeAiPool = isNonVegMode ? (state.aiNonVegPool || []) : state.aiDiscoveryPool;
 
         if (cat === 'MyMeals') {
             const activePool = isNonVegMode ? (state.myNonVegMeals || []) : (state.myVegMeals || []);
-            items = activePool.map(m => ({name: m.name, src: 'Local DB'}));
+            items = activePool.map(m => ({name: m.name, cat: m.category, src: 'Local DB'}));
         } else if (cat === 'Global') {
-            items = activeAiPool.filter(m => ['breakfast', 'lunch', 'dinner'].includes(m.category.toLowerCase())).map(m => ({name: m.name, src: 'AI Pool'}));
+            items = activeAiPool.filter(m => ['breakfast', 'lunch', 'dinner'].includes(m.category.toLowerCase())).map(m => ({name: m.name, cat: m.category, src: 'AI Pool'}));
         } else {
-            const aiItems = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === cat.toLowerCase()).map(m => ({name: m.name, src: 'AI Pool'}));
-            const dbItems = (state.db[cat.toLowerCase()]||[]).map(m => ({name: m, src: 'Local DB'}));
+            const aiItems = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === cat.toLowerCase()).map(m => ({name: m.name, cat: m.category, src: 'AI Pool'}));
+            const dbItems = (state.db[cat.toLowerCase()]||[]).map(m => ({name: m, cat: cat, src: 'Local DB'}));
             items = [...aiItems, ...dbItems];
         }
 
         let html = '';
-        if(!items.length) html = '<p class="subtle" style="text-align:center; padding: 20px;">No items found in this category.</p>';
-        items.forEach(i => {
-            html += `<div class="data-row"><span>${escapeHtml(i.name)}</span><span class="badge" style="font-size:0.65rem; background:transparent; border:1px solid var(--color-border); color:var(--color-text-muted);">${i.src}</span></div>`;
-        });
+        if(!items.length) {
+            html = '<p class="subtle" style="text-align:center; padding: 20px;">No items found in this category.</p>';
+        } else if (cat === 'MyMeals' || cat === 'Global') {
+            const grouped = { 'Breakfast': [], 'Lunch': [], 'Dinner': [] };
+            items.forEach(i => {
+                const c = i.cat ? i.cat.charAt(0).toUpperCase() + i.cat.slice(1).toLowerCase() : 'Dinner';
+                if(grouped[c]) grouped[c].push(i);
+            });
+            ['Breakfast', 'Lunch', 'Dinner'].forEach(c => {
+                if (grouped[c].length > 0) {
+                    html += `<div style="padding: 16px 0 8px 4px; font-weight: 700; color: var(--color-primary); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.1em;">${c}</div>`;
+                    grouped[c].forEach(i => {
+                        html += `<div class="data-row"><span>${escapeHtml(i.name)}</span><span class="badge" style="font-size:0.65rem; background:transparent; border:1px solid var(--color-border); color:var(--color-text-muted);">${i.src}</span></div>`;
+                    });
+                }
+            });
+        } else {
+            items.forEach(i => {
+                html += `<div class="data-row"><span>${escapeHtml(i.name)}</span><span class="badge" style="font-size:0.65rem; background:transparent; border:1px solid var(--color-border); color:var(--color-text-muted);">${i.src}</span></div>`;
+            });
+        }
         document.getElementById('cookbookOutput').innerHTML = html;
     }
 
@@ -922,8 +960,8 @@
             
             saveStateLocally();
             updateCookbookStats(); 
-            const activePill = document.querySelector('.category-pill.active');
-            if(activePill) renderCookbookList(activePill.dataset.cat);
+            const activePill = document.querySelector('.stat-btn.active');
+            if(activePill) renderCookbookList(activePill.dataset.cbcat);
             
             btn.innerHTML = `⚡ Refill`;
             document.getElementById('syncIndicator').classList.remove('active');
@@ -967,7 +1005,32 @@
       });
     }
     
-    document.addEventListener('click', e => { const rmBtn = e.target.closest('[data-remove-queue]'); if (rmBtn) { pendingApprovals.splice(Number(rmBtn.dataset.removeQueue), 1); renderReviewQueue(); } });
+    document.addEventListener('click', e => { 
+        const rmBtn = e.target.closest('[data-remove-queue]'); 
+        if (rmBtn) { 
+            const idx = Number(rmBtn.dataset.removeQueue); 
+            const removedItem = pendingApprovals[idx];
+            pendingApprovals.splice(idx, 1); 
+            
+            if (state.currentSuggestions && state.currentSuggestions.length > 0) {
+                state.currentSuggestions.forEach((card, cardIdx) => {
+                    if (card.name === removedItem.meal && card.isQueued) {
+                        card.isQueued = false;
+                        const bookmarkSvg = document.getElementById(`bookmark-${cardIdx}`);
+                        if (bookmarkSvg) {
+                            bookmarkSvg.setAttribute('fill', 'none');
+                            bookmarkSvg.setAttribute('stroke', 'currentColor');
+                        }
+                    }
+                });
+            }
+
+            renderReviewQueue(); 
+            if (pendingApprovals.length === 0) {
+                document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
+            }
+        } 
+    });
     
     async function submitQueueForApproval() {
       if (!pendingApprovals.length) return;
@@ -1036,10 +1099,11 @@
       const cachedSettings = localStorage.getItem('mp_settings');
       if (cachedSettings) {
           appSettings = JSON.parse(cachedSettings);
-          setDietPref(appSettings.diet || 'veg');
-      } else {
-          setDietPref('veg');
       }
+      
+      // Override to always start on Veg per user instructions
+      appSettings.diet = 'veg';
+      setDietPref('veg');
         
       const cached = localStorage.getItem('mp_data');
       if (cached) {
