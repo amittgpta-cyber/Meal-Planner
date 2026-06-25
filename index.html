@@ -604,8 +604,8 @@
       const gUrl = `https://www.google.com/search?q=${searchQ}`;
       const yUrl = `https://www.youtube.com/results?search_query=${searchQ}`;
 
-      if (action === 'share-card') {
-          const text = `🍽️ *${card.name.trim()}*\n\n🔍 _${gUrl}_\n\n▶️ _${yUrl}_`;
+     if (action === 'share-card') {
+          const text = `🍽️ *${card.name.trim()}*\n\n🔍 *Google Recipe:* _${gUrl}_\n\n📺 *YouTube Recipe:* _${yUrl}_`;
           window.open(`whatsapp://send?text=${encodeURIComponent(text)}`, '_blank');
       }
       if (action === 'google') window.open(gUrl, '_blank');
