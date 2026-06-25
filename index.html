@@ -28,13 +28,11 @@
       --shadow-md: 0 16px 40px rgba(0,0,0, 1);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        html { scroll-behavior: smooth; overscroll-behavior: none; }
     
-    /* FIX 1: Removed double padding-bottom to fix the phantom scroll bug */
+    html { scroll-behavior: smooth; overscroll-behavior: none; }
     body { min-height: 100dvh; font-family: var(--font-body); background: var(--color-bg); color: var(--color-text); overflow-x: hidden; overscroll-behavior-y: none; user-select: none; }
     input, textarea { user-select: auto; }
-    
-    button, input, select { font: inherit; color: inherit; outline: none; background: none; border: none; cursor: pointer; }
+    button, select { font: inherit; color: inherit; outline: none; background: none; border: none; cursor: pointer; }
     
     .topbar-wrapper { position: relative; width: 100%; max-width: 70rem; margin: 0 auto; padding: calc(1.5rem + env(safe-area-inset-top)) 1rem 1rem; z-index: 40; display: flex; flex-direction: column; gap: 10px; }
     .topbar-main { display: flex; align-items: center; justify-content: space-between; width: 100%; }
@@ -50,7 +48,6 @@
     .accent-btn { background: var(--color-secondary); color: var(--color-bg); }
     button:active { transform: scale(0.92); }
 
-    /* The shell dynamically adds enough bottom padding just for the floaters */
     .shell { max-width: 70rem; margin: 0 auto; padding: 1rem 1rem calc(6rem + env(safe-area-inset-bottom)); }
     .page { display: none; animation: fadePeek 0.35s var(--ease-fluid); }
     .page.active { display: block; }
@@ -92,7 +89,6 @@
     
     .empty { padding: 3rem 2rem; background: var(--color-surface); border-radius: 2rem; border: 1px solid var(--color-border); color: var(--color-text-muted); text-align: center; width: 100%; }
     
-    /* FIX 2: True Independent Floating Pills */
     .bottom-nav { 
         position: fixed; 
         bottom: 24px; 
@@ -104,7 +100,7 @@
         gap: 12px; 
         z-index: 1000; 
         transition: transform 0.35s var(--ease-fluid), opacity 0.35s var(--ease-fluid); 
-        pointer-events: none; /* Clicks pass through the invisible wrapper */
+        pointer-events: none; 
     }
     .bottom-nav.nav-hidden {
         transform: translate(-50%, 150%);
@@ -113,7 +109,7 @@
     .bottom-nav button { 
         margin: 0; 
         border-radius: 100px; 
-        pointer-events: auto; /* Reactivates clicks explicitly for the buttons */
+        pointer-events: auto; 
         box-shadow: var(--shadow-md); 
     }
 
@@ -159,6 +155,16 @@
     .data-row:active { transform: scale(0.98); }
     
     .topbar-hidden { display: none !important; }
+
+    /* Custom Diet Toggle UI */
+    .diet-toggle-container {
+        display: flex; background: var(--color-surface-2); border-radius: 2rem; border: 1px solid var(--color-border); padding: 4px; width: 100%; margin-bottom: 20px;
+    }
+    .diet-btn {
+        flex: 1; padding: 12px; font-weight: 600; border-radius: 1.5rem; text-align: center; color: var(--color-text-muted); transition: 0.3s var(--ease-fluid);
+    }
+    .diet-btn.active.veg { background: var(--color-success); color: var(--color-bg); }
+    .diet-btn.active.nonveg { background: var(--color-error); color: var(--color-bg); }
   </style>
 </head>
 <body>
@@ -251,6 +257,11 @@
       <div class="dialog-head"><h4 style="font-family: var(--font-display); font-size: 1.5rem;">Core Database</h4><button class="icon-btn" style="border-radius: 50%;" onclick="closeModal('dataModal')"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
       <div class="dialog-body" id="cookBookScrollArea">
           
+        <div class="diet-toggle-container">
+            <button class="diet-btn veg active" id="toggleVeg" onclick="setDietPref('veg')">🌿 Veg</button>
+            <button class="diet-btn nonveg" id="toggleNonVeg" onclick="setDietPref('non-veg')">🥩 Non-Veg</button>
+        </div>
+          
         <button class="primary-btn" style="width: 100%; border-radius: 1.5rem; padding: 16px; margin-bottom: 24px; font-size: 1.1rem;" onclick="forceRefill()" id="refillBtn">⚡ Refill</button>
           
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
@@ -289,9 +300,11 @@
 
     let state = { 
         db: { breakfast: [], lunch: [], dinner: [], dessert: [], drinks: [], cocktails: [] }, 
-        aiDiscoveryPool: [], 
+        aiDiscoveryPool: [], aiNonVegPool: [],
         cookingHistory: [], currentSuggestions: [], masterGrocery: [], orderHistory: [], cart: [] 
     };
+    
+    let appSettings = { diet: 'veg' }; // Default global state
     
     let pendingApprovals = [];
     let graveyard = [];
@@ -323,6 +336,15 @@
       renderThemeIcon();
       themeBtn.addEventListener('click', () => { theme = theme === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', theme); renderThemeIcon(); });
     })();
+    
+    // Diet Toggle Logic
+    function setDietPref(pref) {
+        appSettings.diet = pref;
+        document.getElementById('toggleVeg').classList.toggle('active', pref === 'veg');
+        document.getElementById('toggleNonVeg').classList.toggle('active', pref === 'non-veg');
+        saveStateLocally();
+        updateCookbookStats();
+    }
 
     function updateUndoButton() {
         const btn = document.getElementById('undoBtn');
@@ -473,6 +495,7 @@
         }
     });
 
+    // MASTER STRICT DIET FILTER
     document.getElementById('generateBtn').addEventListener('click', () => {
         const activePill = document.querySelector('.category-pill.active');
         if (!activePill) return; 
@@ -481,22 +504,49 @@
 
         const cat = activePill.dataset.cat;
         const deck = [];
+        
+        // Exclude Drinks/Dessert from diet toggle logic
+        const isDietAgnostic = ['Dessert', 'Drinks', 'Cocktails'].includes(cat);
+        const isNonVegMode = !isDietAgnostic && appSettings.diet === 'non-veg';
 
         if (cat === 'MyMeals') {
-            const bPool = state.db.breakfast || []; const lPool = state.db.lunch || []; const dPool = state.db.dinner || [];
-            const m1 = pickUniqueMeal(bPool, []); const m2 = pickUniqueMeal(lPool, []); const m3 = pickUniqueMeal(dPool, []);
+            // Local Filtering
+            const bPool = state.db.breakfast || []; 
+            const lPool = state.db.lunch || []; 
+            const dPool = state.db.dinner || [];
+            
+            let filteredB, filteredL, filteredD;
+            if (isNonVegMode) {
+                // Strict Non-Veg: Exclude anything Veg/Egg
+                filteredB = bPool.filter(m => getMealTag(m).text === 'Non-Veg');
+                filteredL = lPool.filter(m => getMealTag(m).text === 'Non-Veg');
+                filteredD = dPool.filter(m => getMealTag(m).text === 'Non-Veg');
+            } else {
+                // Strict Veg: Exclude anything Non-Veg
+                filteredB = bPool.filter(m => getMealTag(m).text !== 'Non-Veg');
+                filteredL = lPool.filter(m => getMealTag(m).text !== 'Non-Veg');
+                filteredD = dPool.filter(m => getMealTag(m).text !== 'Non-Veg');
+            }
+
+            const m1 = pickUniqueMeal(filteredB, []); const m2 = pickUniqueMeal(filteredL, []); const m3 = pickUniqueMeal(filteredD, []);
             if(m1) deck.push(buildCard('Breakfast', m1, 'db', 'breakfast'));
             if(m2) deck.push(buildCard('Lunch', m2, 'db', 'lunch'));
             if(m3) deck.push(buildCard('Dinner', m3, 'db', 'dinner'));
+            
         } else if (cat === 'Global') {
-            const bPool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'breakfast');
-            const lPool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'lunch');
-            const dPool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'dinner');
+            // Global Filtering (Pull from the correct designated safe bucket)
+            const activePool = isNonVegMode ? (state.aiNonVegPool || []) : state.aiDiscoveryPool;
+            
+            const bPool = activePool.filter(m => m.category.toLowerCase() === 'breakfast');
+            const lPool = activePool.filter(m => m.category.toLowerCase() === 'lunch');
+            const dPool = activePool.filter(m => m.category.toLowerCase() === 'dinner');
             
             if(bPool.length) { const m = bPool[Math.floor(Math.random()*bPool.length)]; deck.push(buildCard('Breakfast', m.name, 'api', 'breakfast')); }
             if(lPool.length) { const m = lPool[Math.floor(Math.random()*lPool.length)]; deck.push(buildCard('Lunch', m.name, 'api', 'lunch')); }
             if(dPool.length) { const m = dPool[Math.floor(Math.random()*dPool.length)]; deck.push(buildCard('Dinner', m.name, 'api', 'dinner')); }
+            
         } else {
+            // Diet-Agnostic Categories (Dessert, Drinks, Cocktails)
             const pool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === cat.toLowerCase());
             if(pool.length > 0) {
                 const m = pool[Math.floor(Math.random() * pool.length)];
@@ -558,11 +608,24 @@
               card.name = card.history[card.historyIndex];
           } else {
               let newMeal = null;
+              
+              const isDietAgnostic = ['Dessert', 'Drinks', 'Cocktails'].includes(card.poolContext.charAt(0).toUpperCase() + card.poolContext.slice(1).toLowerCase());
+              const isNonVegMode = !isDietAgnostic && appSettings.diet === 'non-veg';
+              
               if (card.source === 'api') {
-                  const pool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === card.poolContext.toLowerCase());
+                  const activePool = isNonVegMode ? (state.aiNonVegPool || []) : state.aiDiscoveryPool;
+                  const pool = activePool.filter(m => m.category.toLowerCase() === card.poolContext.toLowerCase());
                   if(pool.length > 0) newMeal = pool[Math.floor(Math.random() * pool.length)];
               } else {
-                  const pool = state.db[card.poolContext] || [];
+                  let pool = state.db[card.poolContext] || [];
+                  // Re-apply strict filter on NEXT click for local DB
+                  if (!isDietAgnostic) {
+                      if (isNonVegMode) {
+                          pool = pool.filter(m => getMealTag(m).text === 'Non-Veg');
+                      } else {
+                          pool = pool.filter(m => getMealTag(m).text !== 'Non-Veg');
+                      }
+                  }
                   const nm = pickUniqueMeal(pool, card.history);
                   if(nm) newMeal = { name: nm };
               }
@@ -594,7 +657,12 @@
       
       if (action === 'add-to-cart') {
           const targetName = card.name.toLowerCase().trim();
-          const aiMeal = state.aiDiscoveryPool.find(m => m.name.toLowerCase().trim() === targetName);
+          
+          let aiMeal = state.aiDiscoveryPool.find(m => m.name.toLowerCase().trim() === targetName);
+          if (!aiMeal && state.aiNonVegPool) {
+             aiMeal = state.aiNonVegPool.find(m => m.name.toLowerCase().trim() === targetName);
+          }
+          
           if (aiMeal && aiMeal.ingredients && aiMeal.ingredients !== '[]') {
               try { pushToCartLocally(JSON.parse(aiMeal.ingredients), card.name); return; } catch(e) {}
           }
@@ -604,8 +672,8 @@
       const gUrl = `https://www.google.com/search?q=${searchQ}`;
       const yUrl = `https://www.youtube.com/results?search_query=${searchQ}`;
 
-     if (action === 'share-card') {
-          const text = `🍽️ *${card.name.trim()}*\n\n🔍 *Google Recipe:* _${gUrl}_\n\n📺 *YouTube Recipe:* _${yUrl}_`;
+      if (action === 'share-card') {
+          const text = `🍽️ *${card.name.trim()}*\n\n🔍 _${gUrl}_\n\n▶️ _${yUrl}_`;
           window.open(`whatsapp://send?text=${encodeURIComponent(text)}`, '_blank');
       }
       if (action === 'google') window.open(gUrl, '_blank');
@@ -745,8 +813,12 @@
     }
 
     function updateCookbookStats() {
+        // Stats ignore the toggle filter to show total accurate counts of the raw data.
         document.getElementById('cb-mymeals').innerText = (state.db.breakfast||[]).length + (state.db.lunch||[]).length + (state.db.dinner||[]).length;
-        document.getElementById('cb-global').innerText = state.aiDiscoveryPool.filter(m => ['breakfast', 'lunch', 'dinner'].includes(m.category.toLowerCase())).length;
+        
+        const activeAiPool = appSettings.diet === 'non-veg' ? (state.aiNonVegPool || []) : state.aiDiscoveryPool;
+        document.getElementById('cb-global').innerText = activeAiPool.filter(m => ['breakfast', 'lunch', 'dinner'].includes(m.category.toLowerCase())).length;
+        
         document.getElementById('cb-dessert').innerText = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'dessert').length + (state.db.dessert||[]).length;
         document.getElementById('cb-drinks').innerText = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'drinks').length + (state.db.drinks||[]).length;
         document.getElementById('cb-cocktails').innerText = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'cocktails').length + (state.db.cocktails||[]).length;
@@ -754,11 +826,21 @@
 
     function renderCookbookList(cat) {
         let items = [];
+        const isNonVegMode = appSettings.diet === 'non-veg';
+        const activeAiPool = isNonVegMode ? (state.aiNonVegPool || []) : state.aiDiscoveryPool;
+
         if (cat === 'MyMeals') {
             items = [...(state.db.breakfast||[]), ...(state.db.lunch||[]), ...(state.db.dinner||[])].map(m => ({name: m, src: 'Local DB'}));
+            // Apply strict filter to visually hide items in the UI list when inspecting
+            if (isNonVegMode) {
+                items = items.filter(i => getMealTag(i.name).text === 'Non-Veg');
+            } else {
+                items = items.filter(i => getMealTag(i.name).text !== 'Non-Veg');
+            }
         } else if (cat === 'Global') {
-            items = state.aiDiscoveryPool.filter(m => ['breakfast', 'lunch', 'dinner'].includes(m.category.toLowerCase())).map(m => ({name: m.name, src: 'AI Pool'}));
+            items = activeAiPool.filter(m => ['breakfast', 'lunch', 'dinner'].includes(m.category.toLowerCase())).map(m => ({name: m.name, src: 'AI Pool'}));
         } else {
+            // Diet Agnostic
             const aiItems = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === cat.toLowerCase()).map(m => ({name: m.name, src: 'AI Pool'}));
             const dbItems = (state.db[cat.toLowerCase()]||[]).map(m => ({name: m, src: 'Local DB'}));
             items = [...aiItems, ...dbItems];
@@ -774,17 +856,24 @@
 
     function forceRefill() {
         const btn = document.getElementById('refillBtn');
-        btn.innerHTML = `Syncing Database...`;
+        btn.innerHTML = `Syncing...`;
         document.getElementById('syncIndicator').classList.add('active');
         
-        fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'forceRefill' }) })
+        // Pass the diet flag to the backend
+        fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'forceRefill', diet: appSettings.diet }) })
         .then(res => res.json())
         .then(parsed => {
             const data = parsed.data;
             Object.assign(state.db, { breakfast: data.breakfast, lunch: data.lunch, dinner: data.dinner, dessert: data.dessert, drinks: data.drinks, cocktails: data.cocktails });
             if(data.aiDiscoveryPool) state.aiDiscoveryPool = data.aiDiscoveryPool;
+            if(data.aiNonVegPool) state.aiNonVegPool = data.aiNonVegPool;
+            
             saveStateLocally();
             updateCookbookStats(); 
+            // Re-render the list if the user is looking at it
+            const activePill = document.querySelector('.category-pill.active');
+            if(activePill) renderCookbookList(activePill.dataset.cat);
+            
             btn.innerHTML = `⚡ Refill`;
             document.getElementById('syncIndicator').classList.remove('active');
         }).catch(e => {
@@ -881,9 +970,20 @@
     }
     function closeGuidedShopping() { document.getElementById('guided-overlay').classList.remove('active'); renderCart(); }
 
-    function saveStateLocally() { localStorage.setItem('mp_data', JSON.stringify(state)); }
+    function saveStateLocally() { 
+        localStorage.setItem('mp_data', JSON.stringify(state)); 
+        localStorage.setItem('mp_settings', JSON.stringify(appSettings));
+    }
 
     function init() {
+      const cachedSettings = localStorage.getItem('mp_settings');
+      if (cachedSettings) {
+          appSettings = JSON.parse(cachedSettings);
+          setDietPref(appSettings.diet || 'veg');
+      } else {
+          setDietPref('veg');
+      }
+        
       const cached = localStorage.getItem('mp_data');
       if (cached) {
           state = JSON.parse(cached);
@@ -905,6 +1005,8 @@
             state.masterGrocery = data.masterGrocery; state.orderHistory = data.orderHistory; state.cart = data.cart; state.cookingHistory = data.cookingHistory;
             
             if(data.aiDiscoveryPool && data.aiDiscoveryPool.length > state.aiDiscoveryPool.length) state.aiDiscoveryPool = data.aiDiscoveryPool;
+            if(data.aiNonVegPool) state.aiNonVegPool = data.aiNonVegPool;
+            
             saveStateLocally();
             document.getElementById('syncIndicator').classList.remove('active');
             
