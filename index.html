@@ -113,6 +113,31 @@
         box-shadow: var(--shadow-md); 
     }
 
+    /* BillSplit Styled Floating Share FAB */
+    .floating-share-fab {
+        position: fixed;
+        bottom: 100px;
+        right: 24px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: #1a1918;
+        border: 1px solid var(--color-border);
+        color: #e8e6e3;
+        box-shadow: var(--shadow-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 999;
+        transition: transform 0.3s var(--ease-fluid), opacity 0.3s;
+    }
+    [data-theme="light"] .floating-share-fab {
+        background: #f7f6f2;
+        color: #161514;
+    }
+    .floating-share-fab:active { transform: scale(0.88); }
+    .floating-share-fab.fab-hidden { transform: scale(0); opacity: 0; pointer-events: none; }
+
     .cart-tools { display: flex; gap: 10px; margin-bottom: 20px; }
     .cart-tools input { flex: 1; padding: 14px 20px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); transition: 0.2s; }
     .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); font-weight: bold; margin: 24px 0 12px; }
@@ -156,13 +181,8 @@
     
     .topbar-hidden { display: none !important; }
 
-    /* Custom Diet Toggle UI */
-    .diet-toggle-container {
-        display: flex; background: var(--color-surface-2); border-radius: 2rem; border: 1px solid var(--color-border); padding: 4px; width: 100%; margin-bottom: 20px;
-    }
-    .diet-btn {
-        flex: 1; padding: 12px; font-weight: 600; border-radius: 1.5rem; text-align: center; color: var(--color-text-muted); transition: 0.3s var(--ease-fluid);
-    }
+    .diet-toggle-container { display: flex; background: var(--color-surface-2); border-radius: 2rem; border: 1px solid var(--color-border); padding: 4px; width: 100%; margin-bottom: 20px; }
+    .diet-btn { flex: 1; padding: 12px; font-weight: 600; border-radius: 1.5rem; text-align: center; color: var(--color-text-muted); transition: 0.3s var(--ease-fluid); }
     .diet-btn.active.veg { background: var(--color-success); color: var(--color-bg); }
     .diet-btn.active.nonveg { background: var(--color-error); color: var(--color-bg); }
   </style>
@@ -226,6 +246,10 @@
       </div>
     </main>
   </div>
+
+  <button class="floating-share-fab" id="floatingShareFab" onclick="shareDailyMenuToWhatsApp()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
+  </button>
 
   <div class="bottom-nav" id="bottomNav">
       <button class="ghost-btn" id="navToggleBtn" onclick="toggleMainView()" style="flex: 1; height: 56px; font-size: 1.1rem; justify-content: center; background: color-mix(in oklab, var(--color-surface) 90%, transparent); backdrop-filter: blur(24px); border: 1px solid var(--color-border); color: var(--color-text);">🛒 Cart</button>
@@ -297,15 +321,16 @@
 
   <script>
     const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzNOXoxn17I3d4-inuxiEqhdPxOQokGlSGCYW8buwLTcO6YJxbvcHBH0dZ1d-fBDzwl/exec"; 
+    const CORE_MEAT_KEYS = ['sausage', 'bacon', 'chicken', 'beef', 'pork', 'fish', 'prawn', 'meat', 'lamb', 'ham', 'turkey', 'duck', 'tuna', 'salmon', 'crab', 'shrimp', 'veal', 'venison', 'lobster', 'scallop', 'oyster', 'squab', 'goose', 'pepperoni', 'salami', 'chorizo', 'pancetta', 'gelatin', 'lard', 'tallow'];
 
     let state = { 
-        db: { breakfast: [], lunch: [], dinner: [], dessert: [], drinks: [], cocktails: [] }, 
+        myVegMeals: [], myNonVegMeals: [],
+        db: { dessert: [], drinks: [], cocktails: [] },
         aiDiscoveryPool: [], aiNonVegPool: [],
         cookingHistory: [], currentSuggestions: [], masterGrocery: [], orderHistory: [], cart: [] 
     };
     
-    let appSettings = { diet: 'veg' }; // Default global state
-    
+    let appSettings = { diet: 'veg' }; 
     let pendingApprovals = [];
     let graveyard = [];
     let activeTab = 'plan';
@@ -323,7 +348,6 @@
     }, { passive: true });
 
     function escapeHtml(str) { return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
-
     function openModal(modalId) { document.getElementById(modalId).classList.add('open'); }
     function closeModal(modalId) { document.getElementById(modalId).classList.remove('open'); }
 
@@ -337,7 +361,6 @@
       themeBtn.addEventListener('click', () => { theme = theme === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', theme); renderThemeIcon(); });
     })();
     
-    // Diet Toggle Logic
     function setDietPref(pref) {
         appSettings.diet = pref;
         document.getElementById('toggleVeg').classList.toggle('active', pref === 'veg');
@@ -391,19 +414,31 @@
     window.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushGraveyardCache(); });
     window.addEventListener("pagehide", flushGraveyardCache);
 
-    function getMealTag(name) {
+    function getMealTag(name, rawItem = null) {
+      if (rawItem && rawItem.source === 'db_nv') return { text: 'Non-Veg', cls: 'tag-nonveg' };
+      if (rawItem && rawItem.source === 'db_v') return { text: 'Veg', cls: 'tag-veg' };
+
       const low = String(name || '').toLowerCase();
-      const nonVegRegex = /\b(chicken|fish|mutton|meat|prawn|beef|pork|bacon|prosciutto|salmon|tuna|lamb|shrimp|crab|turkey|ham|duck|gosht|murgh|machli|sausage)\b/i;
+      let hasMeat = CORE_MEAT_KEYS.some(fw => low.includes(fw));
+
+      if (!hasMeat && rawItem && rawItem.ingredients) {
+          try {
+              const ingList = typeof rawItem.ingredients === 'string' ? JSON.parse(rawItem.ingredients) : rawItem.ingredients;
+              if (Array.isArray(ingList)) {
+                  hasMeat = ingList.some(ing => CORE_MEAT_KEYS.some(fw => String(ing).toLowerCase().includes(fw)));
+              }
+          } catch(e){}
+      }
+
+      if (hasMeat) return { text: 'Non-Veg', cls: 'tag-nonveg' };
       const eggRegex = /\b(egg|eggs|omelet|omelette|frittata|shakshuka|anda|bhurji)\b/i;
-      
-      if (nonVegRegex.test(low)) return { text: 'Non-Veg', cls: 'tag-nonveg' };
       if (eggRegex.test(low)) return { text: 'Egg', cls: 'tag-egg' };
       return { text: 'Veg', cls: 'tag-veg' };
     }
 
     function cookedWithinAWeek(mealName) { 
         const now = Date.now(); 
-        return state.cookingHistory.some(e => {
+        return (state.cookingHistory || []).some(e => {
             if(e.name.toLowerCase().trim() !== mealName.toLowerCase().trim()) return false;
             return (now - new Date(e.date).getTime()) < 7 * 24 * 60 * 60 * 1000;
         }); 
@@ -412,20 +447,20 @@
     function buildCard(time, name, source, poolContext = null, extra = {}) { 
         return { 
             time, name, source, poolContext, 
+            ingredients: extra.ingredients || null,
             isLocked: !!extra.isLocked, cookedRecently: !!cookedWithinAWeek(name), 
-            history: extra.history || [name], historyIndex: extra.historyIndex || 0,
+            history: extra.history || [{name: name, ingredients: extra.ingredients || null}], 
+            historyIndex: extra.historyIndex || 0,
             isQueued: false 
         }; 
     }
 
     function getCardInnerHTML(item, index) {
-      const tag = getMealTag(item.name);
-      
-      const cartHtml = item.source !== 'db' ? `<div class="icon-circle" data-action="add-to-cart" data-index="${index}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div>` : '';
-      
+      const tag = getMealTag(item.name, item);
+      const cartHtml = item.source.indexOf('db') !== 0 ? `<div class="icon-circle" data-action="add-to-cart" data-index="${index}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div>` : '';
       const bookmarkColor = item.isQueued ? 'var(--color-success)' : 'none';
       const bookmarkStroke = item.isQueued ? 'var(--color-success)' : 'currentColor';
-      const bookmarkHtml = item.source !== 'db' ? `<div class="icon-circle" data-action="queue-meal" data-index="${index}"><svg id="bookmark-${index}" style="pointer-events:none; transition: 0.3s var(--ease-fluid);" width="20" height="20" viewBox="0 0 24 24" fill="${bookmarkColor}" stroke="${bookmarkStroke}" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>` : '';
+      const bookmarkHtml = item.source.indexOf('db') !== 0 ? `<div class="icon-circle" data-action="queue-meal" data-index="${index}"><svg id="bookmark-${index}" style="pointer-events:none; transition: 0.3s var(--ease-fluid);" width="20" height="20" viewBox="0 0 24 24" fill="${bookmarkColor}" stroke="${bookmarkStroke}" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>` : '';
 
       return `
         <div class="card-header-row">
@@ -434,14 +469,9 @@
                 <span class="badge ${tag.cls}">${tag.text}</span>
                 ${item.cookedRecently ? '<span class="badge warning">Cooked recently</span>' : ''}
             </div>
-            <div class="top-actions">
-                ${cartHtml}
-                ${bookmarkHtml}
-            </div>
+            <div class="top-actions">${cartHtml}${bookmarkHtml}</div>
         </div>
-        
         <div class="meal-title">${escapeHtml(item.name)}</div>
-        
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
             <button class="card-action" data-action="prev" data-index="${index}" ${item.historyIndex > 0 && !item.isLocked ? '' : 'disabled'}><svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="11 17 6 12 11 7"></polyline><polyline points="18 17 13 12 18 7"></polyline></svg></button>
             <button class="card-action" data-action="next" data-index="${index}" ${item.isLocked ? 'disabled' : ''}><svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 17 18 12 13 7"></polyline><polyline points="6 17 11 12 6 7"></polyline></svg></button>
@@ -450,7 +480,6 @@
             <button class="card-action ${item.isLocked ? 'locked' : ''}" data-action="lock" data-index="${index}">${item.isLocked ? '✓ On Menu' : 'Serve It'}</button>
             <button class="card-action" data-action="toggle-explore" data-index="${index}">⋮ More</button>
         </div>
-        
         <div id="explore-${index}" class="explore-area">
           <button class="explore-icon" data-action="google" data-index="${index}"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 24c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 21.53 7.7 24 12 24z"/><path fill="#FBBC05" d="M5.84 15.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V8.06H2.18C1.43 9.55 1 11.22 1 13s.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 4.84c1.61 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.63 14.97 0 12 0 7.7 0 3.99 2.47 2.18 6.06l3.66 2.84c.87-2.6 3.3-4.06 6.16-4.06z"/></svg>Recipe</button>
           <button class="explore-icon" data-action="youtube" data-index="${index}"><svg viewBox="0 0 24 24"><path fill="#FF0000" d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>Video</button>
@@ -495,7 +524,6 @@
         }
     });
 
-    // MASTER STRICT DIET FILTER
     document.getElementById('generateBtn').addEventListener('click', () => {
         const activePill = document.querySelector('.category-pill.active');
         if (!activePill) return; 
@@ -505,63 +533,53 @@
         const cat = activePill.dataset.cat;
         const deck = [];
         
-        // Exclude Drinks/Dessert from diet toggle logic
         const isDietAgnostic = ['Dessert', 'Drinks', 'Cocktails'].includes(cat);
         const isNonVegMode = !isDietAgnostic && appSettings.diet === 'non-veg';
 
         if (cat === 'MyMeals') {
-            // Local Filtering
-            const bPool = state.db.breakfast || []; 
-            const lPool = state.db.lunch || []; 
-            const dPool = state.db.dinner || [];
+            const activePool = isNonVegMode ? (state.myNonVegMeals || []) : (state.myVegMeals || []);
             
-            let filteredB, filteredL, filteredD;
-            if (isNonVegMode) {
-                // Strict Non-Veg: Exclude anything Veg/Egg
-                filteredB = bPool.filter(m => getMealTag(m).text === 'Non-Veg');
-                filteredL = lPool.filter(m => getMealTag(m).text === 'Non-Veg');
-                filteredD = dPool.filter(m => getMealTag(m).text === 'Non-Veg');
-            } else {
-                // Strict Veg: Exclude anything Non-Veg
-                filteredB = bPool.filter(m => getMealTag(m).text !== 'Non-Veg');
-                filteredL = lPool.filter(m => getMealTag(m).text !== 'Non-Veg');
-                filteredD = dPool.filter(m => getMealTag(m).text !== 'Non-Veg');
-            }
+            const bPool = activePool.filter(m => m.category.toLowerCase() === 'breakfast');
+            const lPool = activePool.filter(m => m.category.toLowerCase() === 'lunch');
+            const dPool = activePool.filter(m => m.category.toLowerCase() === 'dinner');
 
-            const m1 = pickUniqueMeal(filteredB, []); const m2 = pickUniqueMeal(filteredL, []); const m3 = pickUniqueMeal(filteredD, []);
-            if(m1) deck.push(buildCard('Breakfast', m1, 'db', 'breakfast'));
-            if(m2) deck.push(buildCard('Lunch', m2, 'db', 'lunch'));
-            if(m3) deck.push(buildCard('Dinner', m3, 'db', 'dinner'));
+            const m1 = pickUniqueMealObj(bPool, []); 
+            const m2 = pickUniqueMealObj(lPool, []); 
+            const m3 = pickUniqueMealObj(dPool, []);
+            
+            const dbSource = isNonVegMode ? 'db_nv' : 'db_v';
+            if(m1) deck.push(buildCard('Breakfast', m1.name, dbSource, 'breakfast'));
+            if(m2) deck.push(buildCard('Lunch', m2.name, dbSource, 'lunch'));
+            if(m3) deck.push(buildCard('Dinner', m3.name, dbSource, 'dinner'));
             
         } else if (cat === 'Global') {
-            // Global Filtering (Pull from the correct designated safe bucket)
             const activePool = isNonVegMode ? (state.aiNonVegPool || []) : state.aiDiscoveryPool;
             
             const bPool = activePool.filter(m => m.category.toLowerCase() === 'breakfast');
             const lPool = activePool.filter(m => m.category.toLowerCase() === 'lunch');
             const dPool = activePool.filter(m => m.category.toLowerCase() === 'dinner');
             
-            if(bPool.length) { const m = bPool[Math.floor(Math.random()*bPool.length)]; deck.push(buildCard('Breakfast', m.name, 'api', 'breakfast')); }
-            if(lPool.length) { const m = lPool[Math.floor(Math.random()*lPool.length)]; deck.push(buildCard('Lunch', m.name, 'api', 'lunch')); }
-            if(dPool.length) { const m = dPool[Math.floor(Math.random()*dPool.length)]; deck.push(buildCard('Dinner', m.name, 'api', 'dinner')); }
+            if(bPool.length) { const m = bPool[Math.floor(Math.random()*bPool.length)]; deck.push(buildCard('Breakfast', m.name, 'api', 'breakfast', {ingredients: m.ingredients})); }
+            if(lPool.length) { const m = lPool[Math.floor(Math.random()*lPool.length)]; deck.push(buildCard('Lunch', m.name, 'api', 'lunch', {ingredients: m.ingredients})); }
+            if(dPool.length) { const m = dPool[Math.floor(Math.random()*dPool.length)]; deck.push(buildCard('Dinner', m.name, 'api', 'dinner', {ingredients: m.ingredients})); }
             
         } else {
-            // Diet-Agnostic Categories (Dessert, Drinks, Cocktails)
             const pool = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === cat.toLowerCase());
             if(pool.length > 0) {
                 const m = pool[Math.floor(Math.random() * pool.length)];
-                deck.push(buildCard(cat, m.name, 'api', cat.toLowerCase()));
+                deck.push(buildCard(cat, m.name, 'api', cat.toLowerCase(), {ingredients: m.ingredients}));
             } else {
-                const lPool = state.db[cat.toLowerCase()] || []; const lm = pickUniqueMeal(lPool, []);
-                if(lm) deck.push(buildCard(cat, lm, 'db', cat.toLowerCase()));
+                const lPool = (state.db[cat.toLowerCase()] || []).map(name => ({name: name})); 
+                const lm = pickUniqueMealObj(lPool, []);
+                if(lm) deck.push(buildCard(cat, lm.name, 'db_v', cat.toLowerCase()));
             }
         }
         
         renderOutputDeck(deck);
     });
 
-    function pickUniqueMeal(pool, excludedNames = []) {
-      const uniquePool = pool.filter(m => !excludedNames.includes(m));
+    function pickUniqueMealObj(pool, excludedNames = []) {
+      const uniquePool = pool.filter(m => !excludedNames.includes(m.name));
       if (uniquePool.length === 0) return null;
       return uniquePool[Math.floor(Math.random() * uniquePool.length)];
     }
@@ -584,7 +602,7 @@
               bookmarkSvg.setAttribute('stroke', 'currentColor');
           } else {
               card.isQueued = true;
-              pendingApprovals.push({ category: defaultCat, meal: card.name });
+              pendingApprovals.push({ category: defaultCat, meal: card.name, diet: appSettings.diet });
               bookmarkSvg.setAttribute('fill', 'var(--color-success)');
               bookmarkSvg.setAttribute('stroke', 'var(--color-success)');
           }
@@ -595,7 +613,9 @@
       if (action === 'prev') {
           if (card.historyIndex > 0) {
               card.historyIndex--;
-              card.name = card.history[card.historyIndex];
+              const historicItem = card.history[card.historyIndex];
+              card.name = historicItem.name;
+              card.ingredients = historicItem.ingredients;
               card.cookedRecently = !!cookedWithinAWeek(card.name); 
               const article = document.getElementById('suggestions').children[idx];
               article.innerHTML = getCardInnerHTML(card, idx);
@@ -605,34 +625,37 @@
       if (action === 'next') {
           if (card.historyIndex < card.history.length - 1) {
               card.historyIndex++;
-              card.name = card.history[card.historyIndex];
+              const historicItem = card.history[card.historyIndex];
+              card.name = historicItem.name;
+              card.ingredients = historicItem.ingredients;
           } else {
               let newMeal = null;
               
               const isDietAgnostic = ['Dessert', 'Drinks', 'Cocktails'].includes(card.poolContext.charAt(0).toUpperCase() + card.poolContext.slice(1).toLowerCase());
               const isNonVegMode = !isDietAgnostic && appSettings.diet === 'non-veg';
               
+              const excludedHistoryNames = card.history.map(h => h.name);
+              
               if (card.source === 'api') {
                   const activePool = isNonVegMode ? (state.aiNonVegPool || []) : state.aiDiscoveryPool;
                   const pool = activePool.filter(m => m.category.toLowerCase() === card.poolContext.toLowerCase());
-                  if(pool.length > 0) newMeal = pool[Math.floor(Math.random() * pool.length)];
+                  newMeal = pickUniqueMealObj(pool, excludedHistoryNames);
               } else {
-                  let pool = state.db[card.poolContext] || [];
-                  // Re-apply strict filter on NEXT click for local DB
+                  let pool = [];
                   if (!isDietAgnostic) {
-                      if (isNonVegMode) {
-                          pool = pool.filter(m => getMealTag(m).text === 'Non-Veg');
-                      } else {
-                          pool = pool.filter(m => getMealTag(m).text !== 'Non-Veg');
-                      }
+                      pool = isNonVegMode ? (state.myNonVegMeals || []) : (state.myVegMeals || []);
+                      pool = pool.filter(m => m.category.toLowerCase() === card.poolContext.toLowerCase());
+                  } else {
+                      pool = (state.db[card.poolContext] || []).map(n => ({name: n}));
                   }
-                  const nm = pickUniqueMeal(pool, card.history);
-                  if(nm) newMeal = { name: nm };
+                  newMeal = pickUniqueMealObj(pool, excludedHistoryNames);
               }
 
               if (newMeal) { 
-                  card.history.push(newMeal.name); card.historyIndex++; 
-                  card.name = newMeal.name; 
+                  card.history.push({name: newMeal.name, ingredients: newMeal.ingredients || null}); 
+                  card.historyIndex++; 
+                  card.name = newMeal.name;
+                  card.ingredients = newMeal.ingredients || null;
               } else { return; }
           }
           card.cookedRecently = !!cookedWithinAWeek(card.name);
@@ -657,12 +680,10 @@
       
       if (action === 'add-to-cart') {
           const targetName = card.name.toLowerCase().trim();
-          
           let aiMeal = state.aiDiscoveryPool.find(m => m.name.toLowerCase().trim() === targetName);
           if (!aiMeal && state.aiNonVegPool) {
              aiMeal = state.aiNonVegPool.find(m => m.name.toLowerCase().trim() === targetName);
           }
-          
           if (aiMeal && aiMeal.ingredients && aiMeal.ingredients !== '[]') {
               try { pushToCartLocally(JSON.parse(aiMeal.ingredients), card.name); return; } catch(e) {}
           }
@@ -680,6 +701,38 @@
       if (action === 'youtube') window.open(yUrl, '_blank');
       if (action === 'nutrition') window.open(`https://www.google.com/search?q=${searchQ}+nutritional+factual+information+calories`, '_blank');
     });
+
+    function shareDailyMenuToWhatsApp() {
+        const lockedCards = state.currentSuggestions.filter(card => card.isLocked);
+        if (lockedCards.length === 0) {
+            alert("Please lock (✓ On Menu) at least one meal to share the menu.");
+            return;
+        }
+
+        let text = "🍽️ *Today's Menu*\n\n";
+        
+        const timeIcons = {
+            'Breakfast': '🍳',
+            'Lunch': '🍱',
+            'Dinner': '🍽️',
+            'Dessert': '🍰',
+            'Drinks': '🥤',
+            'Cocktails': '🥂'
+        };
+
+        lockedCards.forEach(card => {
+            const icon = timeIcons[card.time] || '🍽️';
+            const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
+            const gUrl = `https://www.google.com/search?q=${searchQ}`;
+            const yUrl = `https://www.youtube.com/results?search_query=${searchQ}`;
+            
+            text += `${icon} *${card.time}:* ${card.name.trim()}\n`;
+            text += `🔍 _${gUrl}_\n`;
+            text += `▶️ _${yUrl}_\n\n`;
+        });
+
+        window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
+    }
 
     function pushToCartLocally(ingredients, mealContext = "Uncategorized") {
         const now = new Date();
@@ -793,10 +846,13 @@
       document.getElementById(`page-${tabId}`).classList.add('active');
       
       const topbar = document.getElementById('mainTopbar');
+      const fab = document.getElementById('floatingShareFab');
       if (tabId === 'cart') {
           topbar.classList.add('topbar-hidden');
+          fab.classList.add('fab-hidden');
       } else {
           topbar.classList.remove('topbar-hidden');
+          fab.classList.remove('fab-hidden');
       }
     }
 
@@ -813,8 +869,7 @@
     }
 
     function updateCookbookStats() {
-        // Stats ignore the toggle filter to show total accurate counts of the raw data.
-        document.getElementById('cb-mymeals').innerText = (state.db.breakfast||[]).length + (state.db.lunch||[]).length + (state.db.dinner||[]).length;
+        document.getElementById('cb-mymeals').innerText = (state.myVegMeals||[]).length + (state.myNonVegMeals||[]).length;
         
         const activeAiPool = appSettings.diet === 'non-veg' ? (state.aiNonVegPool || []) : state.aiDiscoveryPool;
         document.getElementById('cb-global').innerText = activeAiPool.filter(m => ['breakfast', 'lunch', 'dinner'].includes(m.category.toLowerCase())).length;
@@ -830,17 +885,11 @@
         const activeAiPool = isNonVegMode ? (state.aiNonVegPool || []) : state.aiDiscoveryPool;
 
         if (cat === 'MyMeals') {
-            items = [...(state.db.breakfast||[]), ...(state.db.lunch||[]), ...(state.db.dinner||[])].map(m => ({name: m, src: 'Local DB'}));
-            // Apply strict filter to visually hide items in the UI list when inspecting
-            if (isNonVegMode) {
-                items = items.filter(i => getMealTag(i.name).text === 'Non-Veg');
-            } else {
-                items = items.filter(i => getMealTag(i.name).text !== 'Non-Veg');
-            }
+            const activePool = isNonVegMode ? (state.myNonVegMeals || []) : (state.myVegMeals || []);
+            items = activePool.map(m => ({name: m.name, src: 'Local DB'}));
         } else if (cat === 'Global') {
             items = activeAiPool.filter(m => ['breakfast', 'lunch', 'dinner'].includes(m.category.toLowerCase())).map(m => ({name: m.name, src: 'AI Pool'}));
         } else {
-            // Diet Agnostic
             const aiItems = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === cat.toLowerCase()).map(m => ({name: m.name, src: 'AI Pool'}));
             const dbItems = (state.db[cat.toLowerCase()]||[]).map(m => ({name: m, src: 'Local DB'}));
             items = [...aiItems, ...dbItems];
@@ -859,18 +908,19 @@
         btn.innerHTML = `Syncing...`;
         document.getElementById('syncIndicator').classList.add('active');
         
-        // Pass the diet flag to the backend
         fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'forceRefill', diet: appSettings.diet }) })
         .then(res => res.json())
         .then(parsed => {
             const data = parsed.data;
-            Object.assign(state.db, { breakfast: data.breakfast, lunch: data.lunch, dinner: data.dinner, dessert: data.dessert, drinks: data.drinks, cocktails: data.cocktails });
+            state.myVegMeals = data.myVegMeals || [];
+            state.myNonVegMeals = data.myNonVegMeals || [];
+            Object.assign(state.db, { dessert: data.dessert, drinks: data.drinks, cocktails: data.cocktails });
+            
             if(data.aiDiscoveryPool) state.aiDiscoveryPool = data.aiDiscoveryPool;
             if(data.aiNonVegPool) state.aiNonVegPool = data.aiNonVegPool;
             
             saveStateLocally();
             updateCookbookStats(); 
-            // Re-render the list if the user is looking at it
             const activePill = document.querySelector('.category-pill.active');
             if(activePill) renderCookbookList(activePill.dataset.cat);
             
@@ -885,7 +935,7 @@
     function queueUnifiedEntry() {
         const m = document.getElementById('unified-meal-input').value.trim();
         const c = document.getElementById('unified-meal-category').value;
-        if (m) { pendingApprovals.push({ category: c, meal: m }); document.getElementById('unified-meal-input').value = ''; renderReviewQueue(); }
+        if (m) { pendingApprovals.push({ category: c, meal: m, diet: appSettings.diet }); document.getElementById('unified-meal-input').value = ''; renderReviewQueue(); }
     }
     
     function renderReviewQueue() {
@@ -926,7 +976,13 @@
         if ((await res.json()).success) {
             pendingApprovals.forEach(i => { 
                 const catLower = i.category.toLowerCase();
-                if(state.db[catLower]) state.db[catLower].push(i.meal); 
+                const isCore = ['breakfast', 'lunch', 'dinner'].includes(catLower);
+                if (isCore) {
+                    if (i.diet === 'non-veg') { state.myNonVegMeals.push({name: i.meal, category: i.category}); }
+                    else { state.myVegMeals.push({name: i.meal, category: i.category}); }
+                } else if (state.db[catLower]) {
+                    state.db[catLower].push(i.meal);
+                }
             });
             pendingApprovals = []; renderReviewQueue(); updateCookbookStats(); saveStateLocally();
             
@@ -988,6 +1044,16 @@
       if (cached) {
           state = JSON.parse(cached);
           state.cart.forEach(c => { if(!c.mealContext) c.mealContext = "Uncategorized"; });
+          
+          if (!state.myVegMeals) {
+              state.myVegMeals = []; state.myNonVegMeals = [];
+              if (state.db.breakfast) state.myVegMeals.push(...state.db.breakfast.map(m => ({name: m, category: 'Breakfast'})));
+              if (state.db.lunch) state.myVegMeals.push(...state.db.lunch.map(m => ({name: m, category: 'Lunch'})));
+              if (state.db.dinner) state.myVegMeals.push(...state.db.dinner.map(m => ({name: m, category: 'Dinner'})));
+              delete state.db.breakfast; delete state.db.lunch; delete state.db.dinner;
+              saveStateLocally();
+          }
+          
           renderEmptyState();
       } else {
           document.getElementById('syncIndicator').classList.add('active');
@@ -1001,7 +1067,10 @@
         .then(res => res.json())
         .then(parsed => {
             const data = parsed.data;
-            Object.assign(state.db, { breakfast: data.breakfast, lunch: data.lunch, dinner: data.dinner, dessert: data.dessert, drinks: data.drinks, cocktails: data.cocktails });
+            state.myVegMeals = data.myVegMeals || [];
+            state.myNonVegMeals = data.myNonVegMeals || [];
+            Object.assign(state.db, { dessert: data.dessert, drinks: data.drinks, cocktails: data.cocktails });
+            
             state.masterGrocery = data.masterGrocery; state.orderHistory = data.orderHistory; state.cart = data.cart; state.cookingHistory = data.cookingHistory;
             
             if(data.aiDiscoveryPool && data.aiDiscoveryPool.length > state.aiDiscoveryPool.length) state.aiDiscoveryPool = data.aiDiscoveryPool;
