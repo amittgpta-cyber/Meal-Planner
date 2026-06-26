@@ -29,8 +29,8 @@
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     
-    html { scroll-behavior: smooth; overscroll-behavior: none; }
-    body { min-height: 100dvh; font-family: var(--font-body); background: var(--color-bg); color: var(--color-text); overflow-x: hidden; overscroll-behavior-y: none; user-select: none; }
+        html { scroll-behavior: smooth; }
+    body { min-height: 100dvh; font-family: var(--font-body); background: var(--color-bg); color: var(--color-text); overflow-x: hidden; user-select: none; }
     input, textarea { user-select: auto; }
     button, select { font: inherit; color: inherit; outline: none; background: none; border: none; cursor: pointer; }
     
@@ -915,9 +915,18 @@
         document.getElementById('cb-cocktails').innerText = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'cocktails').length + (state.db.cocktails||[]).length;
     }
 
-    function renderCookbookList(cat) {
-        document.querySelectorAll('.stat-btn').forEach(b => b.classList.remove('active'));
+        function renderCookbookList(cat) {
         const activeBtn = document.querySelector(`.stat-btn[data-cbcat="${cat}"]`);
+        
+        // Toggle Logic: If it is already active, deselect it, wipe the list, and halt.
+        if (activeBtn && activeBtn.classList.contains('active')) {
+            activeBtn.classList.remove('active');
+            document.getElementById('cookbookOutput').innerHTML = '';
+            return;
+        }
+
+        // Fresh Selection: Deselect all others, activate the new one.
+        document.querySelectorAll('.stat-btn').forEach(b => b.classList.remove('active'));
         if(activeBtn) activeBtn.classList.add('active');
 
         let items = [];
@@ -962,6 +971,7 @@
         }
         document.getElementById('cookbookOutput').innerHTML = html;
     }
+
 
     function forceRefill() {
         const btn = document.getElementById('refillBtn');
