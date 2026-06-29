@@ -108,7 +108,7 @@
     .cart-tools select { flex: 1.5; padding: 0 12px; height: 56px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-family: var(--font-body); font-size: 0.95rem; -webkit-appearance: none; appearance: none; outline: none; }
     
     .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); font-weight: bold; margin: 24px 0 12px; }
-    .cart-group-header { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; color: var(--color-primary); margin: 24px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--color-divider); }
+    .cart-group-header { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; color: var(--color-primary); margin: 0; padding: 0; }
     
     .list-item-row { display: flex; align-items: center; justify-content: space-between; background: var(--color-surface); padding: 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); margin-bottom: 12px; transition: transform 0.2s var(--ease-fluid), opacity 0.3s; width: 100%; }
     .list-item-row:active { transform: scale(0.97); }
@@ -117,7 +117,6 @@
     .checkbox { width: 24px; height: 24px; border: 2px solid var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: transparent; transition: 0.2s var(--ease-fluid); flex-shrink: 0; font-weight: bold; }
     .list-item-row.checked .checkbox { background: var(--color-primary); color: var(--color-bg); }
     .item-name { font-size: 1.125rem; font-weight: 600; text-transform: capitalize; color: var(--color-text); }
-    .item-flag { font-size: 0.75rem; color: var(--color-warning); font-weight: 600; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
     .trash-btn { background: none; border: none; font-size: 1.25rem; color: var(--color-error); padding: 8px; border-radius: 50%; cursor: pointer; transition: transform 0.2s var(--ease-fluid); }
     .trash-btn:active { transform: scale(0.8); }
     
@@ -175,6 +174,10 @@
     .toast-container { position: fixed; top: env(safe-area-inset-top, 20px); left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; margin-top: 20px; width: 90%; max-width: 400px;}
     .toast { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); padding: 16px 20px; border-radius: 1.5rem; box-shadow: var(--shadow-md); font-weight: 600; font-size: 0.95rem; text-align: center; animation: toastSlide 0.3s var(--ease-fluid) forwards; transition: opacity 0.3s; pointer-events: auto; }
     @keyframes toastSlide { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .cart-accordion-header { display: flex; justify-content: space-between; align-items: center; background: var(--color-surface-2); padding: 16px 20px; border-radius: 1.5rem; border: 1px solid var(--color-border); cursor: pointer; user-select: none; margin-bottom: 16px; }
+    .cart-chevron { font-size: 1.25rem; transition: transform 0.3s var(--ease-fluid); color: var(--color-text-muted); }
+    .cart-chevron.expanded { transform: rotate(180deg); }
   </style>
 </head>
 <body>
@@ -230,7 +233,12 @@
             <button class="ghost-btn" style="border-radius: 1.5rem; padding: 6px 16px; font-size: 12px; height: 36px; font-weight: 600;" onclick="clearActiveCart()">🗑️ Clear</button>
         </div>
         
-        <div id="unified-cart-items"></div>
+        <!-- Accordion Wrapper -->
+        <div class="cart-accordion-header" onclick="toggleCartDropdown()">
+            <div class="cart-group-header">🛒 Cart</div>
+            <div id="cartChevron" class="cart-chevron">▼</div>
+        </div>
+        <div id="unified-cart-items" style="display: none;"></div>
         
         <div style="display:flex; gap:10px; margin-top:30px; margin-bottom:24px;">
             <button class="primary-btn" style="flex: 1; background: #fc8019;" onclick="startGuidedShopping('swiggy')">🛒 Swiggy</button>
@@ -371,6 +379,7 @@
     let deckCache = {}; 
     let activeTab = 'plan';
     let activeMasterCategory = '🔥 Top Picks';
+    let isCartExpanded = false;
 
     let lastScrollY = window.scrollY;
     const bottomNav = document.getElementById('bottomNav');
@@ -383,6 +392,29 @@
         }
         lastScrollY = currentScrollY;
     }, { passive: true });
+
+    // Swipe Navigation Listeners
+    let touchstartX = 0;
+    let touchendX = 0;
+    document.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; }, {passive: true});
+    document.addEventListener('touchend', e => { 
+        touchendX = e.changedTouches[0].screenX; 
+        if (touchendX < touchstartX - 100 && activeTab === 'plan') toggleMainView();
+        if (touchendX > touchstartX + 100 && activeTab === 'cart') toggleMainView();
+    }, {passive: true});
+
+    function toggleCartDropdown() {
+        isCartExpanded = !isCartExpanded;
+        const el = document.getElementById('unified-cart-items');
+        const chev = document.getElementById('cartChevron');
+        if (isCartExpanded) {
+            el.style.display = 'block';
+            chev.classList.add('expanded');
+        } else {
+            el.style.display = 'none';
+            chev.classList.remove('expanded');
+        }
+    }
 
     function showToast(message) {
         const container = document.getElementById('toastContainer') || (() => {
@@ -413,7 +445,7 @@
       const root = document.documentElement;
       let theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       root.setAttribute('data-theme', theme);
-      const renderThemeIcon = () => { themeBtn.innerHTML = theme === 'dark' ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>' : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'; };
+      const renderThemeIcon = () => { themeBtn.innerHTML = theme === 'dark' ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>' : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2/></svg>'; };
       renderThemeIcon();
       themeBtn.addEventListener('click', () => { theme = theme === 'dark' ? 'light' : 'dark'; root.setAttribute('data-theme', theme); renderThemeIcon(); });
     })();
@@ -428,7 +460,6 @@
         renderEmptyState();
         saveStateLocally();
         updateCookbookStats();
-        
         const activeBtn = document.querySelector('.stat-btn.active');
         if(activeBtn) renderCookbookList(activeBtn.dataset.cbcat);
     }
@@ -483,19 +514,14 @@
     function getMealTag(name, rawItem = null) {
       if (rawItem && rawItem.source === 'db_nv') return { text: 'Non-Veg', cls: 'tag-nonveg' };
       if (rawItem && rawItem.source === 'db_v') return { text: 'Veg', cls: 'tag-veg' };
-
       const low = String(name || '').toLowerCase();
       let hasMeat = CORE_MEAT_KEYS.some(fw => low.includes(fw));
-
       if (!hasMeat && rawItem && rawItem.ingredients) {
           try {
               const ingList = typeof rawItem.ingredients === 'string' ? JSON.parse(rawItem.ingredients) : rawItem.ingredients;
-              if (Array.isArray(ingList)) {
-                  hasMeat = ingList.some(ing => CORE_MEAT_KEYS.some(fw => String(ing).toLowerCase().includes(fw)));
-              }
+              if (Array.isArray(ingList)) { hasMeat = ingList.some(ing => CORE_MEAT_KEYS.some(fw => String(ing).toLowerCase().includes(fw))); }
           } catch(e){}
       }
-
       if (hasMeat) return { text: 'Non-Veg', cls: 'tag-nonveg' };
       const eggRegex = /\b(egg|eggs|omelet|omelette|frittata|shakshuka|anda|bhurji)\b/i;
       if (eggRegex.test(low)) return { text: 'Egg', cls: 'tag-egg' };
@@ -511,14 +537,7 @@
     }
 
     function buildCard(time, name, source, poolContext = null, extra = {}) { 
-        return { 
-            time, name, source, poolContext, 
-            ingredients: extra.ingredients || null,
-            isLocked: !!extra.isLocked, cookedRecently: !!cookedWithinAWeek(name), 
-            history: extra.history || [{name: name, ingredients: extra.ingredients || null}], 
-            historyIndex: extra.historyIndex || 0,
-            isQueued: false 
-        }; 
+        return { time, name, source, poolContext, ingredients: extra.ingredients || null, isLocked: !!extra.isLocked, cookedRecently: !!cookedWithinAWeek(name), history: extra.history || [{name: name, ingredients: extra.ingredients || null}], historyIndex: extra.historyIndex || 0, isQueued: false }; 
     }
 
     function getCardInnerHTML(item, index) {
@@ -576,28 +595,12 @@
       });
     }
 
-    document.getElementById('specialtyBar').addEventListener('click', (e) => {
-        const btn = e.target.closest('.category-pill'); if (!btn) return;
-        if (btn.classList.contains('active')) {
-            btn.classList.remove('active'); 
-            document.getElementById('generateBtn').style.opacity = '0.5';
-            renderEmptyState(); 
-        } else {
-            document.querySelectorAll('.category-pill').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active'); 
-            document.getElementById('generateBtn').style.opacity = '1';
-            renderEmptyState(); 
-        }
-    });
-
     document.getElementById('generateBtn').addEventListener('click', () => {
         const activePill = document.querySelector('.category-pill.active');
         if (!activePill) return; 
-
         if (activeTab === 'cart') toggleMainView(); 
 
         const cat = activePill.dataset.cat;
-        
         if (deckCache[cat] && deckCache[cat].length > 0) {
             renderOutputDeck(deckCache[cat]);
             return;
@@ -616,8 +619,8 @@
             const m1 = pickUniqueMealObj(bPool, []); 
             const m2 = pickUniqueMealObj(lPool, []); 
             const m3 = pickUniqueMealObj(dPool, []);
-            
             const dbSource = isNonVegMode ? 'db_nv' : 'db_v';
+            
             if(m1) deck.push(buildCard('Breakfast', m1.name, dbSource, 'breakfast'));
             if(m2) deck.push(buildCard('Lunch', m2.name, dbSource, 'lunch'));
             if(m3) deck.push(buildCard('Dinner', m3.name, dbSource, 'dinner'));
@@ -643,23 +646,15 @@
                 if(lm) deck.push(buildCard(cat, lm.name, 'db_v', cat.toLowerCase()));
             }
         }
-        
         deckCache[cat] = deck; 
         renderOutputDeck(deck);
     });
-
-    function pickUniqueMealObj(pool, excludedNames = []) {
-      const uniquePool = pool.filter(m => !excludedNames.includes(m.name));
-      if (uniquePool.length === 0) return null;
-      return uniquePool[Math.floor(Math.random() * uniquePool.length)];
-    }
 
     document.getElementById('suggestions').addEventListener('click', async event => {
       const btn = event.target.closest('[data-action]'); if (!btn) return;
       const idx = Number(btn.dataset.index); const action = btn.dataset.action; const card = state.currentSuggestions[idx];
       
       if (action === 'toggle-explore') document.getElementById(`explore-${idx}`).classList.toggle('open');
-      
       if (action === 'queue-meal') {
           const catMap = { 'Breakfast': 'Breakfast', 'Lunch': 'Lunch', 'Dinner': 'Dinner', 'Dessert': 'Dessert', 'Drinks': 'Drinks', 'Cocktails': 'Cocktails' };
           const defaultCat = catMap[card.time] || 'Dinner';
@@ -668,40 +663,29 @@
           if (card.isQueued) {
               card.isQueued = false;
               pendingApprovals = pendingApprovals.filter(p => p.meal !== card.name);
-              bookmarkSvg.setAttribute('fill', 'none');
-              bookmarkSvg.setAttribute('stroke', 'currentColor');
+              bookmarkSvg.setAttribute('fill', 'none'); bookmarkSvg.setAttribute('stroke', 'currentColor');
           } else {
               card.isQueued = true;
               pendingApprovals.push({ category: defaultCat, meal: card.name, diet: appSettings.diet });
-              bookmarkSvg.setAttribute('fill', 'var(--color-success)');
-              bookmarkSvg.setAttribute('stroke', 'var(--color-success)');
+              bookmarkSvg.setAttribute('fill', 'var(--color-success)'); bookmarkSvg.setAttribute('stroke', 'var(--color-success)');
           }
           renderReviewQueue(); 
-          if(pendingApprovals.length > 0) {
-              document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="var(--color-primary)" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
-          } else {
-              document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
-          }
+          document.getElementById('openDataBtn').innerHTML = pendingApprovals.length > 0 ? `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="var(--color-primary)" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>` : `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
       }
 
-      if (action === 'prev') {
-          if (card.historyIndex > 0) {
-              card.historyIndex--;
-              const historicItem = card.history[card.historyIndex];
-              card.name = historicItem.name;
-              card.ingredients = historicItem.ingredients;
-              card.cookedRecently = !!cookedWithinAWeek(card.name); 
-              const article = document.getElementById('suggestions').children[idx];
-              article.innerHTML = getCardInnerHTML(card, idx);
-          }
+      if (action === 'prev' && card.historyIndex > 0) {
+          card.historyIndex--;
+          const historicItem = card.history[card.historyIndex];
+          card.name = historicItem.name; card.ingredients = historicItem.ingredients;
+          card.cookedRecently = !!cookedWithinAWeek(card.name); 
+          document.getElementById('suggestions').children[idx].innerHTML = getCardInnerHTML(card, idx);
       }
       
       if (action === 'next') {
           if (card.historyIndex < card.history.length - 1) {
               card.historyIndex++;
               const historicItem = card.history[card.historyIndex];
-              card.name = historicItem.name;
-              card.ingredients = historicItem.ingredients;
+              card.name = historicItem.name; card.ingredients = historicItem.ingredients;
           } else {
               let newMeal = null;
               const isDietAgnostic = ['Dessert', 'Drinks', 'Cocktails'].includes(card.poolContext.charAt(0).toUpperCase() + card.poolContext.slice(1).toLowerCase());
@@ -710,29 +694,15 @@
               
               if (card.source === 'api') {
                   const activePool = isNonVegMode ? (state.aiNonVegPool || []) : state.aiDiscoveryPool;
-                  const pool = activePool.filter(m => m.category.toLowerCase() === card.poolContext.toLowerCase());
-                  newMeal = pickUniqueMealObj(pool, excludedHistoryNames);
+                  newMeal = pickUniqueMealObj(activePool.filter(m => m.category.toLowerCase() === card.poolContext.toLowerCase()), excludedHistoryNames);
               } else {
-                  let pool = [];
-                  if (!isDietAgnostic) {
-                      pool = isNonVegMode ? (state.myNonVegMeals || []) : (state.myVegMeals || []);
-                      pool = pool.filter(m => m.category.toLowerCase() === card.poolContext.toLowerCase());
-                  } else {
-                      pool = (state.db[card.poolContext] || []).map(n => ({name: n}));
-                  }
+                  let pool = !isDietAgnostic ? (isNonVegMode ? (state.myNonVegMeals || []) : (state.myVegMeals || [])).filter(m => m.category.toLowerCase() === card.poolContext.toLowerCase()) : (state.db[card.poolContext] || []).map(n => ({name: n}));
                   newMeal = pickUniqueMealObj(pool, excludedHistoryNames);
               }
-
-              if (newMeal) { 
-                  card.history.push({name: newMeal.name, ingredients: newMeal.ingredients || null}); 
-                  card.historyIndex++; 
-                  card.name = newMeal.name;
-                  card.ingredients = newMeal.ingredients || null;
-              } else { return; }
+              if (newMeal) { card.history.push({name: newMeal.name, ingredients: newMeal.ingredients || null}); card.historyIndex++; card.name = newMeal.name; card.ingredients = newMeal.ingredients || null; } else { return; }
           }
           card.cookedRecently = !!cookedWithinAWeek(card.name);
-          const article = document.getElementById('suggestions').children[idx];
-          article.innerHTML = getCardInnerHTML(card, idx);
+          document.getElementById('suggestions').children[idx].innerHTML = getCardInnerHTML(card, idx);
           const activePill = document.querySelector('.category-pill.active');
           if (activePill) deckCache[activePill.dataset.cat] = state.currentSuggestions;
       }
@@ -748,110 +718,63 @@
           }
           card.cookedRecently = !!cookedWithinAWeek(card.name);
           const article = document.getElementById('suggestions').children[idx];
-          article.className = 'meal-card' + (card.isLocked ? ' locked' : ''); 
-          article.innerHTML = getCardInnerHTML(card, idx);
+          article.className = 'meal-card' + (card.isLocked ? ' locked' : ''); article.innerHTML = getCardInnerHTML(card, idx);
       }
       
       if (action === 'add-to-cart') {
           const targetName = card.name.toLowerCase().trim();
-          let aiMeal = state.aiDiscoveryPool.find(m => m.name.toLowerCase().trim() === targetName);
-          if (!aiMeal && state.aiNonVegPool) {
-             aiMeal = state.aiNonVegPool.find(m => m.name.toLowerCase().trim() === targetName);
-          }
-          if (aiMeal && aiMeal.ingredients && aiMeal.ingredients !== '[]') {
-              try { pushToCartLocally(JSON.parse(aiMeal.ingredients), card.name); return; } catch(e) {}
-          }
+          let aiMeal = state.aiDiscoveryPool.find(m => m.name.toLowerCase().trim() === targetName) || (state.aiNonVegPool ? state.aiNonVegPool.find(m => m.name.toLowerCase().trim() === targetName) : null);
+          if (aiMeal && aiMeal.ingredients && aiMeal.ingredients !== '[]') { try { pushToCartLocally(JSON.parse(aiMeal.ingredients), card.name); return; } catch(e) {} }
       }
       
       const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
-      const gUrl = `https://www.google.com/search?q=${searchQ}`;
-      const yUrl = `https://www.youtube.com/results?search_query=${searchQ}`;
-
-      if (action === 'share-card') {
-          const text = `🍽️ *${card.name.trim()}*\n\n🔍 _${gUrl}_\n\n▶️ _${yUrl}_`;
-          window.open(`whatsapp://send?text=${encodeURIComponent(text)}`, '_blank');
-      }
-      if (action === 'google') window.open(gUrl, '_blank');
-      if (action === 'youtube') window.open(yUrl, '_blank');
+      if (action === 'share-card') { window.open(`whatsapp://send?text=${encodeURIComponent(`🍽️ *${card.name.trim()}*\n\n🔍 _https://www.google.com/search?q=${searchQ}_\n\n▶️ _https://www.youtube.com/results?search_query=${searchQ}_`)}`, '_blank'); }
+      if (action === 'google') window.open(`https://www.google.com/search?q=${searchQ}`, '_blank');
+      if (action === 'youtube') window.open(`https://www.youtube.com/results?search_query=${searchQ}`, '_blank');
       if (action === 'nutrition') window.open(`https://www.google.com/search?q=${searchQ}+nutritional+factual+information+calories`, '_blank');
     });
 
     function shareDailyMenuToWhatsApp() {
         const lockedCards = state.currentSuggestions.filter(card => card.isLocked);
-        if (lockedCards.length === 0) {
-            showToast("Please lock (✓ On Menu) at least one meal to share the menu.");
-            return;
-        }
-
+        if (lockedCards.length === 0) { showToast("Please lock (✓ On Menu) at least one meal to share the menu."); return; }
         let text = "🍽️ *Today's Menu*\n\n";
         const timeIcons = { 'Breakfast': '🍳', 'Lunch': '🍱', 'Dinner': '🍽️', 'Dessert': '🍰', 'Drinks': '🥤', 'Cocktails': '🥂' };
-
         lockedCards.forEach(card => {
-            const icon = timeIcons[card.time] || '🍽️';
             const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
-            const gUrl = `https://www.google.com/search?q=${searchQ}`;
-            const yUrl = `https://www.youtube.com/results?search_query=${searchQ}`;
-            text += `${icon} *${card.time}:* ${card.name.trim()}\n🔍 _${gUrl}_\n▶️ _${yUrl}_\n\n`;
+            text += `${timeIcons[card.time] || '🍽️'} *${card.time}:* ${card.name.trim()}\n🔍 _https://www.google.com/search?q=${searchQ}_\n▶️ _https://www.youtube.com/results?search_query=${searchQ}_\n\n`;
         });
         window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
     }
 
     function pushToCartLocally(ingredients, mealContext = "Uncategorized") {
-        const now = new Date();
-        const recentNames = state.orderHistory
-            .filter(h => (now - new Date(h.date)) < 14*24*60*60*1000)
-            .map(h => h.item.toLowerCase().trim());
-            
+        const recentNames = state.orderHistory.filter(h => (now - new Date(h.date)) < 14*24*60*60*1000).map(h => h.item.toLowerCase().trim());
         ingredients.reverse().forEach(ing => {
           const safeIng = ing.toLowerCase().trim();
-          const isRecent = recentNames.includes(safeIng);
-          
-          // DO NOT push to cart if it's recently bought. Only add fresh items.
-          if(!isRecent && !state.cart.some(c => c.name.toLowerCase().trim() === safeIng)) {
-            state.cart.unshift({ 
-                name: ing, 
-                checked: true, // Auto check new items
-                recent: false, 
-                flag: "", 
-                mealContext: mealContext 
-            });
+          if(!recentNames.includes(safeIng) && !state.cart.some(c => c.name.toLowerCase().trim() === safeIng)) {
+            state.cart.unshift({ name: ing, checked: true, recent: false, flag: "", mealContext: mealContext });
           }
         });
-        
         renderCart(); saveStateLocally(); syncCartToBackend();
         if (activeTab !== 'cart') toggleMainView();
     }
 
     function shareCartToWhatsApp() {
-        const checkedItems = state.cart.filter(i => i.checked);
-        if (checkedItems.length === 0) return;
-        
-        let text = "🛒 *Grocery List:*\n\n";
-        checkedItems.forEach(i => text += `- ${i.name}\n`);
+        const checkedItems = state.cart.filter(i => i.checked); if (checkedItems.length === 0) return;
+        let text = "🛒 *Grocery List:*\n\n"; checkedItems.forEach(i => text += `- ${i.name}\n`);
         window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
     }
 
     function renderCart() {
-      // 1. Purge completely bought / recent items permanently from the cart array so it doesn't clutter
       const initialLength = state.cart.length;
       state.cart = state.cart.filter(item => !(item.recent === true || item.flag === "Verified Purchase"));
-      
-      // Save state if we actively purged items so backend stays synced
-      if (state.cart.length !== initialLength) {
-          saveStateLocally();
-          syncCartToBackend();
-      }
+      if (state.cart.length !== initialLength) { saveStateLocally(); syncCartToBackend(); }
 
-      // 2. Render remaining items as a single consolidated list, checked items grouped at the top
       let html = '';
       if (state.cart.length === 0) { 
-          html = '<p class="subtle">Cart is empty.</p>'; 
+          html = '<p class="subtle" style="padding: 16px;">Cart is empty.</p>'; 
       } else {
-          html += `<div class="cart-group-header">🛒 Cart</div>`;
-          // Map to keep original indices for toggleCartItem to work perfectly
           const sortedCart = state.cart.map((item, index) => ({...item, originalIndex: index}))
                                        .sort((a, b) => (a.checked === b.checked) ? 0 : a.checked ? -1 : 1);
-          
           sortedCart.forEach(item => {
              html += `
               <div class="list-item-row ${item.checked ? 'checked' : 'dimmed'}">
@@ -859,7 +782,7 @@
                     <div class="checkbox">${item.checked ? '✓' : ''}</div>
                     <div><div class="item-name">${escapeHtml(item.name)}</div></div>
                 </div>
-                <button class="trash-btn" onclick="executeSoftDelete('cart', '${item.originalIndex}')"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                <button class="trash-btn" onclick="executeSoftDelete('cart', '${item.originalIndex}')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
               </div>`;
          });
       }
@@ -867,64 +790,37 @@
     }
 
     /* --- MASTER LIST LOGIC WITH DYNAMIC SORTING --- */
-    
-    // Sorts categories based on order frequency dynamically
     function getSortedCategories() {
         const catFreqs = {};
         (state.masterGrocery || []).forEach(item => {
             const cat = item.category || '📦 Uncategorized';
             catFreqs[cat] = (catFreqs[cat] || 0) + (item.freq || 1);
         });
-
         const fixedTop = ['All', '🔥 Top Picks'];
         const fixedBottom = ['📦 Uncategorized'];
         const dynamicCats = MASTER_CATEGORIES.filter(c => !fixedTop.includes(c.id) && !fixedBottom.includes(c.id));
-        
-        dynamicCats.sort((a, b) => {
-            const freqA = catFreqs[a.id] || 0;
-            const freqB = catFreqs[b.id] || 0;
-            return freqB - freqA;
-        });
-
-        return [
-            ...MASTER_CATEGORIES.filter(c => fixedTop.includes(c.id)),
-            ...dynamicCats,
-            ...MASTER_CATEGORIES.filter(c => fixedBottom.includes(c.id))
-        ];
+        dynamicCats.sort((a, b) => (catFreqs[b.id] || 0) - (catFreqs[a.id] || 0));
+        return [...MASTER_CATEGORIES.filter(c => fixedTop.includes(c.id)), ...dynamicCats, ...MASTER_CATEGORIES.filter(c => fixedBottom.includes(c.id))];
     }
     
     function populateCategoryDropdowns() {
         const sortedCats = getSortedCategories();
         const cartSelect = document.getElementById('cartCategorySelect');
         if (cartSelect) {
-            cartSelect.innerHTML = `<option value="📦 Uncategorized">📦 Category</option>` + 
-                sortedCats.filter(c => !['All', '🔥 Top Picks', '📦 Uncategorized'].includes(c.id))
-                          .map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+            cartSelect.innerHTML = `<option value="📦 Uncategorized">📦 Category</option>` + sortedCats.filter(c => !['All', '🔥 Top Picks', '📦 Uncategorized'].includes(c.id)).map(c => `<option value="${c.id}">${c.label}</option>`).join('');
         }
     }
 
     function renderCategoryRibbon() {
-        const ribbon = document.getElementById('masterCategoryRibbon');
-        const sortedCats = getSortedCategories();
-        ribbon.innerHTML = sortedCats.map(cat => {
-            const isActive = activeMasterCategory === cat.id ? 'active' : '';
-            const isTopPicks = cat.id === '🔥 Top Picks' ? 'top-picks' : '';
-            return `<div class="filter-chip ${isTopPicks} ${isActive}" onclick="setMasterCategory('${cat.id}')">${cat.label}</div>`;
-        }).join('');
+        document.getElementById('masterCategoryRibbon').innerHTML = getSortedCategories().map(cat => `<div class="filter-chip ${cat.id === '🔥 Top Picks' ? 'top-picks' : ''} ${activeMasterCategory === cat.id ? 'active' : ''}" onclick="setMasterCategory('${cat.id}')">${cat.label}</div>`).join('');
     }
 
-    function setMasterCategory(catId) {
-        activeMasterCategory = catId;
-        renderCategoryRibbon();
-        filterMasterList();
-    }
+    function setMasterCategory(catId) { activeMasterCategory = catId; renderCategoryRibbon(); filterMasterList(); }
 
     function editMasterItem(itemName, newCategory) {
         const item = state.masterGrocery.find(i => i.name === itemName);
         if (item) {
-            item.category = newCategory;
-            saveStateLocally();
-            filterMasterList();
+            item.category = newCategory; saveStateLocally(); filterMasterList();
             fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'editMasterItemCategory', item: itemName, category: newCategory }) }).catch(e=>e);
             showToast(`Category updated to ${newCategory}`);
         }
@@ -932,24 +828,19 @@
 
     function filterMasterList() {
         const term = document.getElementById('masterSearchInput').value.trim();
-        
         let filtered = (state.masterGrocery || []).filter(item => {
             if (term && !fuzzyMatch(term, item.name)) return false;
             if (activeMasterCategory === 'All') return true;
             if (activeMasterCategory === '🔥 Top Picks') return item.freq >= 10;
             return (item.category || '📦 Uncategorized') === activeMasterCategory;
         });
-
         filtered.sort((a, b) => (b.freq - a.freq) || a.name.localeCompare(b.name));
-
         const catOptions = getSortedCategories().filter(c => !['All', '🔥 Top Picks'].includes(c.id)).map(c => `<option value="${c.id}">${c.label}</option>`).join('');
 
-        const renderList = (arr) => arr.map(item => {
-            const inCart = state.cart.some(c => c.name.toLowerCase().trim() === item.name.toLowerCase().trim());
-            return `
-            <div class="list-item-row ${inCart ? 'checked' : ''}">
+        document.getElementById('ml-content').innerHTML = filtered.map(item => `
+            <div class="list-item-row">
                 <div class="list-item-left" onclick="toggleMasterItem('${escapeHtml(item.name)}')">
-                    <div class="checkbox">${inCart ? '✓' : ''}</div>
+                    <div class="checkbox">${state.cart.some(c => c.name.toLowerCase().trim() === item.name.toLowerCase().trim()) ? '✓' : ''}</div>
                     <div>
                         <div class="item-name">${escapeHtml(item.name)}</div>
                         <div class="item-flag" style="color:var(--color-text-muted);">🔄 Bought ${item.freq}x · ${item.category || 'Uncategorized'}</div>
@@ -957,44 +848,25 @@
                 </div>
                 <div style="display:flex; align-items:center; gap: 8px;">
                     <select onchange="editMasterItem('${escapeHtml(item.name)}', this.value)" style="background:var(--color-surface-2); color:var(--color-text); border:1px solid var(--color-border); border-radius:0.5rem; padding:6px; font-size:0.75rem; width: 44px; direction: rtl;">
-                        <option value="" disabled selected>✏️</option>
-                        ${catOptions}
+                        <option value="" disabled selected>✏️</option>${catOptions}
                     </select>
-                    <button class="trash-btn" onclick="executeSoftDelete('master', '${escapeHtml(item.name)}')">
-                        <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
+                    <button class="trash-btn" onclick="executeSoftDelete('master', '${escapeHtml(item.name)}')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
                 </div>
-            </div>`;
-        }).join('');
-        
-        document.getElementById('ml-content').innerHTML = renderList(filtered) || '<p class="subtle" style="text-align:center; margin-top:20px;">No items match.</p>';
+            </div>`).join('') || '<p class="subtle" style="text-align:center; margin-top:20px;">No items match.</p>';
     }
 
-    function openMasterList() {
-        document.getElementById('masterSearchInput').value = '';
-        renderCategoryRibbon();
-        filterMasterList();
-        document.getElementById('masterListModal').classList.add('open');
-    }
-
-    function toggleCartItem(index) { 
-        state.cart[index].checked = !state.cart[index].checked; 
-        renderCart(); saveStateLocally(); syncCartToBackend(); 
-    }
-    
+    function openMasterList() { document.getElementById('masterSearchInput').value = ''; renderCategoryRibbon(); filterMasterList(); openModal('masterListModal'); }
+    function toggleCartItem(index) { state.cart[index].checked = !state.cart[index].checked; renderCart(); saveStateLocally(); syncCartToBackend(); }
     function clearActiveCart() { state.cart = state.cart.filter(c => !c.checked); renderCart(); saveStateLocally(); syncCartToBackend(); }
     
     function addManualCartItem() { 
         const name = document.getElementById('manualCartAdd').value.trim(); 
         const category = document.getElementById('cartCategorySelect').value;
-        
         if(name) { 
             state.cart.unshift({name: name, checked: true, recent: false, mealContext: 'Uncategorized'}); 
             document.getElementById('manualCartAdd').value = ''; 
-            
             state.masterGrocery.push({name: name, freq: 1, category: category});
             fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'addMasterItem', item: name, category: category }) });
-            
             renderCart(); saveStateLocally(); syncCartToBackend(); 
         } 
     }
@@ -1007,46 +879,34 @@
     }
     
     async function syncCartToBackend() { if(GOOGLE_SHEETS_API_URL.includes("script.google.com")) fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'syncCart', cart: state.cart }) }).catch(e=>e); }
-    
-    function openCookbook() { 
-        updateCookbookStats();
-        openModal('dataModal'); 
-    }
+    function openCookbook() { updateCookbookStats(); openModal('dataModal'); }
 
     function switchTab(tabId) {
       document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
       document.getElementById(`page-${tabId}`).classList.add('active');
-      
       const topbar = document.getElementById('mainTopbar');
       const fab = document.getElementById('floatingShareFab');
+      const genBtn = document.getElementById('generateBtn');
+      const navToggleBtn = document.getElementById('navToggleBtn');
+      
       if (tabId === 'cart') {
-          topbar.classList.add('topbar-hidden');
-          fab.classList.add('fab-hidden');
+          topbar.classList.add('topbar-hidden'); fab.classList.add('fab-hidden');
+          genBtn.style.display = 'none'; navToggleBtn.innerText = 'Plan';
       } else {
-          topbar.classList.remove('topbar-hidden');
-          fab.classList.remove('fab-hidden');
+          topbar.classList.remove('topbar-hidden'); fab.classList.remove('fab-hidden');
+          genBtn.style.display = 'flex'; navToggleBtn.innerText = '🛒 Cart';
       }
     }
 
     function toggleMainView() {
-        if(activeTab === 'plan') {
-            switchTab('cart');
-            document.getElementById('navToggleBtn').innerHTML = '🍽️ Plan';
-            activeTab = 'cart';
-        } else {
-            switchTab('plan');
-            document.getElementById('navToggleBtn').innerHTML = '🛒 Cart';
-            activeTab = 'plan';
-        }
+        if(activeTab === 'plan') { switchTab('cart'); activeTab = 'cart'; } 
+        else { switchTab('plan'); activeTab = 'plan'; }
     }
 
     function updateCookbookStats() {
-        const activeMyMealsPool = appSettings.diet === 'non-veg' ? (state.myNonVegMeals || []) : (state.myVegMeals || []);
-        document.getElementById('cb-mymeals').innerText = activeMyMealsPool.length;
-        
-        const activeAiPool = appSettings.diet === 'non-veg' ? (state.aiNonVegPool || []) : state.aiDiscoveryPool;
-        document.getElementById('cb-global').innerText = activeAiPool.filter(m => ['breakfast', 'lunch', 'dinner'].includes(m.category.toLowerCase())).length;
-        
+        const isNonVeg = appSettings.diet === 'non-veg';
+        document.getElementById('cb-mymeals').innerText = (isNonVeg ? state.myNonVegMeals : state.myVegMeals).length;
+        document.getElementById('cb-global').innerText = (isNonVeg ? state.aiNonVegPool : state.aiDiscoveryPool).filter(m => ['breakfast', 'lunch', 'dinner'].includes(m.category.toLowerCase())).length;
         document.getElementById('cb-dessert').innerText = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'dessert').length + (state.db.dessert||[]).length;
         document.getElementById('cb-drinks').innerText = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'drinks').length + (state.db.drinks||[]).length;
         document.getElementById('cb-cocktails').innerText = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === 'cocktails').length + (state.db.cocktails||[]).length;
@@ -1059,127 +919,64 @@
 
     function renderCookbookList(cat, isSearchUpdate = false) {
         const activeBtn = document.querySelector(`.stat-btn[data-cbcat="${cat}"]`);
-        
         if (!isSearchUpdate) {
-            if (activeBtn && activeBtn.classList.contains('active')) {
-                activeBtn.classList.remove('active');
-                document.getElementById('cookbookOutput').innerHTML = '';
-                document.getElementById('cookbookSearchInput').value = '';
-                return;
-            }
+            if (activeBtn && activeBtn.classList.contains('active')) { activeBtn.classList.remove('active'); document.getElementById('cookbookOutput').innerHTML = ''; document.getElementById('cookbookSearchInput').value = ''; return; }
             document.querySelectorAll('.stat-btn').forEach(b => b.classList.remove('active'));
-            if(activeBtn) activeBtn.classList.add('active');
-            document.getElementById('cookbookSearchInput').value = ''; 
+            if(activeBtn) activeBtn.classList.add('active'); document.getElementById('cookbookSearchInput').value = ''; 
         }
-
         const searchTerm = document.getElementById('cookbookSearchInput').value.trim();
         let items = [];
         const isNonVegMode = appSettings.diet === 'non-veg';
         const activeAiPool = isNonVegMode ? (state.aiNonVegPool || []) : state.aiDiscoveryPool;
 
-        if (cat === 'MyMeals') {
-            const activePool = isNonVegMode ? (state.myNonVegMeals || []) : (state.myVegMeals || []);
-            items = activePool.map(m => ({name: m.name, cat: m.category, src: 'Local DB'}));
-        } else if (cat === 'Global') {
-            items = activeAiPool.filter(m => ['breakfast', 'lunch', 'dinner'].includes(m.category.toLowerCase())).map(m => ({name: m.name, cat: m.category, src: 'AI Pool'}));
-        } else {
-            const aiItems = state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === cat.toLowerCase()).map(m => ({name: m.name, cat: m.category, src: 'AI Pool'}));
-            const dbItems = (state.db[cat.toLowerCase()]||[]).map(m => ({name: m, cat: cat, src: 'Local DB'}));
-            items = [...aiItems, ...dbItems];
-        }
+        if (cat === 'MyMeals') { items = (isNonVegMode ? state.myNonVegMeals : state.myVegMeals).map(m => ({name: m.name, cat: m.category, src: 'Local DB'})); } 
+        else if (cat === 'Global') { items = activeAiPool.filter(m => ['breakfast', 'lunch', 'dinner'].includes(m.category.toLowerCase())).map(m => ({name: m.name, cat: m.category, src: 'AI Pool'})); } 
+        else { items = [...state.aiDiscoveryPool.filter(m => m.category.toLowerCase() === cat.toLowerCase()).map(m => ({name: m.name, cat: m.category, src: 'AI Pool'})), ...(state.db[cat.toLowerCase()]||[]).map(m => ({name: m, cat: cat, src: 'Local DB'}))]; }
 
-        if (searchTerm) {
-            items = items.filter(i => fuzzyMatch(searchTerm, i.name));
-        }
-
+        if (searchTerm) items = items.filter(i => fuzzyMatch(searchTerm, i.name));
         items.sort((a, b) => a.name.localeCompare(b.name));
 
         let html = '';
-        if(!items.length) {
-            html = '<p class="subtle" style="text-align:center; padding: 20px;">No items found in this category.</p>';
-        } else if (cat === 'MyMeals' || cat === 'Global') {
+        if(!items.length) { html = '<p class="subtle" style="text-align:center; padding: 20px;">No items found.</p>'; } 
+        else if (cat === 'MyMeals' || cat === 'Global') {
             const grouped = { 'Breakfast': [], 'Lunch': [], 'Dinner': [] };
-            items.forEach(i => {
-                const c = i.cat ? i.cat.charAt(0).toUpperCase() + i.cat.slice(1).toLowerCase() : 'Dinner';
-                if(grouped[c]) grouped[c].push(i);
-            });
+            items.forEach(i => { const c = i.cat ? i.cat.charAt(0).toUpperCase() + i.cat.slice(1).toLowerCase() : 'Dinner'; if(grouped[c]) grouped[c].push(i); });
             ['Breakfast', 'Lunch', 'Dinner'].forEach(c => {
                 if (grouped[c].length > 0) {
                     html += `<div style="padding: 16px 0 8px 4px; font-weight: 700; color: var(--color-primary); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.1em;">${c}</div>`;
-                    grouped[c].forEach(i => {
-                        html += `<div class="data-row"><span>${escapeHtml(i.name)}</span><span class="badge" style="font-size:0.65rem; background:transparent; border:1px solid var(--color-border); color:var(--color-text-muted);">${i.src}</span></div>`;
-                    });
+                    grouped[c].forEach(i => html += `<div class="data-row"><span>${escapeHtml(i.name)}</span><span class="badge" style="font-size:0.65rem; background:transparent; border:1px solid var(--color-border); color:var(--color-text-muted);">${i.src}</span></div>`);
                 }
             });
-        } else {
-            items.forEach(i => {
-                html += `<div class="data-row"><span>${escapeHtml(i.name)}</span><span class="badge" style="font-size:0.65rem; background:transparent; border:1px solid var(--color-border); color:var(--color-text-muted);">${i.src}</span></div>`;
-            });
-        }
+        } else { items.forEach(i => html += `<div class="data-row"><span>${escapeHtml(i.name)}</span><span class="badge" style="font-size:0.65rem; background:transparent; border:1px solid var(--color-border); color:var(--color-text-muted);">${i.src}</span></div>`); }
         document.getElementById('cookbookOutput').innerHTML = html;
     }
 
-
     function forceRefill() {
-        const btn = document.getElementById('refillBtn');
-        btn.innerHTML = `Syncing...`;
+        const btn = document.getElementById('refillBtn'); btn.innerHTML = `Syncing...`;
         document.getElementById('syncIndicator').classList.add('active');
-        
         fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'forceRefill', diet: appSettings.diet }) })
-        .then(res => res.json())
-        .then(parsed => {
-            const data = parsed.data;
-            state.myVegMeals = data.myVegMeals || [];
-            state.myNonVegMeals = data.myNonVegMeals || [];
+        .then(res => res.json()).then(parsed => {
+            const data = parsed.data; state.myVegMeals = data.myVegMeals || []; state.myNonVegMeals = data.myNonVegMeals || [];
             Object.assign(state.db, { dessert: data.dessert, drinks: data.drinks, cocktails: data.cocktails });
-            
-            if(data.aiDiscoveryPool) state.aiDiscoveryPool = data.aiDiscoveryPool;
-            if(data.aiNonVegPool) state.aiNonVegPool = data.aiNonVegPool;
-            
-            saveStateLocally();
-            deckCache = {}; 
-            updateCookbookStats(); 
-            const activePill = document.querySelector('.stat-btn.active');
-            if(activePill) renderCookbookList(activePill.dataset.cbcat);
-            
-            btn.innerHTML = `⚡ Refill`;
-            document.getElementById('syncIndicator').classList.remove('active');
-        }).catch(e => {
-            btn.innerHTML = `⚡ Refill`;
-            document.getElementById('syncIndicator').classList.remove('active');
-        });
+            if(data.aiDiscoveryPool) state.aiDiscoveryPool = data.aiDiscoveryPool; if(data.aiNonVegPool) state.aiNonVegPool = data.aiNonVegPool;
+            saveStateLocally(); deckCache = {}; updateCookbookStats();
+            const activePill = document.querySelector('.stat-btn.active'); if(activePill) renderCookbookList(activePill.dataset.cbcat);
+            btn.innerHTML = `⚡ Refill`; document.getElementById('syncIndicator').classList.remove('active');
+        }).catch(() => { btn.innerHTML = `⚡ Refill`; document.getElementById('syncIndicator').classList.remove('active'); });
     }
 
     function queueUnifiedEntry() {
-        const m = document.getElementById('unified-meal-input').value.trim();
-        const c = document.getElementById('unified-meal-category').value;
+        const m = document.getElementById('unified-meal-input').value.trim(); const c = document.getElementById('unified-meal-category').value;
         if (m) { pendingApprovals.push({ category: c, meal: m, diet: appSettings.diet }); document.getElementById('unified-meal-input').value = ''; renderReviewQueue(); }
     }
     
     function renderReviewQueue() {
-      const ql = document.getElementById('reviewQueueList'); ql.innerHTML = '';
-      const qp = document.getElementById('reviewQueuePanel');
+      const ql = document.getElementById('reviewQueueList'); ql.innerHTML = ''; const qp = document.getElementById('reviewQueuePanel');
       if (!pendingApprovals.length) { qp.style.display = 'none'; return; }
       qp.style.display = 'block';
       pendingApprovals.forEach((item, idx) => {
         const li = document.createElement('li'); li.className = 'review-queue-item';
-        
-        const catSelect = `
-        <select onchange="pendingApprovals[${idx}].category = this.value">
-            <option value="Breakfast" ${item.category.toLowerCase()==='breakfast'?'selected':''}>Breakfast</option>
-            <option value="Lunch" ${item.category.toLowerCase()==='lunch'?'selected':''}>Lunch</option>
-            <option value="Dinner" ${item.category.toLowerCase()==='dinner'?'selected':''}>Dinner</option>
-            <option value="Dessert" ${item.category.toLowerCase()==='dessert'?'selected':''}>Dessert</option>
-            <option value="Drinks" ${item.category.toLowerCase()==='drinks'?'selected':''}>Drinks</option>
-            <option value="Cocktails" ${item.category.toLowerCase()==='cocktails'?'selected':''}>Cocktails</option>
-        </select>`;
-
-        li.innerHTML = `
-        <div style="display:flex; align-items:center; gap:0.75rem; flex-grow:1;">
-            <span style="font-weight:600; font-family:var(--font-display);">${escapeHtml(item.meal)}</span> 
-            ${catSelect}
-        </div>
-        <button class="trash-btn" data-remove-queue="${idx}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
+        li.innerHTML = `<div style="display:flex; align-items:center; gap:0.75rem; flex-grow:1;"><span style="font-weight:600; font-family:var(--font-display);">${escapeHtml(item.meal)}</span><select onchange="pendingApprovals[${idx}].category = this.value"><option value="Breakfast" ${item.category.toLowerCase()==='breakfast'?'selected':''}>Breakfast</option><option value="Lunch" ${item.category.toLowerCase()==='lunch'?'selected':''}>Lunch</option><option value="Dinner" ${item.category.toLowerCase()==='dinner'?'selected':''}>Dinner</option><option value="Dessert" ${item.category.toLowerCase()==='dessert'?'selected':''}>Dessert</option><option value="Drinks" ${item.category.toLowerCase()==='drinks'?'selected':''}>Drinks</option><option value="Cocktails" ${item.category.toLowerCase()==='cocktails'?'selected':''}>Cocktails</option></select></div><button class="trash-btn" data-remove-queue="${idx}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
         ql.appendChild(li);
       });
     }
@@ -1187,27 +984,13 @@
     document.addEventListener('click', e => { 
         const rmBtn = e.target.closest('[data-remove-queue]'); 
         if (rmBtn) { 
-            const idx = Number(rmBtn.dataset.removeQueue); 
-            const removedItem = pendingApprovals[idx];
-            pendingApprovals.splice(idx, 1); 
-            
-            if (state.currentSuggestions && state.currentSuggestions.length > 0) {
+            const idx = Number(rmBtn.dataset.removeQueue); const removedItem = pendingApprovals[idx]; pendingApprovals.splice(idx, 1); 
+            if (state.currentSuggestions) {
                 state.currentSuggestions.forEach((card, cardIdx) => {
-                    if (card.name === removedItem.meal && card.isQueued) {
-                        card.isQueued = false;
-                        const bookmarkSvg = document.getElementById(`bookmark-${cardIdx}`);
-                        if (bookmarkSvg) {
-                            bookmarkSvg.setAttribute('fill', 'none');
-                            bookmarkSvg.setAttribute('stroke', 'currentColor');
-                        }
-                    }
+                    if (card.name === removedItem.meal && card.isQueued) { card.isQueued = false; const svg = document.getElementById(`bookmark-${cardIdx}`); if (svg) { svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', 'currentColor'); } }
                 });
             }
-
-            renderReviewQueue(); 
-            if (pendingApprovals.length === 0) {
-                document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
-            }
+            renderReviewQueue(); if (pendingApprovals.length === 0) document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
         } 
     });
     
@@ -1219,20 +1002,11 @@
         if ((await res.json()).success) {
             pendingApprovals.forEach(i => { 
                 const catLower = i.category.toLowerCase();
-                const isCore = ['breakfast', 'lunch', 'dinner'].includes(catLower);
-                if (isCore) {
-                    if (i.diet === 'non-veg') { state.myNonVegMeals.push({name: i.meal, category: i.category}); }
-                    else { state.myVegMeals.push({name: i.meal, category: i.category}); }
-                } else if (state.db[catLower]) {
-                    state.db[catLower].push(i.meal);
-                }
+                if (['breakfast', 'lunch', 'dinner'].includes(catLower)) { (i.diet === 'non-veg' ? state.myNonVegMeals : state.myVegMeals).push({name: i.meal, category: i.category}); } 
+                else if (state.db[catLower]) { state.db[catLower].push(i.meal); }
             });
-            pendingApprovals = []; renderReviewQueue(); updateCookbookStats(); saveStateLocally();
-            
-            deckCache = {}; 
-            
+            pendingApprovals = []; renderReviewQueue(); updateCookbookStats(); saveStateLocally(); deckCache = {}; 
             document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
-            
             btn.innerHTML = "✓ Synced"; setTimeout(() => btn.innerHTML = "Push to Cloud", 2000);
         } else throw new Error();
       } catch (err) { btn.innerHTML = "Push to Cloud"; }
@@ -1240,106 +1014,53 @@
 
     let shoppingQueue = []; let shoppingIndex = 0; let activePlatform = 'swiggy';
     function startGuidedShopping(platform) {
-      shoppingQueue = state.cart.filter(i => i.checked); 
-      if(!shoppingQueue.length) { 
-          showToast("Please check at least one item to shop."); return; 
-      }
-      activePlatform = platform; shoppingIndex = 0; updateGuidedUI(); 
-      document.getElementById('guided-overlay').classList.add('active'); launchPlatformLink();
+      shoppingQueue = state.cart.filter(i => i.checked); if(!shoppingQueue.length) { showToast("Please check at least one item to shop."); return; }
+      activePlatform = platform; shoppingIndex = 0; updateGuidedUI(); openModal('guided-overlay'); launchPlatformLink();
     }
     function updateGuidedUI() {
       document.getElementById('shopping-progress').innerText = `Item ${shoppingIndex + 1} of ${shoppingQueue.length} (${activePlatform.toUpperCase()})`;
       document.getElementById('shopping-item-name').innerText = escapeHtml(shoppingQueue[shoppingIndex].name);
     }
-    function launchPlatformLink() {
-        const query = encodeURIComponent(shoppingQueue[shoppingIndex].name);
-        window.location.href = activePlatform === 'swiggy' ? `swiggy://instamart/search?query=${query}` : `https://blinkit.com/s/?q=${query}`;
-    }
+    function launchPlatformLink() { window.location.href = activePlatform === 'swiggy' ? `swiggy://instamart/search?query=${encodeURIComponent(shoppingQueue[shoppingIndex].name)}` : `https://blinkit.com/s/?q=${encodeURIComponent(shoppingQueue[shoppingIndex].name)}`; }
     function markFoundAndNext() {
-      const current = shoppingQueue[shoppingIndex];
-      const dbIdx = state.cart.findIndex(c => c.name.toLowerCase().trim() === current.name.toLowerCase().trim() && c.mealContext === current.mealContext);
-      if(dbIdx > -1) { 
-          // Completely purge items from the cart once verified
-          state.cart.splice(dbIdx, 1);
-      }
+      const current = shoppingQueue[shoppingIndex]; const dbIdx = state.cart.findIndex(c => c.name.toLowerCase().trim() === current.name.toLowerCase().trim() && c.mealContext === current.mealContext);
+      if(dbIdx > -1) state.cart.splice(dbIdx, 1);
       fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateHistory', items: [current.name] }) }).catch(e=>e);
       shoppingIndex++;
-      if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); saveStateLocally(); syncCartToBackend(); }
-      else { updateGuidedUI(); launchPlatformLink(); }
+      if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); saveStateLocally(); syncCartToBackend(); } else { updateGuidedUI(); launchPlatformLink(); }
     }
-    function markNotFoundAndNext() {
-      shoppingIndex++;
-      if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); saveStateLocally(); syncCartToBackend(); }
-      else { updateGuidedUI(); launchPlatformLink(); }
-    }
-    function closeGuidedShopping() { document.getElementById('guided-overlay').classList.remove('active'); renderCart(); }
-
-    function saveStateLocally() { 
-        localStorage.setItem('mp_data', JSON.stringify(state)); 
-        localStorage.setItem('mp_settings', JSON.stringify(appSettings));
-    }
+    function markNotFoundAndNext() { shoppingIndex++; if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); saveStateLocally(); syncCartToBackend(); } else { updateGuidedUI(); launchPlatformLink(); } }
+    function closeGuidedShopping() { closeModal('guided-overlay'); renderCart(); }
+    function saveStateLocally() { localStorage.setItem('mp_data', JSON.stringify(state)); localStorage.setItem('mp_settings', JSON.stringify(appSettings)); }
 
     function init() {
-      const cachedSettings = localStorage.getItem('mp_settings');
-      if (cachedSettings) {
-          appSettings = JSON.parse(cachedSettings);
-      }
-      
-      appSettings.diet = 'veg';
-      setDietPref('veg');
-        
+      const cachedSettings = localStorage.getItem('mp_settings'); if (cachedSettings) appSettings = JSON.parse(cachedSettings);
+      appSettings.diet = 'veg'; setDietPref('veg');
       const cached = localStorage.getItem('mp_data');
       if (cached) {
-          state = JSON.parse(cached);
-          state.cart.forEach(c => { if(!c.mealContext) c.mealContext = "Uncategorized"; });
-          
+          state = JSON.parse(cached); state.cart.forEach(c => { if(!c.mealContext) c.mealContext = "Uncategorized"; });
           if (!state.myVegMeals) {
               state.myVegMeals = []; state.myNonVegMeals = [];
               if (state.db.breakfast) state.myVegMeals.push(...state.db.breakfast.map(m => ({name: m, category: 'Breakfast'})));
               if (state.db.lunch) state.myVegMeals.push(...state.db.lunch.map(m => ({name: m, category: 'Lunch'})));
               if (state.db.dinner) state.myVegMeals.push(...state.db.dinner.map(m => ({name: m, category: 'Dinner'})));
-              delete state.db.breakfast; delete state.db.lunch; delete state.db.dinner;
-              saveStateLocally();
+              delete state.db.breakfast; delete state.db.lunch; delete state.db.dinner; saveStateLocally();
           }
-          
-          populateCategoryDropdowns();
-          renderCart(); 
-          renderEmptyState();
-      } else {
-          document.getElementById('syncIndicator').classList.add('active');
-          renderEmptyState();
-      }
+          populateCategoryDropdowns(); renderCart(); renderEmptyState();
+      } else { document.getElementById('syncIndicator').classList.add('active'); renderEmptyState(); }
       updateUndoButton();
-      
       if (!GOOGLE_SHEETS_API_URL || GOOGLE_SHEETS_API_URL.includes("PASTE")) return;
       
       fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAllData' }) })
-        .then(res => res.json())
-        .then(parsed => {
-            const data = parsed.data;
-            state.myVegMeals = data.myVegMeals || [];
-            state.myNonVegMeals = data.myNonVegMeals || [];
+        .then(res => res.json()).then(parsed => {
+            const data = parsed.data; state.myVegMeals = data.myVegMeals || []; state.myNonVegMeals = data.myNonVegMeals || [];
             Object.assign(state.db, { dessert: data.dessert, drinks: data.drinks, cocktails: data.cocktails });
-            
             state.masterGrocery = data.masterGrocery; state.orderHistory = data.orderHistory; state.cart = data.cart; state.cookingHistory = data.cookingHistory;
-            
-            if(data.aiDiscoveryPool && data.aiDiscoveryPool.length > state.aiDiscoveryPool.length) state.aiDiscoveryPool = data.aiDiscoveryPool;
-            if(data.aiNonVegPool) state.aiNonVegPool = data.aiNonVegPool;
-            
-            saveStateLocally();
-            
-            populateCategoryDropdowns();
-            renderCart();
-            
-            if(document.getElementById('masterListModal').classList.contains('open')) {
-                renderCategoryRibbon();
-                filterMasterList();
-            }
-            
+            saveStateLocally(); populateCategoryDropdowns(); renderCart();
+            if(document.getElementById('masterListModal').classList.contains('open')) { renderCategoryRibbon(); filterMasterList(); }
             document.getElementById('syncIndicator').classList.remove('active');
-        }).catch(e => { document.getElementById('syncIndicator').classList.remove('active'); });
+        }).catch(() => { document.getElementById('syncIndicator').classList.remove('active'); });
     }
-
     init();
   </script>
 </body>
