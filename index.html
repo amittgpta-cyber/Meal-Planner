@@ -94,55 +94,16 @@
     
     .empty { padding: 3rem 2rem; background: var(--color-surface); border-radius: 2rem; border: 1px solid var(--color-border); color: var(--color-text-muted); text-align: center; width: 100%; }
     
-    .bottom-nav { 
-        position: fixed; 
-        bottom: 24px; 
-        left: 50%;
-        transform: translateX(-50%);
-        width: calc(100% - 32px);
-        max-width: 400px; 
-        display: flex; 
-        gap: 12px; 
-        z-index: 1000; 
-        transition: transform 0.35s var(--ease-fluid), opacity 0.35s var(--ease-fluid); 
-        pointer-events: none; 
-    }
-    .bottom-nav.nav-hidden {
-        transform: translate(-50%, 150%);
-        opacity: 0;
-    }
-    .bottom-nav button { 
-        margin: 0; 
-        border-radius: 100px; 
-        pointer-events: auto; 
-        box-shadow: var(--shadow-md); 
-    }
+    .bottom-nav { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 400px; display: flex; gap: 12px; z-index: 1000; transition: transform 0.35s var(--ease-fluid), opacity 0.35s var(--ease-fluid); pointer-events: none; }
+    .bottom-nav.nav-hidden { transform: translate(-50%, 150%); opacity: 0; }
+    .bottom-nav button { margin: 0; border-radius: 100px; pointer-events: auto; box-shadow: var(--shadow-md); }
 
-    .floating-share-fab {
-        position: fixed;
-        bottom: 100px;
-        right: 24px;
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        background: #1a1918;
-        border: 1px solid var(--color-border);
-        color: #e8e6e3;
-        box-shadow: var(--shadow-md);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 999;
-        transition: transform 0.3s var(--ease-fluid), opacity 0.3s;
-    }
-    [data-theme="light"] .floating-share-fab {
-        background: #f7f6f2;
-        color: #161514;
-    }
+    .floating-share-fab { position: fixed; bottom: 100px; right: 24px; width: 56px; height: 56px; border-radius: 50%; background: #1a1918; border: 1px solid var(--color-border); color: #e8e6e3; box-shadow: var(--shadow-md); display: flex; align-items: center; justify-content: center; z-index: 999; transition: transform 0.3s var(--ease-fluid), opacity 0.3s; }
+    [data-theme="light"] .floating-share-fab { background: #f7f6f2; color: #161514; }
     .floating-share-fab:active { transform: scale(0.88); }
     .floating-share-fab.fab-hidden { transform: scale(0); opacity: 0; pointer-events: none; }
 
-    /* --- CONSOLIDATED ADD CART UI --- */
+    /* --- ADD CART UI --- */
     .cart-tools { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; width: 100%; }
     .cart-tools input { flex: 2; padding: 14px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); transition: 0.2s; min-width: 0; }
     .cart-tools select { flex: 1.5; padding: 0 12px; height: 52px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-family: var(--font-body); font-size: 0.95rem; -webkit-appearance: none; appearance: none; outline: none; }
@@ -157,7 +118,7 @@
     .checkbox { width: 24px; height: 24px; border: 2px solid var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: transparent; transition: 0.2s var(--ease-fluid); flex-shrink: 0; font-weight: bold; }
     .list-item-row.checked .checkbox { background: var(--color-primary); color: var(--color-bg); }
     .item-name { font-size: 1.125rem; font-weight: 600; text-transform: capitalize; color: var(--color-text); }
-    .item-flag { font-size: 0.75rem; color: var(--color-warning); font-weight: 600; margin-top: 4px; }
+    .item-flag { font-size: 0.75rem; color: var(--color-warning); font-weight: 600; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
     .trash-btn { background: none; border: none; font-size: 1.25rem; color: var(--color-error); padding: 8px; border-radius: 50%; cursor: pointer; transition: transform 0.2s var(--ease-fluid); }
     .trash-btn:active { transform: scale(0.8); }
     
@@ -165,9 +126,13 @@
     .modal.open { display: flex; }
     .dialog { background: var(--color-surface); width: 100%; max-width: 520px; max-height: 85vh; border-radius: 2rem; border: 1px solid var(--color-border); display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-md); animation: fadePeek 0.35s var(--ease-fluid); }
     .dialog-head { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); flex-shrink: 0; }
-    .dialog-body { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth; }
     
-    /* --- NEW MASTER LIST UI ELEMENTS --- */
+    /* MODIFIED MODAL BODY FOR SCROLL FIX */
+    .dialog-body { padding: 0; display: flex; flex-direction: column; overflow: hidden; }
+    .master-header-box { padding: 20px 20px 0 20px; flex-shrink: 0; }
+    .master-scroll-box { padding: 0 20px 20px 20px; overflow-y: auto; flex: 1; }
+    
+    /* --- MASTER LIST UI ELEMENTS --- */
     .master-search-bar { width: 100%; padding: 14px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-size: 1rem; color: var(--color-text); margin-bottom: 12px; }
     
     .filter-ribbon { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; margin-bottom: 8px; -ms-overflow-style: none; scrollbar-width: none; }
@@ -175,10 +140,8 @@
     .filter-chip { padding: 10px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-weight: 600; font-size: 0.9rem; color: var(--color-text); cursor: pointer; white-space: nowrap; transition: 0.2s var(--ease-fluid); }
     .filter-chip.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-bg); }
     
-    /* The "Top Picks" Gold Styling */
     .filter-chip.top-picks { border-color: #ffd700; color: #ffd700; }
     .filter-chip.top-picks.active { background: #ffd700; color: #000; }
-    /* ----------------------------------- */
     
     .sync-indicator { position: fixed; top: 10px; right: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: bold; color: var(--color-text-muted); background: var(--color-surface-2); padding: 6px 12px; border-radius: 2rem; opacity: 0; transition: 0.3s; z-index: 9999; }
     .sync-indicator.active { opacity: 1; }
@@ -211,6 +174,11 @@
     .stat-title { font-size: 0.8rem; color: var(--color-text-muted); transition: 0.2s; }
     .stat-btn.active { background: var(--color-primary); border-color: var(--color-primary); transform: scale(1.02); }
     .stat-btn.active .stat-num, .stat-btn.active .stat-title { color: var(--color-bg); }
+    
+    /* CUSTOM TOAST NOTIFICATION */
+    .toast-container { position: fixed; top: env(safe-area-inset-top, 20px); left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; margin-top: 20px; width: 90%; max-width: 400px;}
+    .toast { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); padding: 16px 20px; border-radius: 1.5rem; box-shadow: var(--shadow-md); font-weight: 600; font-size: 0.95rem; text-align: center; animation: toastSlide 0.3s var(--ease-fluid) forwards; transition: opacity 0.3s; pointer-events: auto; }
+    @keyframes toastSlide { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   </style>
 </head>
 <body>
@@ -329,21 +297,20 @@
           </button>
       </div>
       <div class="dialog-body">
-        <input type="text" id="masterSearchInput" class="master-search-bar" placeholder="Search saved items..." onkeyup="filterMasterList()">
-        
-        <div class="filter-ribbon" id="masterCategoryRibbon">
-            </div>
-
-        <div id="ml-content"></div>
+        <div class="master-header-box">
+            <input type="text" id="masterSearchInput" class="master-search-bar" placeholder="Search saved items..." onkeyup="filterMasterList()">
+            <div class="filter-ribbon" id="masterCategoryRibbon"></div>
+        </div>
+        <div class="master-scroll-box" id="ml-content"></div>
       </div>
     </section>
   </div>
 
   <div class="modal" id="dataModal">
-    <section class="dialog">
+    <section class="dialog" style="padding: 0;">
       <div class="dialog-head"><h4 style="font-family: var(--font-display); font-size: 1.5rem;">Core Database</h4><button class="icon-btn" style="border-radius: 50%;" onclick="closeModal('dataModal')"><svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
-      <div class="dialog-body" id="cookBookScrollArea">
-          
+      
+      <div class="dialog-body" style="overflow-y: auto; padding: 20px;" id="cookBookScrollArea">
         <div class="diet-toggle-container">
             <button class="diet-btn veg active" id="toggleVeg" onclick="setDietPref('veg')">🌿 Veg</button>
             <button class="diet-btn nonveg" id="toggleNonVeg" onclick="setDietPref('non-veg')">🥩 Non-Veg</button>
@@ -360,9 +327,9 @@
         </div>
 
         <section id="dashboardView">
-            <div style="background: var(--color-surface-2); padding: 1.5rem; border-radius: 2rem; border: 1px solid var(--color-border); margin-bottom: 20px;">
+            <div style="background: var(--color-surface-2); padding: 1.5rem; border-radius: 2rem; border: 1px solid var(--color-border); margin-bottom: 12px;">
                 <h5 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: .12em; color: var(--color-primary); margin-bottom: 1.25rem;">Add Manual Entry</h5>
-                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; width: 100%; margin-bottom: 12px;">
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; width: 100%;">
                     <input class="ghost-btn" style="flex: 1; min-width: 0; text-align: left; border-radius: 1.25rem; padding: 14px 16px;" id="unified-meal-input" placeholder="Type meal name...">
                     <select style="flex: 0 0 auto; min-width: 110px; border-radius: 1.25rem; padding: 0 12px; height: 48px; font-family: var(--font-body); font-size: 16px; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); -webkit-appearance: none; appearance: none; outline: none;" id="unified-meal-category">
                         <option value="Breakfast">Breakfast</option><option value="Lunch">Lunch</option><option value="Dinner">Dinner</option>
@@ -370,9 +337,9 @@
                     </select>
                     <button class="primary-btn" style="flex-shrink: 0; border-radius: 1.25rem; padding: 0 20px; height: 48px;" onclick="queueUnifiedEntry()">+</button>
                 </div>
-                
-                <input type="text" id="cookbookSearchInput" class="master-search-bar" style="margin-bottom: 0;" placeholder="Search cookbook..." onkeyup="filterCookbookSearch()">
             </div>
+            
+            <input type="text" id="cookbookSearchInput" class="master-search-bar" style="margin-bottom: 20px;" placeholder="Search cookbook..." onkeyup="filterCookbookSearch()">
             
             <div id="reviewQueuePanel" style="display:none; padding:15px; background:var(--color-surface-2); border-radius:1.5rem; border:1px solid var(--color-success); margin-bottom: 20px;">
                <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><h5 style="color:var(--color-success); font-weight:bold;">Pending Sync</h5><button onclick="submitQueueForApproval()" id="submitApprovalBtn" style="color:var(--color-success); font-weight:bold; background:none; border:none; cursor:pointer;">Push to Cloud</button></div>
@@ -390,6 +357,7 @@
     const CORE_MEAT_KEYS = ['sausage', 'bacon', 'chicken', 'beef', 'pork', 'fish', 'prawn', 'meat', 'lamb', 'ham', 'turkey', 'duck', 'tuna', 'salmon', 'crab', 'shrimp', 'veal', 'venison', 'lobster', 'scallop', 'oyster', 'squab', 'goose', 'pepperoni', 'salami', 'chorizo', 'pancetta', 'gelatin', 'lard', 'tallow'];
 
     const MASTER_CATEGORIES = [
+        { id: 'All', label: '🌐 All Items' },
         { id: '🔥 Top Picks', label: '🔥 Top Picks' },
         { id: '🥛 Dairy', label: '🥛 Dairy' },
         { id: '🥚🍞 Eggs & Bread', label: '🥚🍞 Eggs & Bread' },
@@ -443,6 +411,32 @@
         lastScrollY = currentScrollY;
     }, { passive: true });
 
+    function showToast(message) {
+        const container = document.getElementById('toastContainer') || (() => {
+            const c = document.createElement('div');
+            c.id = 'toastContainer';
+            c.className = 'toast-container';
+            document.body.appendChild(c);
+            return c;
+        })();
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerText = message;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    }
+
+    // Fuzzy matching to normalize words like omelette / omelet
+    function fuzzyMatch(query, target) {
+        let q = query.toLowerCase().replace(/omelette/g, 'omelet');
+        let t = target.toLowerCase().replace(/omelette/g, 'omelet');
+        const terms = q.split(' ').filter(Boolean);
+        return terms.every(term => t.includes(term));
+    }
+
     function escapeHtml(str) { return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
     function openModal(modalId) { document.getElementById(modalId).classList.add('open'); }
     function closeModal(modalId) { document.getElementById(modalId).classList.remove('open'); }
@@ -493,11 +487,8 @@
             if (idx > -1) {
                 const deletedItem = state.masterGrocery.splice(idx, 1)[0];
                 graveyard.push({ context: 'master', item: deletedItem, originalIndex: idx });
-                
-                // Optimistically remove from backend array just in case
                 fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteMasterItem', item: deletedItem.name }) }).catch(e=>e);
-
-                openMasterList(); saveStateLocally(); updateUndoButton();
+                filterMasterList(); saveStateLocally(); updateUndoButton();
             }
         }
     }
@@ -508,18 +499,14 @@
         if (lastDeleted.context === 'cart') { state.cart.splice(lastDeleted.originalIndex, 0, lastDeleted.item); renderCart(); } 
         else if (lastDeleted.context === 'master') { 
             state.masterGrocery.splice(lastDeleted.originalIndex, 0, lastDeleted.item); 
-            // Optimistically re-add to backend array just in case
             fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'addMasterItem', item: lastDeleted.item.name, category: lastDeleted.item.category }) }).catch(e=>e);
-            openMasterList(); 
+            filterMasterList(); 
         }
         saveStateLocally(); updateUndoButton();
     }
 
     function flushGraveyardCache() {
         if (!graveyard.length) return;
-        graveyard.forEach(cached => {
-            // Already handled master deletion eagerly above to prevent edge cases
-        });
         syncCartToBackend(); graveyard = []; updateUndoButton();
     }
 
@@ -832,7 +819,7 @@
     function shareDailyMenuToWhatsApp() {
         const lockedCards = state.currentSuggestions.filter(card => card.isLocked);
         if (lockedCards.length === 0) {
-            alert("Please lock (✓ On Menu) at least one meal to share the menu.");
+            showToast("Please lock (✓ On Menu) at least one meal to share the menu.");
             return;
         }
 
@@ -953,22 +940,36 @@
         filterMasterList();
     }
 
+    function editMasterItem(itemName, newCategory) {
+        const item = state.masterGrocery.find(i => i.name === itemName);
+        if (item) {
+            item.category = newCategory;
+            saveStateLocally();
+            filterMasterList();
+            fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'editMasterItemCategory', item: itemName, category: newCategory }) }).catch(e=>e);
+            showToast(`Category updated to ${newCategory}`);
+        }
+    }
+
     function filterMasterList() {
-        const term = document.getElementById('masterSearchInput').value.toLowerCase();
+        const term = document.getElementById('masterSearchInput').value.trim();
         
         let filtered = (state.masterGrocery || []).filter(item => {
-            if (term && !item.name.toLowerCase().includes(term)) return false;
+            if (term && !fuzzyMatch(term, item.name)) return false;
 
-            if (activeMasterCategory === '🔥 Top Picks') {
+            if (activeMasterCategory === 'All') {
+                return true;
+            } else if (activeMasterCategory === '🔥 Top Picks') {
                 return item.freq >= 10;
-            } else if (activeMasterCategory !== 'All') {
+            } else {
                 const itemCat = item.category || '📦 Uncategorized';
                 return itemCat === activeMasterCategory;
             }
-            return true;
         });
 
         filtered.sort((a, b) => (b.freq - a.freq) || a.name.localeCompare(b.name));
+
+        const catOptions = MASTER_CATEGORIES.filter(c => c.id !== 'All').map(c => `<option value="${c.id}">${c.label}</option>`).join('');
 
         const renderList = (arr) => arr.map(item => {
             const inCart = state.cart.some(c => c.name.toLowerCase().trim() === item.name.toLowerCase().trim());
@@ -981,9 +982,15 @@
                         <div class="item-flag" style="color:var(--color-text-muted);">🔄 Bought ${item.freq}x · ${item.category || 'Uncategorized'}</div>
                     </div>
                 </div>
-                <button class="trash-btn" onclick="executeSoftDelete('master', '${escapeHtml(item.name)}')">
-                    <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                </button>
+                <div style="display:flex; align-items:center; gap: 8px;">
+                    <select onchange="editMasterItem('${escapeHtml(item.name)}', this.value)" style="background:var(--color-surface-2); color:var(--color-text); border:1px solid var(--color-border); border-radius:0.5rem; padding:6px; font-size:0.75rem; width: 44px; direction: rtl;">
+                        <option value="" disabled selected>✏️</option>
+                        ${catOptions}
+                    </select>
+                    <button class="trash-btn" onclick="executeSoftDelete('master', '${escapeHtml(item.name)}')">
+                        <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
             </div>`;
         }).join('');
         
@@ -1013,7 +1020,6 @@
             state.cart.unshift({name: name, checked: true, recent: false, mealContext: 'Uncategorized'}); 
             document.getElementById('manualCartAdd').value = ''; 
             
-            // Simultaneously add to master database so AI/Local Dictionary can categorize it in the background
             state.masterGrocery.push({name: name, freq: 1, category: category});
             fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'addMasterItem', item: name, category: category }) });
             
@@ -1094,7 +1100,7 @@
             document.getElementById('cookbookSearchInput').value = ''; 
         }
 
-        const searchTerm = document.getElementById('cookbookSearchInput').value.toLowerCase();
+        const searchTerm = document.getElementById('cookbookSearchInput').value.trim();
         let items = [];
         const isNonVegMode = appSettings.diet === 'non-veg';
         const activeAiPool = isNonVegMode ? (state.aiNonVegPool || []) : state.aiDiscoveryPool;
@@ -1110,9 +1116,8 @@
             items = [...aiItems, ...dbItems];
         }
 
-        // Apply Search Filter
         if (searchTerm) {
-            items = items.filter(i => i.name.toLowerCase().includes(searchTerm));
+            items = items.filter(i => fuzzyMatch(searchTerm, i.name));
         }
 
         items.sort((a, b) => a.name.localeCompare(b.name));
@@ -1265,7 +1270,7 @@
     function startGuidedShopping(platform) {
       shoppingQueue = state.cart.filter(i => i.checked); 
       if(!shoppingQueue.length) { 
-          alert("Please check at least one item to shop."); return; 
+          showToast("Please check at least one item to shop."); return; 
       }
       activePlatform = platform; shoppingIndex = 0; updateGuidedUI(); 
       document.getElementById('guided-overlay').classList.add('active'); launchPlatformLink();
