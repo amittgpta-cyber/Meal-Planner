@@ -10,7 +10,6 @@
   <title>Meal Planner Pro</title>
   <link rel="apple-touch-icon" href="icon-512x512-1.png">
 
-  
   <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=boska@400,500,700&display=swap" rel="stylesheet">
   
   <style>
@@ -105,11 +104,11 @@
 
     /* --- ADD CART UI --- */
     .cart-tools { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; width: 100%; }
-    .cart-tools input { flex: 2; padding: 14px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); transition: 0.2s; min-width: 0; }
-    .cart-tools select { flex: 1.5; padding: 0 12px; height: 52px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-family: var(--font-body); font-size: 0.95rem; -webkit-appearance: none; appearance: none; outline: none; }
+    .cart-tools input { flex: 2; padding: 14px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); transition: 0.2s; min-width: 0; height: 56px; }
+    .cart-tools select { flex: 1.5; padding: 0 12px; height: 56px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-family: var(--font-body); font-size: 0.95rem; -webkit-appearance: none; appearance: none; outline: none; }
     
     .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); font-weight: bold; margin: 24px 0 12px; }
-    .cart-group-header { font-family: var(--font-display); font-size: 1.25rem; font-weight: 600; color: var(--color-primary); margin: 24px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--color-divider); }
+    .cart-group-header { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; color: var(--color-primary); margin: 24px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--color-divider); }
     
     .list-item-row { display: flex; align-items: center; justify-content: space-between; background: var(--color-surface); padding: 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); margin-bottom: 12px; transition: transform 0.2s var(--ease-fluid), opacity 0.3s; width: 100%; }
     .list-item-row:active { transform: scale(0.97); }
@@ -127,12 +126,10 @@
     .dialog { background: var(--color-surface); width: 100%; max-width: 520px; max-height: 85vh; border-radius: 2rem; border: 1px solid var(--color-border); display: flex; flex-direction: column; overflow: hidden; box-shadow: var(--shadow-md); animation: fadePeek 0.35s var(--ease-fluid); }
     .dialog-head { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--color-border); flex-shrink: 0; }
     
-    /* MODIFIED MODAL BODY FOR SCROLL FIX */
     .dialog-body { padding: 0; display: flex; flex-direction: column; overflow: hidden; }
     .master-header-box { padding: 20px 20px 0 20px; flex-shrink: 0; }
     .master-scroll-box { padding: 0 20px 20px 20px; overflow-y: auto; flex: 1; }
     
-    /* --- MASTER LIST UI ELEMENTS --- */
     .master-search-bar { width: 100%; padding: 14px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-size: 1rem; color: var(--color-text); margin-bottom: 12px; }
     
     .filter-ribbon { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; margin-bottom: 8px; -ms-overflow-style: none; scrollbar-width: none; }
@@ -175,7 +172,6 @@
     .stat-btn.active { background: var(--color-primary); border-color: var(--color-primary); transform: scale(1.02); }
     .stat-btn.active .stat-num, .stat-btn.active .stat-title { color: var(--color-bg); }
     
-    /* CUSTOM TOAST NOTIFICATION */
     .toast-container { position: fixed; top: env(safe-area-inset-top, 20px); left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; margin-top: 20px; width: 90%; max-width: 400px;}
     .toast { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); padding: 16px 20px; border-radius: 1.5rem; box-shadow: var(--shadow-md); font-weight: 600; font-size: 0.95rem; text-align: center; animation: toastSlide 0.3s var(--ease-fluid) forwards; transition: opacity 0.3s; pointer-events: auto; }
     @keyframes toastSlide { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -220,43 +216,18 @@
             <button class="icon-btn" onclick="shareCartToWhatsApp()">
                 <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20" height="20"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
             </button>
-            <button class="ghost-btn" style="border-radius: 2rem; padding: 8px 16px;" onclick="openMasterList()">List ▾</button>
+            <button class="ghost-btn" style="border-radius: 2rem; padding: 8px 16px;" onclick="openMasterList()">Items list ▾</button>
           </div>
         </div>
         
         <div class="cart-tools">
             <input id="manualCartAdd" placeholder="Add custom item...">
-            <select id="cartCategorySelect">
-                <option value="📦 Uncategorized">📦 Category</option>
-                <option value="🥛 Dairy">🥛 Dairy</option>
-                <option value="🥚🍞 Eggs & Bread">🥚🍞 Eggs & Bread</option>
-                <option value="🌾🍚 Staples">🌾🍚 Staples</option>
-                <option value="🥔🧅 Vegetables">🥔🧅 Vegetables</option>
-                <option value="🥦🫑 Exotic Veg">🥦🫑 Exotic Veg</option>
-                <option value="🍎🍌 Fruits">🍎🍌 Fruits</option>
-                <option value="🥝🥑 Exotic Fruits">🥝🥑 Exotic Fruits</option>
-                <option value="🌶️🧂 Spices">🌶️🧂 Spices</option>
-                <option value="🫙🌻 Oil & Ghee">🫙🌻 Oil & Ghee</option>
-                <option value="🥫🍯 Sauces & Spreads">🥫🍯 Sauces/Spreads</option>
-                <option value="🌰🥜 Dry Fruits">🌰🥜 Dry Fruits</option>
-                <option value="🍟🍿 Snacks">🍟🍿 Snacks</option>
-                <option value="💪 Healthy Snacks">💪 Healthy Snacks</option>
-                <option value="🍜 Fast Food">🍜 Fast Food</option>
-                <option value="🧃🧋 Drinks">🧃🧋 Drinks</option>
-                <option value="🍦🍨 Ice Cream">🍦🍨 Ice Cream</option>
-                <option value="🧴🚿 Bath & Grooming">🧴🚿 Bath/Groom</option>
-                <option value="🪥🧼 Hygiene">🪥🧼 Hygiene</option>
-                <option value="🧻🚽 Bathroom">🧻🚽 Bathroom</option>
-                <option value="🧽🧹 Cleaning">🧽🧹 Cleaning</option>
-                <option value="🍽️🗑️ Kitchen">🍽️🗑️ Kitchen</option>
-                <option value="🪔🥥 Pooja">🪔🥥 Pooja</option>
-                <option value="👶 Baby">👶 Baby</option>
-            </select>
-            <button class="primary-btn" style="flex: 0 0 auto; border-radius: 1.5rem; padding: 0 20px; height: 52px;" onclick="addManualCartItem()">+</button>
+            <select id="cartCategorySelect"></select>
+            <button class="primary-btn" style="flex: 0 0 56px; width: 56px; border-radius: 1.5rem; padding: 0; height: 56px; font-size: 1.75rem; display: flex; align-items: center; justify-content: center;" onclick="addManualCartItem()">+</button>
         </div>
         
         <div style="display:flex; justify-content:flex-end; margin-bottom: 12px;">
-            <button class="ghost-btn" style="border-radius: 1.5rem; padding: 6px 12px; font-size: 12px; height: 32px;" onclick="clearActiveCart()">🗑️ Clear Active</button>
+            <button class="ghost-btn" style="border-radius: 1.5rem; padding: 6px 16px; font-size: 12px; height: 36px; font-weight: 600;" onclick="clearActiveCart()">🗑️ Clear</button>
         </div>
         
         <div id="unified-cart-items"></div>
@@ -376,12 +347,14 @@
         { id: '🧃🧋 Drinks', label: '🧃🧋 Drinks' },
         { id: '🍦🍨 Ice Cream', label: '🍦🍨 Ice Cream' },
         { id: '🧴🚿 Bath & Grooming', label: '🧴🚿 Bath/Groom' },
-        { id: '🪥🧼 Hygiene', label: '🪥🧼 Hygiene' },
+        { id: '🧼 Hygiene', label: '🧼 Hygiene' },
         { id: '🧻🚽 Bathroom', label: '🧻🚽 Bathroom' },
         { id: '🧽🧹 Cleaning', label: '🧽🧹 Cleaning' },
         { id: '🍽️🗑️ Kitchen', label: '🍽️🗑️ Kitchen' },
-        { id: '🪔🥥 Pooja', label: '🪔🥥 Pooja' },
+        { id: '🪔 Pooja', label: '🪔 Pooja' },
         { id: '👶 Baby', label: '👶 Baby' },
+        { id: '💊 Meds', label: '💊 Meds' },
+        { id: '📝 Stationery', label: '📝 Stationery' },
         { id: '📦 Uncategorized', label: '📦 Uncat' }
     ];
 
@@ -414,22 +387,16 @@
     function showToast(message) {
         const container = document.getElementById('toastContainer') || (() => {
             const c = document.createElement('div');
-            c.id = 'toastContainer';
-            c.className = 'toast-container';
+            c.id = 'toastContainer'; c.className = 'toast-container';
             document.body.appendChild(c);
             return c;
         })();
         const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.innerText = message;
+        toast.className = 'toast'; toast.innerText = message;
         container.appendChild(toast);
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.remove(), 300);
-        }, 3500);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3500);
     }
 
-    // Fuzzy matching to normalize words like omelette / omelet
     function fuzzyMatch(query, target) {
         let q = query.toLowerCase().replace(/omelette/g, 'omelet');
         let t = target.toLowerCase().replace(/omelette/g, 'omelet');
@@ -611,7 +578,6 @@
 
     document.getElementById('specialtyBar').addEventListener('click', (e) => {
         const btn = e.target.closest('.category-pill'); if (!btn) return;
-        
         if (btn.classList.contains('active')) {
             btn.classList.remove('active'); 
             document.getElementById('generateBtn').style.opacity = '0.5';
@@ -638,13 +604,11 @@
         }
 
         const deck = [];
-        
         const isDietAgnostic = ['Dessert', 'Drinks', 'Cocktails'].includes(cat);
         const isNonVegMode = !isDietAgnostic && appSettings.diet === 'non-veg';
 
         if (cat === 'MyMeals') {
             const activePool = isNonVegMode ? (state.myNonVegMeals || []) : (state.myVegMeals || []);
-            
             const bPool = activePool.filter(m => m.category.toLowerCase() === 'breakfast');
             const lPool = activePool.filter(m => m.category.toLowerCase() === 'lunch');
             const dPool = activePool.filter(m => m.category.toLowerCase() === 'dinner');
@@ -660,7 +624,6 @@
             
         } else if (cat === 'Global') {
             const activePool = isNonVegMode ? (state.aiNonVegPool || []) : state.aiDiscoveryPool;
-            
             const bPool = activePool.filter(m => m.category.toLowerCase() === 'breakfast');
             const lPool = activePool.filter(m => m.category.toLowerCase() === 'lunch');
             const dPool = activePool.filter(m => m.category.toLowerCase() === 'dinner');
@@ -741,10 +704,8 @@
               card.ingredients = historicItem.ingredients;
           } else {
               let newMeal = null;
-              
               const isDietAgnostic = ['Dessert', 'Drinks', 'Cocktails'].includes(card.poolContext.charAt(0).toUpperCase() + card.poolContext.slice(1).toLowerCase());
               const isNonVegMode = !isDietAgnostic && appSettings.diet === 'non-veg';
-              
               const excludedHistoryNames = card.history.map(h => h.name);
               
               if (card.source === 'api') {
@@ -772,7 +733,6 @@
           card.cookedRecently = !!cookedWithinAWeek(card.name);
           const article = document.getElementById('suggestions').children[idx];
           article.innerHTML = getCardInnerHTML(card, idx);
-          
           const activePill = document.querySelector('.category-pill.active');
           if (activePill) deckCache[activePill.dataset.cat] = state.currentSuggestions;
       }
@@ -824,27 +784,15 @@
         }
 
         let text = "🍽️ *Today's Menu*\n\n";
-        
-        const timeIcons = {
-            'Breakfast': '🍳',
-            'Lunch': '🍱',
-            'Dinner': '🍽️',
-            'Dessert': '🍰',
-            'Drinks': '🥤',
-            'Cocktails': '🥂'
-        };
+        const timeIcons = { 'Breakfast': '🍳', 'Lunch': '🍱', 'Dinner': '🍽️', 'Dessert': '🍰', 'Drinks': '🥤', 'Cocktails': '🥂' };
 
         lockedCards.forEach(card => {
             const icon = timeIcons[card.time] || '🍽️';
             const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
             const gUrl = `https://www.google.com/search?q=${searchQ}`;
             const yUrl = `https://www.youtube.com/results?search_query=${searchQ}`;
-            
-            text += `${icon} *${card.time}:* ${card.name.trim()}\n`;
-            text += `🔍 _${gUrl}_\n`;
-            text += `▶️ _${yUrl}_\n\n`;
+            text += `${icon} *${card.time}:* ${card.name.trim()}\n🔍 _${gUrl}_\n▶️ _${yUrl}_\n\n`;
         });
-
         window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
     }
 
@@ -858,64 +806,58 @@
           const safeIng = ing.toLowerCase().trim();
           const isRecent = recentNames.includes(safeIng);
           
-          if(!state.cart.some(c => c.name.toLowerCase().trim() === safeIng && c.mealContext === mealContext)) {
+          // DO NOT push to cart if it's recently bought. Only add fresh items.
+          if(!isRecent && !state.cart.some(c => c.name.toLowerCase().trim() === safeIng)) {
             state.cart.unshift({ 
                 name: ing, 
-                checked: !isRecent, 
-                recent: isRecent, 
-                flag: isRecent ? "Recently Bought" : "", 
+                checked: true, // Auto check new items
+                recent: false, 
+                flag: "", 
                 mealContext: mealContext 
             });
           }
         });
         
         renderCart(); saveStateLocally(); syncCartToBackend();
-        
         if (activeTab !== 'cart') toggleMainView();
     }
 
     function shareCartToWhatsApp() {
-        const groups = {};
-        state.cart.filter(i => i.checked).forEach(item => {
-           const ctx = item.mealContext || "Uncategorized";
-           if (!groups[ctx]) groups[ctx] = [];
-           groups[ctx].push(item.name);
-        });
-        
-        if (Object.keys(groups).length === 0) return;
+        const checkedItems = state.cart.filter(i => i.checked);
+        if (checkedItems.length === 0) return;
         
         let text = "🛒 *Grocery List:*\n\n";
-        for (const [ctx, items] of Object.entries(groups)) {
-            if (ctx !== 'Uncategorized') text += `*For ${ctx}:*\n`;
-            else text += `*General:*\n`;
-            items.forEach(i => text += `- ${i}\n`);
-            text += `\n`;
-        }
-        
+        checkedItems.forEach(i => text += `- ${i.name}\n`);
         window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
     }
 
     function renderCart() {
-      const groups = {};
-      state.cart.forEach((item, index) => {
-         const ctx = item.mealContext || "Uncategorized";
-         if (!groups[ctx]) groups[ctx] = [];
-         groups[ctx].push({ ...item, originalIndex: index });
-      });
+      // 1. Purge completely bought / recent items permanently from the cart array so it doesn't clutter
+      const initialLength = state.cart.length;
+      state.cart = state.cart.filter(item => !(item.recent === true || item.flag === "Verified Purchase"));
+      
+      // Save state if we actively purged items so backend stays synced
+      if (state.cart.length !== initialLength) {
+          saveStateLocally();
+          syncCartToBackend();
+      }
 
+      // 2. Render remaining items as a single consolidated list, checked items grouped at the top
       let html = '';
-      if (state.cart.length === 0) { html = '<p class="subtle">Cart is empty.</p>'; }
-
-      for (const [ctx, items] of Object.entries(groups)) {
-         if(ctx !== "Uncategorized") html += `<div class="cart-group-header">🛒 For ${escapeHtml(ctx)}</div>`;
-         else html += `<div class="cart-group-header">🛒 General Master List</div>`;
-         
-         items.forEach(item => {
+      if (state.cart.length === 0) { 
+          html = '<p class="subtle">Cart is empty.</p>'; 
+      } else {
+          html += `<div class="cart-group-header">🛒 Cart</div>`;
+          // Map to keep original indices for toggleCartItem to work perfectly
+          const sortedCart = state.cart.map((item, index) => ({...item, originalIndex: index}))
+                                       .sort((a, b) => (a.checked === b.checked) ? 0 : a.checked ? -1 : 1);
+          
+          sortedCart.forEach(item => {
              html += `
               <div class="list-item-row ${item.checked ? 'checked' : 'dimmed'}">
                 <div class="list-item-left" onclick="toggleCartItem(${item.originalIndex})">
                     <div class="checkbox">${item.checked ? '✓' : ''}</div>
-                    <div><div class="item-name">${escapeHtml(item.name)}</div>${item.flag && !item.checked ? `<div class="item-flag">🕒 ${item.flag}</div>` : ''}</div>
+                    <div><div class="item-name">${escapeHtml(item.name)}</div></div>
                 </div>
                 <button class="trash-btn" onclick="executeSoftDelete('cart', '${item.originalIndex}')"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
               </div>`;
@@ -924,10 +866,47 @@
       document.getElementById('unified-cart-items').innerHTML = html;
     }
 
-    /* --- MASTER LIST LOGIC --- */
+    /* --- MASTER LIST LOGIC WITH DYNAMIC SORTING --- */
+    
+    // Sorts categories based on order frequency dynamically
+    function getSortedCategories() {
+        const catFreqs = {};
+        (state.masterGrocery || []).forEach(item => {
+            const cat = item.category || '📦 Uncategorized';
+            catFreqs[cat] = (catFreqs[cat] || 0) + (item.freq || 1);
+        });
+
+        const fixedTop = ['All', '🔥 Top Picks'];
+        const fixedBottom = ['📦 Uncategorized'];
+        const dynamicCats = MASTER_CATEGORIES.filter(c => !fixedTop.includes(c.id) && !fixedBottom.includes(c.id));
+        
+        dynamicCats.sort((a, b) => {
+            const freqA = catFreqs[a.id] || 0;
+            const freqB = catFreqs[b.id] || 0;
+            return freqB - freqA;
+        });
+
+        return [
+            ...MASTER_CATEGORIES.filter(c => fixedTop.includes(c.id)),
+            ...dynamicCats,
+            ...MASTER_CATEGORIES.filter(c => fixedBottom.includes(c.id))
+        ];
+    }
+    
+    function populateCategoryDropdowns() {
+        const sortedCats = getSortedCategories();
+        const cartSelect = document.getElementById('cartCategorySelect');
+        if (cartSelect) {
+            cartSelect.innerHTML = `<option value="📦 Uncategorized">📦 Category</option>` + 
+                sortedCats.filter(c => !['All', '🔥 Top Picks', '📦 Uncategorized'].includes(c.id))
+                          .map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+        }
+    }
+
     function renderCategoryRibbon() {
         const ribbon = document.getElementById('masterCategoryRibbon');
-        ribbon.innerHTML = MASTER_CATEGORIES.map(cat => {
+        const sortedCats = getSortedCategories();
+        ribbon.innerHTML = sortedCats.map(cat => {
             const isActive = activeMasterCategory === cat.id ? 'active' : '';
             const isTopPicks = cat.id === '🔥 Top Picks' ? 'top-picks' : '';
             return `<div class="filter-chip ${isTopPicks} ${isActive}" onclick="setMasterCategory('${cat.id}')">${cat.label}</div>`;
@@ -956,20 +935,14 @@
         
         let filtered = (state.masterGrocery || []).filter(item => {
             if (term && !fuzzyMatch(term, item.name)) return false;
-
-            if (activeMasterCategory === 'All') {
-                return true;
-            } else if (activeMasterCategory === '🔥 Top Picks') {
-                return item.freq >= 10;
-            } else {
-                const itemCat = item.category || '📦 Uncategorized';
-                return itemCat === activeMasterCategory;
-            }
+            if (activeMasterCategory === 'All') return true;
+            if (activeMasterCategory === '🔥 Top Picks') return item.freq >= 10;
+            return (item.category || '📦 Uncategorized') === activeMasterCategory;
         });
 
         filtered.sort((a, b) => (b.freq - a.freq) || a.name.localeCompare(b.name));
 
-        const catOptions = MASTER_CATEGORIES.filter(c => c.id !== 'All').map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+        const catOptions = getSortedCategories().filter(c => !['All', '🔥 Top Picks'].includes(c.id)).map(c => `<option value="${c.id}">${c.label}</option>`).join('');
 
         const renderList = (arr) => arr.map(item => {
             const inCart = state.cart.some(c => c.name.toLowerCase().trim() === item.name.toLowerCase().trim());
@@ -1006,7 +979,6 @@
 
     function toggleCartItem(index) { 
         state.cart[index].checked = !state.cart[index].checked; 
-        if(state.cart[index].checked) { state.cart[index].recent = false; state.cart[index].flag = ''; }
         renderCart(); saveStateLocally(); syncCartToBackend(); 
     }
     
@@ -1286,7 +1258,10 @@
     function markFoundAndNext() {
       const current = shoppingQueue[shoppingIndex];
       const dbIdx = state.cart.findIndex(c => c.name.toLowerCase().trim() === current.name.toLowerCase().trim() && c.mealContext === current.mealContext);
-      if(dbIdx > -1) { state.cart[dbIdx].checked = false; state.cart[dbIdx].recent = true; state.cart[dbIdx].flag = "Verified Purchase"; }
+      if(dbIdx > -1) { 
+          // Completely purge items from the cart once verified
+          state.cart.splice(dbIdx, 1);
+      }
       fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'updateHistory', items: [current.name] }) }).catch(e=>e);
       shoppingIndex++;
       if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); saveStateLocally(); syncCartToBackend(); }
@@ -1327,6 +1302,8 @@
               saveStateLocally();
           }
           
+          populateCategoryDropdowns();
+          renderCart(); 
           renderEmptyState();
       } else {
           document.getElementById('syncIndicator').classList.add('active');
@@ -1350,8 +1327,16 @@
             if(data.aiNonVegPool) state.aiNonVegPool = data.aiNonVegPool;
             
             saveStateLocally();
-            document.getElementById('syncIndicator').classList.remove('active');
             
+            populateCategoryDropdowns();
+            renderCart();
+            
+            if(document.getElementById('masterListModal').classList.contains('open')) {
+                renderCategoryRibbon();
+                filterMasterList();
+            }
+            
+            document.getElementById('syncIndicator').classList.remove('active');
         }).catch(e => { document.getElementById('syncIndicator').classList.remove('active'); });
     }
 
