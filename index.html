@@ -11,6 +11,7 @@
   <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=boska@400,500,700&display=swap" rel="stylesheet">
   
   <style>
+    /* PREMIUM UI THEME & VARIABLES */
     :root, [data-theme="light"] {
       --color-bg: #ffffff; 
       --color-surface: #f7f6f2; 
@@ -46,9 +47,28 @@
       --shadow-md: 0 16px 40px rgba(0,0,0, 1);
     }
     
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    html { scroll-behavior: smooth; height: 100%; overscroll-behavior-y: none; }
-    body { min-height: 100%; font-family: var(--font-body); background: var(--color-bg); color: var(--color-text); overflow-x: hidden; overscroll-behavior-y: none; user-select: none; }
+    * { 
+        box-sizing: border-box; 
+        margin: 0; 
+        padding: 0; 
+        -webkit-tap-highlight-color: transparent; 
+    }
+    
+    html { 
+        scroll-behavior: smooth; 
+        height: 100%; 
+        overscroll-behavior-y: none; 
+    }
+    
+    body { 
+        min-height: 100%; 
+        font-family: var(--font-body); 
+        background: var(--color-bg); 
+        color: var(--color-text); 
+        overflow-x: hidden; 
+        overscroll-behavior-y: none; 
+        user-select: none; 
+    }
 
     html.text-scale-110 { font-size: 110%; }
     html.text-scale-120 { font-size: 120%; }
@@ -162,6 +182,7 @@
     .filter-ribbon::-webkit-scrollbar { display: none; }
     .filter-chip { padding: 10px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-weight: 600; font-size: 0.9rem; color: var(--color-text); cursor: pointer; white-space: nowrap; transition: 0.2s var(--ease-fluid); }
     .filter-chip.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-bg); }
+    
     .filter-chip.top-picks { border-color: #ffd700; color: #ffd700; }
     .filter-chip.top-picks.active { background: #ffd700; color: #000; }
     
@@ -208,7 +229,6 @@
   
   <div class="sync-indicator" id="syncIndicator"><div class="sync-spinner"></div> Background Sync...</div>
 
-  <!-- TOPBAR -->
   <div class="topbar-wrapper" id="mainTopbar">
     <div class="topbar-main">
       <div class="brand"><img class="brand-logo" src="icon-512x512.png" alt="Logo" style="object-fit: cover; padding: 0; border: none; background: transparent;" /><h1>Meal Planner</h1></div>
@@ -222,7 +242,6 @@
 
   <div class="shell">
     <main id="main">
-      <!-- PLAN TAB -->
       <div id="page-plan" class="page active">
         <section class="hero">
           <div class="filter-wrapper">
@@ -243,7 +262,6 @@
         <section class="section"><div id="suggestions" class="cards" aria-live="polite"></div></section>
       </div>
 
-      <!-- CART TAB -->
       <div id="page-cart" class="page">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; padding-top: calc(1rem + env(safe-area-inset-top));">
           <h2 style="font-family:var(--font-display); font-size:2rem; font-weight:600;">Grocery Cart</h2>
@@ -280,7 +298,6 @@
     </main>
   </div>
 
-  <!-- FLOATING SHARE & BOTTOM NAV -->
   <button class="floating-share-fab" id="floatingShareFab" onclick="shareDailyMenuToWhatsApp()">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
   </button>
@@ -290,7 +307,6 @@
       <button class="primary-btn" id="generateBtn" style="flex: 2.5; height: 56px; font-size: 1.2rem; justify-content: center; transition: 0.3s var(--ease-fluid);">🎲 Generate</button>
   </div>
 
-  <!-- GUIDED SHOPPING OVERLAY -->
   <div class="guided-overlay" id="guided-overlay">
     <button class="close-shopping" onclick="closeGuidedShopping()">✕</button>
     <div class="shopping-progress" id="shopping-progress">Item 1 of X</div>
@@ -301,7 +317,6 @@
     </div>
   </div>
 
-  <!-- QUICK POP-UP FOR GHOST PROMOTION -->
   <div class="modal" id="ghostPromoteModal">
     <section class="dialog" style="max-width: 350px;">
       <div class="dialog-head">
@@ -316,7 +331,6 @@
     </section>
   </div>
 
-  <!-- MASTER LIST MODAL -->
   <div class="modal" id="masterListModal">
     <section class="dialog">
       <div class="dialog-head">
@@ -335,7 +349,6 @@
     </section>
   </div>
 
-  <!-- DATABASE COOKBOOK MODAL -->
   <div class="modal" id="dataModal">
     <section class="dialog" style="padding: 0;">
       <div class="dialog-head">
@@ -413,8 +426,9 @@
   </div>
 
   <script>
-    const GOOGLE_SHEETS_API_URL = "PASTE_YOUR_WEB_APP_URL_HERE"; 
+    const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzNOXoxn17I3d4-inuxiEqhdPxOQokGlSGCYW8buwLTcO6YJxbvcHBH0dZ1d-fBDzwl/exec"; 
     
+    // PURE 3-SHEET STATE
     let state = { grocery: [], savedMeals: [], globalMeals: [], currentSuggestions: [] };
     let appSettings = { diet: 'veg' }; 
     let pendingApprovals = []; let graveyard = []; let deckCache = {}; 
@@ -623,19 +637,11 @@
     }
 
     function setCategory(cat) {
-        if (activeCategory === cat) {
-            activeCategory = null;
-            document.querySelectorAll('.cat-btn, .meal-btn-full').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('generateBtn').style.opacity = '0.5';
-            deckCache = {}; renderEmptyState();
-            return;
-        }
         activeCategory = cat;
         document.querySelectorAll('.cat-btn, .meal-btn-full').forEach(btn => btn.classList.remove('active'));
         if(cat === 'Meals') document.getElementById('btn-cat-meals').classList.add('active');
         else document.getElementById(`btn-cat-${cat.toLowerCase()}`).classList.add('active');
         
-        document.getElementById('generateBtn').style.opacity = '1';
         deckCache = {}; 
         renderEmptyState();
     }
@@ -725,29 +731,29 @@
         </div>`;
     }
 
-    function renderOutputDeck(schema) {
-      if(schema) state.currentSuggestions = schema;
-      const s = document.getElementById('suggestions'); 
-      s.innerHTML = '';
-      if (!state.currentSuggestions || !state.currentSuggestions.length) { 
-          s.innerHTML = `<div class="empty"><h3>Empty Pool</h3><p class="subtle">No meals found for this selection.</p></div>`; 
-          return; 
-      }
-      state.currentSuggestions.forEach((item, index) => {
-        const article = document.createElement('article');
-        article.className = 'meal-card' + (item.isLocked ? ' locked' : '');
-        article.id = `card-${index}`;
-        article.innerHTML = getCardInnerHTML(item, index);
-        s.appendChild(article);
-      });
-    }
-
     function renderEmptyState() {
         document.getElementById('suggestions').innerHTML = `
             <div class="empty" style="padding: 5rem 1rem; border:none; background:transparent;">
                 <h3 style="font-size: 2.5rem; margin-bottom: 1rem; line-height:1.2;">✨<br>Awaken Your Palate</h3>
                 <p class="subtle" style="font-size: 1.1rem; line-height: 1.5; color: var(--color-text-muted);">Select a culinary path from the filters above to begin.</p>
             </div>`;
+    }
+
+    function renderOutputDeck(schema) {
+      state.currentSuggestions = structuredClone(schema);
+      const s = document.getElementById('suggestions'); 
+      s.innerHTML = '';
+      if (!schema.length) { 
+          s.innerHTML = `<div class="empty"><h3>Empty Pool</h3><p class="subtle">No meals found for this selection.</p></div>`; 
+          return; 
+      }
+      schema.forEach((item, index) => {
+        const article = document.createElement('article');
+        article.className = 'meal-card' + (item.isLocked ? ' locked' : '');
+        article.id = `card-${index}`;
+        article.innerHTML = getCardInnerHTML(item, index);
+        s.appendChild(article);
+      });
     }
 
     document.getElementById('suggestions').addEventListener('click', async event => {
@@ -819,7 +825,7 @@
     });
 
     function shareDailyMenuToWhatsApp() {
-        if (!state.currentSuggestions || !Array.isArray(state.currentSuggestions)) {
+        if (!state.currentSuggestions || state.currentSuggestions.length === 0) {
             showToast("Please generate a menu first."); 
             return;
         }
@@ -1319,7 +1325,7 @@
     }
 
     function saveStateLocally() { 
-        localStorage.setItem('mp_data_v8', JSON.stringify(state)); 
+        localStorage.setItem('mp_data_v9', JSON.stringify(state)); 
         localStorage.setItem('mp_settings', JSON.stringify(appSettings)); 
     }
 
@@ -1332,7 +1338,7 @@
       setDietPref(appSettings.diet || 'veg');
       
       try {
-          const cached = localStorage.getItem('mp_data_v8');
+          const cached = localStorage.getItem('mp_data_v9');
           if (cached) { 
               state = JSON.parse(cached); 
               if(!state.grocery) state.grocery = [];
