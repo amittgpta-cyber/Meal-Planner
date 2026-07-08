@@ -70,6 +70,10 @@
         user-select: none; 
     }
 
+    /* TEXT SCALING CLASSES */
+    html.text-scale-110 { font-size: 110%; }
+    html.text-scale-120 { font-size: 120%; }
+
     input, textarea { 
         user-select: auto; 
     }
@@ -549,6 +553,15 @@
         -webkit-appearance: none; 
         appearance: none; 
         outline: none; 
+    }
+    
+    .section-title { 
+        font-size: 14px; 
+        text-transform: uppercase; 
+        letter-spacing: 1px; 
+        color: var(--color-text-muted); 
+        font-weight: bold; 
+        margin: 24px 0 12px; 
     }
     
     .list-item-row { 
@@ -1368,13 +1381,13 @@
         
         if(idx > -1) {
             const item = state.grocery[idx];
-            graveyard.push({ context: 'cart', item: JSON.parse(JSON.stringify(item)), originalIndex: idx }); 
+            graveyard.push({ context: context, item: JSON.parse(JSON.stringify(item)), originalIndex: idx }); 
             
             if(context === 'cart') {
                 item.inCart = false; 
                 item.checked = false; 
                 item.mealContext = '';
-                if(item.category === 'Ghost') state.grocery.splice(idx, 1); // purge ghost completely
+                if(item.category === 'Ghost') state.grocery.splice(idx, 1); 
                 renderCart(); 
                 saveStateLocally(); 
                 runServer('syncCart', {cart: state.grocery.filter(i=>i.inCart)});
@@ -1412,6 +1425,18 @@
         }
         updateUndoButton();
     }
+    
+    function flushGraveyardCache() {
+        if (!graveyard.length) return;
+        runServer('syncCart', {cart: state.grocery.filter(i=>i.inCart)});
+        graveyard = []; 
+        updateUndoButton();
+    }
+
+    window.addEventListener("visibilitychange", () => { 
+        if (document.visibilityState === "hidden") flushGraveyardCache(); 
+    });
+    window.addEventListener("pagehide", flushGraveyardCache);
 
     // ------------------------------------------------
     // DUAL FILTER & CARDS
@@ -1522,6 +1547,10 @@
       if(schema) state.currentSuggestions = schema;
       const s = document.getElementById('suggestions'); 
       s.innerHTML = '';
+      if (!schema.length) { 
+          s.innerHTML = `<div class="empty"><h3>Empty Pool</h3><p class="subtle">No meals found for this selection.</p></div>`; 
+          return; 
+      }
       schema.forEach((item, index) => {
         const article = document.createElement('article');
         article.className = 'meal-card' + (item.isLocked ? ' locked' : '');
@@ -1609,7 +1638,7 @@
 
     function shareDailyMenuToWhatsApp() {
         const lockedCards = state.currentSuggestions.filter(card => card.isLocked);
-        if (!lockedCards.length) { 
+        if (lockedCards.length === 0) { 
             showToast("Please lock (✓ On Menu) at least one meal to share the menu."); 
             return; 
         }
@@ -1624,11 +1653,14 @@
     // GHOST ITEM LONG PRESS POP-UP
     // ------------------------------------------------
     let pressTimer;
+    
     function touchStartGhost(e, itemName, isGhost) {
       if(!isGhost) return;
+      
+      const safeName = escapeHtml(itemName);
+      
       pressTimer = setTimeout(() => {
-        const safeName = itemName.replace(/\\'/g, "'").replace(/&quot;/g, '"');
-        document.getElementById('ghostPromoteName').value = safeName;
+        document.getElementById('ghostPromoteName').value = itemName;
         
         const sortedCats = getSortedCategories();
         document.getElementById('ghostPromoteCategory').innerHTML = `<option value="📦 Uncategorized">📦 Category</option>` + 
@@ -1717,6 +1749,8 @@
           groups[group].forEach(item => {
               const isGhost = item.category === 'Ghost';
               const safeName = escapeHtml(item.name);
+              
+              // We use single quotes and escapeHtml so touchStartGhost works inline safely
               html += `
               <div class="list-item-row ${item.checked ? 'checked' : 'dimmed'}" ontouchstart="touchStartGhost(event, '${safeName}', ${isGhost})" ontouchend="touchEndGhost(event)" ontouchmove="touchMoveGhost(event)">
                 <div class="list-item-left" onclick="toggleCartItem('${safeName}')">
@@ -1733,7 +1767,10 @@
     }
 
     function toggleCartItem(name) { 
-        const item = state.grocery.find(i => i.name.toLowerCase() === name.toLowerCase());
+        // Decode HTML entities back for array search
+        const rawName = name.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+        const item = state.grocery.find(i => i.name.toLowerCase() === rawName.toLowerCase());
+        
         if(item) {
             item.checked = !item.checked;
             renderCart(); 
@@ -1747,7 +1784,7 @@
         state.grocery.forEach(i => {
             if(i.inCart && i.checked) {
                 if(i.category === 'Ghost') {
-                    i.inCart = false; 
+                    i.inCart = false; // Purge ghost
                 } else { 
                     i.count++; 
                     i.inCart = false; 
@@ -1758,7 +1795,8 @@
             }
         });
         
-        state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart)); 
+        state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart)); // Locally remove purged ghosts
+        
         if(hasCheckout) { 
             renderCart(); 
             saveStateLocally(); 
@@ -1807,11 +1845,8 @@
 
     function getSortedCategories() {
         const catFreqs = {};
-        state.grocery.forEach(item => { 
-            catFreqs[item.category] = (catFreqs[item.category] || 0) + (item.count || 1); 
-        });
-        const fixedTop = ['All', '🔥 Top Picks']; 
-        const fixedBottom = ['📦 Uncategorized'];
+        state.grocery.forEach(item => { catFreqs[item.category] = (catFreqs[item.category] || 0) + (item.count || 1); });
+        const fixedTop = ['All', '🔥 Top Picks']; const fixedBottom = ['📦 Uncategorized'];
         const dynamicCats = MASTER_CATEGORIES.filter(c => !fixedTop.includes(c.id) && !fixedBottom.includes(c.id));
         dynamicCats.sort((a, b) => (catFreqs[b.id] || 0) - (catFreqs[a.id] || 0));
         return [...MASTER_CATEGORIES.filter(c => fixedTop.includes(c.id)), ...dynamicCats, ...MASTER_CATEGORIES.filter(c => fixedBottom.includes(c.id))];
@@ -1871,7 +1906,8 @@
     }
 
     function toggleMasterItem(name) {
-      let item = state.grocery.find(i => i.name.toLowerCase() === name.toLowerCase());
+      const rawName = name.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+      let item = state.grocery.find(i => i.name.toLowerCase() === rawName.toLowerCase());
       if(item) { 
           item.inCart = !item.inCart; 
           if(item.inCart) item.checked = false; 
@@ -1883,12 +1919,13 @@
     }
 
     function editMasterItem(itemName, newCategory) {
-        const item = state.grocery.find(i => i.name.toLowerCase() === itemName.toLowerCase());
+        const rawName = itemName.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+        const item = state.grocery.find(i => i.name.toLowerCase() === rawName.toLowerCase());
         if (item) {
             item.category = newCategory; 
             saveStateLocally(); 
             filterMasterList();
-            runServer('editMasterItemCategory', { item: itemName, category: newCategory }); 
+            runServer('editMasterItemCategory', { item: rawName, category: newCategory }); 
             showToast(`Category updated`);
         }
     }
@@ -1956,6 +1993,19 @@
             items.forEach(i => html += `<div class="data-row"><span>${escapeHtml(i.name)}</span><span class="badge" style="font-size:0.65rem; background:transparent; border:1px solid var(--color-border); color:var(--color-text-muted);">${i.src}</span></div>`); 
         }
         document.getElementById('cookbookOutput').innerHTML = html;
+    }
+
+    function setDietPref(pref) {
+        appSettings.diet = pref;
+        document.getElementById('toggleVeg').classList.toggle('active', pref === 'veg');
+        document.getElementById('toggleNonVeg').classList.toggle('active', pref === 'non-veg');
+        deckCache = {}; 
+        renderEmptyState();
+        saveStateLocally();
+        updateCookbookStats();
+        
+        const activeBtn = document.querySelector('.stat-btn.active');
+        if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat);
     }
 
     function queueUnifiedEntry() {
@@ -2059,6 +2109,7 @@
       state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart)); 
       saveStateLocally();
       shoppingIndex++;
+      
       if(shoppingIndex >= shoppingQueue.length) { 
           closeGuidedShopping(); 
           runServer('checkoutCart'); 
@@ -2084,7 +2135,7 @@
     }
 
     function saveStateLocally() { 
-        localStorage.setItem('mp_data_v6', JSON.stringify(state)); 
+        localStorage.setItem('mp_data_v7', JSON.stringify(state)); 
         localStorage.setItem('mp_settings', JSON.stringify(appSettings)); 
     }
 
@@ -2092,7 +2143,7 @@
       const cachedSettings = localStorage.getItem('mp_settings');
       if (cachedSettings) appSettings = JSON.parse(cachedSettings);
       
-      const cached = localStorage.getItem('mp_data_v6');
+      const cached = localStorage.getItem('mp_data_v7');
       if (cached) { 
           state = JSON.parse(cached); 
           populateCategoryDropdowns(); 
@@ -2108,14 +2159,15 @@
       fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAllData' }) })
         .then(res => res.json())
         .then(parsed => {
-            state.grocery = parsed.data.grocery || []; 
-            state.savedMeals = parsed.data.savedMeals || []; 
-            state.globalMeals = parsed.data.globalMeals || [];
-            
-            saveStateLocally(); 
-            populateCategoryDropdowns(); 
-            renderCart();
-            
+            if (parsed.success && parsed.data) {
+                state.grocery = parsed.data.grocery || []; 
+                state.savedMeals = parsed.data.savedMeals || []; 
+                state.globalMeals = parsed.data.globalMeals || [];
+                
+                saveStateLocally(); 
+                populateCategoryDropdowns(); 
+                renderCart();
+            }
             document.getElementById('syncIndicator').classList.remove('active');
         }).catch(e => { 
             document.getElementById('syncIndicator').classList.remove('active'); 
