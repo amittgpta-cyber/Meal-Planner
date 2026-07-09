@@ -162,6 +162,7 @@
     .filter-ribbon::-webkit-scrollbar { display: none; }
     .filter-chip { padding: 10px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-weight: 600; font-size: 0.9rem; color: var(--color-text); cursor: pointer; white-space: nowrap; transition: 0.2s var(--ease-fluid); }
     .filter-chip.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-bg); }
+    
     .filter-chip.top-picks { border-color: #ffd700; color: #ffd700; }
     .filter-chip.top-picks.active { background: #ffd700; color: #000; }
     
@@ -206,12 +207,14 @@
 </head>
 <body>
   
-  <div class="sync-indicator" id="syncIndicator"><div class="sync-spinner"></div> Background Sync...</div>
+  <div class="sync-indicator" id="syncIndicator"><div class="sync-spinner"></div> System Sync...</div>
 
   <div class="topbar-wrapper" id="mainTopbar">
     <div class="topbar-main">
       <div class="brand"><img class="brand-logo" src="icon-512x512.png" alt="Logo" style="object-fit: cover; padding: 0; border: none; background: transparent;" /><h1>Meal Planner</h1></div>
       <div class="header-actions" id="topbar-plan-actions">
+        <button class="icon-btn" onclick="toggleTextSize()" style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; padding: 0;">Aa</button>
+        <button class="icon-btn" data-theme-toggle></button>
         <button class="ghost-btn" id="openDataBtn" onclick="openCookbook()">
             <svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
         </button>
@@ -283,7 +286,7 @@
 
   <div class="bottom-nav" id="bottomNav">
       <button class="ghost-btn" id="navToggleBtn" onclick="toggleMainView()" style="flex: 1; height: 56px; font-size: 1.1rem; justify-content: center; background: color-mix(in oklab, var(--color-surface) 90%, transparent); backdrop-filter: blur(24px); border: 1px solid var(--color-border); color: var(--color-text);">🛒 Cart</button>
-      <button class="primary-btn" id="generateBtn" style="flex: 2.5; height: 56px; font-size: 1.2rem; justify-content: center; transition: 0.3s var(--ease-fluid); opacity: 0.5;">🎲 Generate</button>
+      <button class="primary-btn" id="generateBtn" style="flex: 2.5; height: 56px; font-size: 1.2rem; justify-content: center; opacity: 0.5; transition: 0.3s var(--ease-fluid);">🎲 Generate</button>
   </div>
 
   <div class="guided-overlay" id="guided-overlay">
@@ -331,7 +334,7 @@
   <div class="modal" id="dataModal">
     <section class="dialog" style="padding: 0;">
       <div class="dialog-head">
-        <h4 style="font-family: var(--font-display); font-size: 1.5rem;">Database</h4>
+        <h4 style="font-family: var(--font-display); font-size: 1.5rem;">Core Database</h4>
         <button class="icon-btn" style="border-radius: 50%;" onclick="closeModal('dataModal')">
             <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
@@ -339,19 +342,12 @@
       
       <div class="dialog-body" style="overflow-y: auto; padding: 20px;" id="cookBookScrollArea">
         
-        <div class="top-settings-bar">
-          <div style="display:flex; gap:10px;">
-            <button class="icon-btn" data-theme-toggle></button>
-            <button class="icon-btn" onclick="toggleTextSize()" style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700;">Aa</button>
-          </div>
-        </div>
-
         <div class="diet-toggle-container">
             <button class="diet-btn veg active" id="toggleVeg" onclick="setDietPref('veg')">🌿 Veg</button>
             <button class="diet-btn nonveg" id="toggleNonVeg" onclick="setDietPref('non-veg')">🥩 Non-Veg</button>
         </div>
           
-        <button class="primary-btn" style="width: 100%; border-radius: 1.5rem; padding: 16px; margin-bottom: 24px; font-size: 1.1rem;" onclick="forceRefill()" id="refillBtn">⚡ Force Cloud Sync</button>
+        <button class="primary-btn" style="width: 100%; border-radius: 1.5rem; padding: 16px; margin-bottom: 24px; font-size: 1.1rem;" onclick="forceRefill()" id="refillBtn">⚡ Refill</button>
           
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
             <button class="ghost-btn stat-btn" data-cbcat="MyMeals" onclick="renderCookbookList('MyMeals')">
@@ -492,10 +488,12 @@
     }
 
     function fuzzyMatch(query, target) {
-        let q = query.toLowerCase(); let t = target.toLowerCase();
-        return q.split(' ').filter(Boolean).every(term => t.includes(term));
+        let q = query.toLowerCase().replace(/omelette/g, 'omelet');
+        let t = target.toLowerCase().replace(/omelette/g, 'omelet');
+        const terms = q.split(' ').filter(Boolean);
+        return terms.every(term => t.includes(term));
     }
-    
+
     function escapeHtml(str) { 
         return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); 
     }
@@ -509,25 +507,21 @@
     }
 
     (() => {
-      const themeBtn = document.querySelectorAll('[data-theme-toggle]'); 
+      const themeBtn = document.querySelector('[data-theme-toggle]');
       const root = document.documentElement;
-      let theme = localStorage.getItem('mp_theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      let theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       root.setAttribute('data-theme', theme);
-      
       const renderThemeIcon = () => { 
-          themeBtn.forEach(btn => btn.innerHTML = theme === 'dark' 
+          themeBtn.innerHTML = theme === 'dark' 
             ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>' 
-            : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>');
+            : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'; 
       };
-      
       renderThemeIcon();
-      
-      themeBtn.forEach(btn => btn.addEventListener('click', () => { 
+      themeBtn.addEventListener('click', () => { 
           theme = theme === 'dark' ? 'light' : 'dark'; 
           root.setAttribute('data-theme', theme); 
-          localStorage.setItem('mp_theme', theme); 
           renderThemeIcon(); 
-      }));
+      });
     })();
 
     function switchTab(tabId) {
@@ -747,10 +741,10 @@
     }
 
     function renderOutputDeck(schema) {
-      if(schema) state.currentSuggestions = schema;
+      state.currentSuggestions = structuredClone(schema);
       const s = document.getElementById('suggestions'); 
       s.innerHTML = '';
-      if (!schema || !schema.length) { 
+      if (!schema.length) { 
           s.innerHTML = `<div class="empty"><h3>Empty Pool</h3><p class="subtle">No meals found for this selection.</p></div>`; 
           return; 
       }
@@ -892,6 +886,7 @@
             if(existing) {
                 if(category && category !== '📦 Uncategorized') existing.category = category;
                 existing.inCart = true; 
+                existing.checked = true;
                 existing.mealContext = '';
             }
             renderCart(); 
@@ -911,9 +906,10 @@
           let existing = state.grocery.find(i => i.name.toLowerCase() === safeIng);
           if (existing) {
               existing.inCart = true; 
+              existing.checked = true; 
               existing.mealContext = mealContext;
           } else {
-              state.grocery.unshift({ name: ing, count: 0, lastOrdered: '', category: 'Ghost', inCart: true, checked: false, mealContext: mealContext });
+              state.grocery.unshift({ name: ing, count: 0, lastOrdered: '', category: 'Ghost', inCart: true, checked: true, mealContext: mealContext });
           }
         });
         renderCart(); 
@@ -1013,9 +1009,10 @@
             if(existing) {
                 if(category && category !== '📦 Uncategorized') existing.category = category;
                 existing.inCart = true; 
+                existing.checked = true;
                 existing.mealContext = '';
             } else {
-                state.grocery.unshift({name: name, count: 0, lastOrdered:'', category: category, inCart: true, checked: false, mealContext: ''}); 
+                state.grocery.unshift({name: name, count: 0, lastOrdered:'', category: category, inCart: true, checked: true, mealContext: ''}); 
             }
             document.getElementById('manualCartAdd').value = ''; 
             renderCart(); 
@@ -1111,7 +1108,7 @@
       let item = state.grocery.find(i => i.name.toLowerCase() === rawName.toLowerCase());
       if(item) { 
           item.inCart = !item.inCart; 
-          if(item.inCart) item.checked = false; 
+          if(item.inCart) item.checked = true; 
       }
       filterMasterList(); 
       renderCart(); 
@@ -1379,7 +1376,7 @@
     }
 
     function saveStateLocally() { 
-        localStorage.setItem('mp_data_v11', JSON.stringify(state)); 
+        localStorage.setItem('mp_data_v12', JSON.stringify(state)); 
         localStorage.setItem('mp_settings', JSON.stringify(appSettings)); 
     }
 
@@ -1392,7 +1389,7 @@
       setDietPref(appSettings.diet || 'veg');
       
       try {
-          const cached = localStorage.getItem('mp_data_v11');
+          const cached = localStorage.getItem('mp_data_v12');
           if (cached) { 
               state = JSON.parse(cached); 
               if(!state.grocery) state.grocery = [];
