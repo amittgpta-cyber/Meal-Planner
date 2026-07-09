@@ -127,8 +127,8 @@
     .floating-share-fab.fab-hidden { transform: scale(0); opacity: 0; pointer-events: none; }
 
     .cart-tools { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; width: 100%; }
-    .cart-tools input { flex: 2; padding: 14px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); transition: 0.2s; min-width: 0; height: 56px; }
-    .cart-tools select { flex: 1.5; padding: 0 12px; height: 56px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-family: var(--font-body); font-size: 0.95rem; -webkit-appearance: none; appearance: none; outline: none; }
+    .cart-tools input { flex: 3; padding: 14px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); transition: 0.2s; min-width: 0; height: 56px; }
+    .cart-tools select { flex: 1; padding: 0 12px; height: 56px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-family: var(--font-body); font-size: 0.95rem; -webkit-appearance: none; appearance: none; outline: none; text-overflow: ellipsis; }
     
     .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); font-weight: bold; margin: 24px 0 12px; }
     
@@ -259,7 +259,7 @@
         <div class="cart-tools">
             <input id="manualCartAdd" placeholder="Add custom item...">
             <select id="cartCategorySelect"></select>
-            <button class="primary-btn" style="flex: 0 0 56px; width: 56px; border-radius: 1.5rem; padding: 0; height: 56px; font-size: 1.75rem; display: flex; align-items: center; justify-content: center;" onclick="addManualCartItem()">+</button>
+            <button class="primary-btn" style="flex: 0 0 80px; width: 80px; border-radius: 1.5rem; padding: 0; height: 56px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;" onclick="addManualCartItem()">+</button>
         </div>
         
         <div style="display:flex; justify-content:flex-end; margin-bottom: 12px;">
@@ -302,13 +302,13 @@
   <div class="modal" id="ghostPromoteModal">
     <section class="dialog" style="max-width: 350px;">
       <div class="dialog-head">
-        <h4 style="font-family: var(--font-display); font-size: 1.25rem;">Promote to Master</h4>
+        <h4 style="font-family: var(--font-display); font-size: 1.25rem;">Save to Grocery list</h4>
         <button class="icon-btn" style="border-radius: 50%; width:32px; height:32px;" onclick="closeModal('ghostPromoteModal')">✕</button>
       </div>
       <div class="dialog-body" style="padding: 20px; display:flex; flex-direction:column; gap:12px;">
         <input id="ghostPromoteName" class="master-search-bar" style="margin:0;" type="text" />
         <select id="ghostPromoteCategory" class="master-search-bar" style="margin:0; padding:12px 16px;"></select>
-        <button class="primary-btn" style="width:100%; border-radius: 1.5rem; padding: 14px;" onclick="confirmGhostPromotion()">+ Save to Master</button>
+        <button class="primary-btn" style="width:100%; border-radius: 1.5rem; padding: 14px;" onclick="confirmGhostPromotion()">Save</button>
       </div>
     </section>
   </div>
@@ -461,6 +461,7 @@
     let touchstartX = 0; let touchendX = 0;
     document.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; }, {passive: true});
     document.addEventListener('touchend', e => { 
+        if (document.querySelector('.modal.open') || document.getElementById('guided-overlay').classList.contains('active')) return;
         touchendX = e.changedTouches[0].screenX; 
         if (touchendX < touchstartX - 100 && activeTab === 'plan') toggleMainView();
         if (touchendX > touchstartX + 100 && activeTab === 'cart') toggleMainView();
@@ -615,15 +616,6 @@
         activeSource = src;
         document.getElementById('btn-src-cookbook').classList.toggle('active', src === 'cookbook');
         document.getElementById('btn-src-global').classList.toggle('active', src === 'global');
-        
-        if (activeCategory) {
-            const cacheKey = `${activeSource}_${activeCategory}`;
-            if (deckCache[cacheKey] && deckCache[cacheKey].length > 0) {
-                renderOutputDeck(deckCache[cacheKey]);
-            } else {
-                document.getElementById('generateBtn').click();
-            }
-        }
     }
 
     function setCategory(cat) {
@@ -631,7 +623,6 @@
             activeCategory = null;
             document.querySelectorAll('.cat-btn, .meal-btn-full').forEach(btn => btn.classList.remove('active'));
             document.getElementById('generateBtn').style.opacity = '0.5';
-            renderEmptyState();
             return;
         }
         
@@ -641,13 +632,6 @@
         else document.getElementById(`btn-cat-${cat.toLowerCase()}`).classList.add('active');
         
         document.getElementById('generateBtn').style.opacity = '1';
-        
-        const cacheKey = `${activeSource}_${activeCategory}`;
-        if (deckCache[cacheKey] && deckCache[cacheKey].length > 0) {
-            renderOutputDeck(deckCache[cacheKey]);
-        } else {
-            renderEmptyState();
-        }
     }
 
     document.getElementById('generateBtn').addEventListener('click', () => {
@@ -721,10 +705,12 @@
             <div class="top-actions">${cartHtml}${bookmarkHtml}</div>
         </div>
         <div class="meal-title">${safeName}</div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <button class="card-action ${item.isLocked ? 'locked' : ''}" data-action="lock" data-index="${index}">${item.isLocked ? '✓ On Menu' : 'Serve It'}</button>
-            <button class="card-action" onclick="document.getElementById('explore-${index}').classList.toggle('open')">⋮ More</button>
+        <div style="display:flex; gap: 8px;">
+            <button class="card-action" style="flex: 0 0 48px; padding:0;" data-action="prev-meal" data-index="${index}">&lt;&lt;</button>
+            <button class="card-action ${item.isLocked ? 'locked' : ''}" style="flex: 1;" data-action="lock" data-index="${index}">${item.isLocked ? '✓ On Menu' : 'Serve It'}</button>
+            <button class="card-action" style="flex: 0 0 48px; padding:0;" data-action="next-meal" data-index="${index}">&gt;&gt;</button>
         </div>
+        <button class="card-action" style="width: 100%; margin-top: 8px;" onclick="document.getElementById('explore-${index}').classList.toggle('open')">⋮ More</button>
         <div id="explore-${index}" class="explore-area">
           <button class="explore-icon" data-action="google" data-index="${index}"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 24c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 21.53 7.7 24 12 24z"/><path fill="#FBBC05" d="M5.84 15.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V8.06H2.18C1.43 9.55 1 11.22 1 13s.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 4.84c1.61 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.63 14.97 0 12 0 7.7 0 3.99 2.47 2.18 6.06l3.66 2.84c.87-2.6 3.3-4.06 6.16-4.06z"/></svg>Recipe</button>
           <button class="explore-icon" data-action="youtube" data-index="${index}"><svg viewBox="0 0 24 24"><path fill="#FF0000" d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>Video</button>
@@ -737,7 +723,7 @@
         document.getElementById('suggestions').innerHTML = `
             <div class="empty" style="padding: 5rem 1rem; border:none; background:transparent;">
                 <h3 style="font-size: 2.5rem; margin-bottom: 1rem; line-height:1.2;">✨<br>Awaken Your Palate</h3>
-                <p class="subtle" style="font-size: 1.1rem; line-height: 1.5; color: var(--color-text-muted);">Select a culinary path from the filters above to begin.</p>
+                <p class="subtle" style="font-size: 1.1rem; line-height: 1.5; color: var(--color-text-muted);">Select a culinary path to begin</p>
             </div>`;
     }
 
@@ -765,6 +751,35 @@
       const idx = Number(btn.dataset.index); 
       const action = btn.dataset.action; 
       const card = state.currentSuggestions[idx];
+      
+      if (action === 'prev-meal' || action === 'next-meal') {
+          const pool = activeSource === 'cookbook' ? (state.savedMeals || []) : (state.globalMeals || []);
+          let valid = [];
+          
+          if (activeCategory === 'Meals') {
+              valid = pool.filter(m => (m.diet || 'veg').toLowerCase() === appSettings.diet && !['dessert', 'drinks', 'cocktails'].includes((m.category || '').toLowerCase()) && (m.category || '').toLowerCase() === card.time.toLowerCase());
+          } else {
+              valid = pool.filter(m => (m.category || '').toLowerCase() === activeCategory.toLowerCase() && ((m.diet || 'veg').toLowerCase() === appSettings.diet));
+          }
+
+          if (valid.length > 1) {
+              let currentIdx = valid.findIndex(m => m.name === card.name);
+              if (currentIdx === -1) currentIdx = 0;
+              let newIdx = action === 'next-meal' ? (currentIdx + 1) % valid.length : (currentIdx - 1 + valid.length) % valid.length;
+              let newMeal = valid[newIdx];
+              
+              state.currentSuggestions[idx] = buildCard(card.time, newMeal, activeSource);
+              
+              const article = document.getElementById(`card-${idx}`);
+              article.className = 'meal-card';
+              article.innerHTML = getCardInnerHTML(state.currentSuggestions[idx], idx);
+              
+              const cacheKey = `${activeSource}_${activeCategory}`;
+              if (deckCache[cacheKey]) deckCache[cacheKey] = [...state.currentSuggestions];
+          } else {
+              showToast("No other meals in this category.");
+          }
+      }
       
       if (action === 'toggle-explore') document.getElementById(`explore-${idx}`).classList.toggle('open');
       
@@ -816,7 +831,7 @@
       
       const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
       if (action === 'share-card') { 
-          window.open(`whatsapp://send?text=${encodeURIComponent(`🍽️ *${card.name.trim()}*\n\n🔍 _https://www.google.com/search?q=${searchQ}_\n\n▶️ _https://www.youtube.com/results?search_query=${searchQ}_`)}`, '_blank'); 
+          window.open(`whatsapp://send?text=${encodeURIComponent(`🍽️ *${card.name.trim()}*\n\n🔍 _https://www.google.com/search?q=${searchQ}_\n▶️ _https://www.youtube.com/results?search_query=${searchQ}_`)}`, '_blank'); 
       }
       if (action === 'google') {
           window.open(`https://www.google.com/search?q=${searchQ}`, '_blank');
@@ -842,7 +857,7 @@
         let text = "🍽️ *Today's Menu*\n\n";
         lockedCards.forEach(card => { 
             const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
-            text += `*${card.category}:* ${card.name.trim()}\n🔍 _https://www.google.com/search?q=${searchQ}_\n\n`; 
+            text += `*${card.category}:* ${card.name.trim()}\n🔍 _https://www.google.com/search?q=${searchQ}_\n▶️ _https://www.youtube.com/results?search_query=${searchQ}_\n\n`; 
         });
         window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
     }
@@ -927,6 +942,25 @@
         window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
     }
 
+    function removeMealGroup(mealContext) {
+        const rawContext = mealContext.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+        let hasChanges = false;
+        state.grocery.forEach(i => {
+            if (i.inCart && i.mealContext === rawContext) {
+                i.inCart = false;
+                i.checked = false;
+                i.mealContext = '';
+                hasChanges = true;
+            }
+        });
+        state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart));
+        if (hasChanges) {
+            renderCart();
+            saveStateLocally();
+            runServer('syncCart', {cart: state.grocery.filter(i=>i.inCart)});
+        }
+    }
+
     function renderCart() {
       const container = document.getElementById('unified-cart-items');
       const activeCart = state.grocery.filter(item => item.inCart);
@@ -945,7 +979,16 @@
 
       let html = '';
       for (let group in groups) {
-          html += `<div class="cart-group-title">${group}</div>`;
+          if (group !== 'Groceries') {
+              const mealContext = group.replace('For ', '');
+              html += `<div style="display:flex; justify-content:space-between; align-items:center; margin: 15px 0 5px 8px;">
+                          <div class="cart-group-title" style="margin:0;">${group}</div>
+                          <button class="ghost-btn" style="color:var(--color-error); border:none; height:32px; width:32px; padding:0; font-weight:bold; font-size:1.5rem; display:flex; justify-content:center; align-items:center;" onclick="removeMealGroup('${escapeHtml(mealContext)}')">-</button>
+                       </div>`;
+          } else {
+              html += `<div class="cart-group-title">${group}</div>`;
+          }
+          
           groups[group].forEach(item => {
               const isGhost = item.category === 'Ghost';
               const safeName = escapeHtml(item.name);
@@ -1372,7 +1415,7 @@
     }
 
     function saveStateLocally() { 
-        localStorage.setItem('mp_data_v13', JSON.stringify(state)); 
+        localStorage.setItem('mp_data_v14', JSON.stringify(state)); 
         localStorage.setItem('mp_settings', JSON.stringify(appSettings)); 
     }
 
@@ -1385,7 +1428,7 @@
       setDietPref(appSettings.diet || 'veg');
       
       try {
-          const cached = localStorage.getItem('mp_data_v13');
+          const cached = localStorage.getItem('mp_data_v14');
           if (cached) { 
               state = JSON.parse(cached); 
               if(!state.grocery) state.grocery = [];
