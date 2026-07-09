@@ -11,7 +11,6 @@
   <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=boska@400,500,700&display=swap" rel="stylesheet">
   
   <style>
-    /* PREMIUM UI THEME & VARIABLES */
     :root, [data-theme="light"] {
       --color-bg: #ffffff; 
       --color-surface: #f7f6f2; 
@@ -47,28 +46,9 @@
       --shadow-md: 0 16px 40px rgba(0,0,0, 1);
     }
     
-    * { 
-        box-sizing: border-box; 
-        margin: 0; 
-        padding: 0; 
-        -webkit-tap-highlight-color: transparent; 
-    }
-    
-    html { 
-        scroll-behavior: smooth; 
-        height: 100%; 
-        overscroll-behavior-y: none; 
-    }
-    
-    body { 
-        min-height: 100%; 
-        font-family: var(--font-body); 
-        background: var(--color-bg); 
-        color: var(--color-text); 
-        overflow-x: hidden; 
-        overscroll-behavior-y: none; 
-        user-select: none; 
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html { scroll-behavior: smooth; height: 100%; overscroll-behavior-y: none; }
+    body { min-height: 100%; font-family: var(--font-body); background: var(--color-bg); color: var(--color-text); overflow-x: hidden; overscroll-behavior-y: none; user-select: none; }
 
     html.text-scale-110 { font-size: 110%; }
     html.text-scale-120 { font-size: 120%; }
@@ -182,7 +162,6 @@
     .filter-ribbon::-webkit-scrollbar { display: none; }
     .filter-chip { padding: 10px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-weight: 600; font-size: 0.9rem; color: var(--color-text); cursor: pointer; white-space: nowrap; transition: 0.2s var(--ease-fluid); }
     .filter-chip.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-bg); }
-    
     .filter-chip.top-picks { border-color: #ffd700; color: #ffd700; }
     .filter-chip.top-picks.active { background: #ffd700; color: #000; }
     
@@ -426,9 +405,8 @@
   </div>
 
   <script>
-    const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzNOXoxn17I3d4-inuxiEqhdPxOQokGlSGCYW8buwLTcO6YJxbvcHBH0dZ1d-fBDzwl/exec"; 
+    const GOOGLE_SHEETS_API_URL = "PASTE_YOUR_WEB_APP_URL_HERE"; 
     
-    // PURE 3-SHEET STATE
     let state = { grocery: [], savedMeals: [], globalMeals: [], currentSuggestions: [] };
     let appSettings = { diet: 'veg' }; 
     let pendingApprovals = []; let graveyard = []; let deckCache = {}; 
@@ -552,6 +530,17 @@
       }));
     })();
 
+    function switchTab(tabId) {
+      document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+      document.getElementById(`page-${tabId}`).classList.add('active');
+      const topbar = document.getElementById('mainTopbar'), fab = document.getElementById('floatingShareFab'), genBtn = document.getElementById('generateBtn'), navToggleBtn = document.getElementById('navToggleBtn');
+      if (tabId === 'cart') {
+          topbar.classList.add('topbar-hidden'); fab.classList.add('fab-hidden'); genBtn.style.display = 'none'; navToggleBtn.innerHTML = '🍽️ Plan';
+      } else {
+          topbar.classList.remove('topbar-hidden'); fab.classList.remove('fab-hidden'); genBtn.style.display = 'flex'; navToggleBtn.innerHTML = '🛒 Cart';
+      }
+    }
+
     function updateUndoButton() {
         const btn = document.getElementById('undoBtn');
         if (graveyard.length > 0) { 
@@ -632,44 +621,59 @@
         activeSource = src;
         document.getElementById('btn-src-cookbook').classList.toggle('active', src === 'cookbook');
         document.getElementById('btn-src-global').classList.toggle('active', src === 'global');
-        deckCache = {}; 
-        renderEmptyState();
+        
+        if (activeCategory) {
+            const cacheKey = `${activeSource}_${activeCategory}`;
+            if (deckCache[cacheKey] && deckCache[cacheKey].length > 0) {
+                renderOutputDeck(deckCache[cacheKey]);
+            } else {
+                document.getElementById('generateBtn').click();
+            }
+        }
     }
 
     function setCategory(cat) {
+        if (activeCategory === cat) {
+            activeCategory = null;
+            document.querySelectorAll('.cat-btn, .meal-btn-full').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('generateBtn').style.opacity = '0.5';
+            renderEmptyState();
+            return;
+        }
+        
         activeCategory = cat;
         document.querySelectorAll('.cat-btn, .meal-btn-full').forEach(btn => btn.classList.remove('active'));
         if(cat === 'Meals') document.getElementById('btn-cat-meals').classList.add('active');
         else document.getElementById(`btn-cat-${cat.toLowerCase()}`).classList.add('active');
         
-        deckCache = {}; 
-        renderEmptyState();
+        document.getElementById('generateBtn').style.opacity = '1';
+        
+        const cacheKey = `${activeSource}_${activeCategory}`;
+        if (deckCache[cacheKey] && deckCache[cacheKey].length > 0) {
+            renderOutputDeck(deckCache[cacheKey]);
+        } else {
+            renderEmptyState();
+        }
     }
 
     document.getElementById('generateBtn').addEventListener('click', () => {
         if (activeTab === 'cart') toggleMainView(); 
         if (!activeCategory) return;
 
-        const cacheKey = `${activeSource}_${activeCategory}`;
-        if (deckCache[cacheKey] && deckCache[cacheKey].length > 0) { 
-            renderOutputDeck(deckCache[cacheKey]); 
-            return; 
-        }
-
-        const pool = activeSource === 'cookbook' ? state.savedMeals : state.globalMeals;
+        const pool = activeSource === 'cookbook' ? (state.savedMeals || []) : (state.globalMeals || []);
         let deck = [];
 
         if (activeCategory === 'Meals') {
-            const valid = pool.filter(m => m.diet === appSettings.diet && !['Dessert', 'Drinks', 'Cocktails'].includes(m.category));
-            const b = valid.filter(m => m.category.toLowerCase() === 'breakfast');
-            const l = valid.filter(m => m.category.toLowerCase() === 'lunch');
-            const d = valid.filter(m => m.category.toLowerCase() === 'dinner');
+            const valid = pool.filter(m => (m.diet || 'veg') === appSettings.diet && !['Dessert', 'Drinks', 'Cocktails'].includes((m.category || '').toLowerCase()));
+            const b = valid.filter(m => (m.category || '').toLowerCase() === 'breakfast');
+            const l = valid.filter(m => (m.category || '').toLowerCase() === 'lunch');
+            const d = valid.filter(m => (m.category || '').toLowerCase() === 'dinner');
             
             if(b.length) deck.push(buildCard('Breakfast', b[Math.floor(Math.random()*b.length)], activeSource));
             if(l.length) deck.push(buildCard('Lunch', l[Math.floor(Math.random()*l.length)], activeSource));
             if(d.length) deck.push(buildCard('Dinner', d[Math.floor(Math.random()*d.length)], activeSource));
         } else {
-            const valid = pool.filter(m => m.category.toLowerCase() === activeCategory.toLowerCase() && (activeCategory !== 'Meals' || m.diet === appSettings.diet));
+            const valid = pool.filter(m => (m.category || '').toLowerCase() === activeCategory.toLowerCase() && ((m.diet || 'veg') === appSettings.diet));
             if (valid.length > 0) deck.push(buildCard(activeCategory, valid[Math.floor(Math.random()*valid.length)], activeSource));
         }
 
@@ -678,6 +682,7 @@
             return; 
         }
         
+        const cacheKey = `${activeSource}_${activeCategory}`;
         deckCache[cacheKey] = deck; 
         renderOutputDeck(deck);
     });
@@ -685,14 +690,15 @@
     function buildCard(time, mObj, source) { 
         return { 
             time: time, 
-            name: mObj.name, 
-            category: mObj.category, 
-            diet: mObj.diet, 
-            ingredients: mObj.ingredients, 
-            lastServed: mObj.lastServed, 
+            name: mObj.name || '', 
+            category: mObj.category || time, 
+            diet: mObj.diet || 'veg', 
+            ingredients: mObj.ingredients || '[]', 
+            lastServed: mObj.lastServed || '', 
             source: source, 
             isLocked: false, 
-            isQueued: false 
+            isQueued: false,
+            poolContext: mObj.category || time
         }; 
     }
 
@@ -727,23 +733,16 @@
         <div id="explore-${index}" class="explore-area">
           <button class="explore-icon" data-action="google" data-index="${index}"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 24c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 21.53 7.7 24 12 24z"/><path fill="#FBBC05" d="M5.84 15.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V8.06H2.18C1.43 9.55 1 11.22 1 13s.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 4.84c1.61 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.63 14.97 0 12 0 7.7 0 3.99 2.47 2.18 6.06l3.66 2.84c.87-2.6 3.3-4.06 6.16-4.06z"/></svg>Recipe</button>
           <button class="explore-icon" data-action="youtube" data-index="${index}"><svg viewBox="0 0 24 24"><path fill="#FF0000" d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>Video</button>
-          <button class="explore-icon" data-action="share-card" data-index="${index}"><svg fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>Share</button>
+          <button class="explore-icon" data-action="nutrition" data-index="${index}"><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>Stats</button>
+          <button class="explore-icon" data-action="share-card" data-index="${index}"><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>Share</button>
         </div>`;
     }
 
-    function renderEmptyState() {
-        document.getElementById('suggestions').innerHTML = `
-            <div class="empty" style="padding: 5rem 1rem; border:none; background:transparent;">
-                <h3 style="font-size: 2.5rem; margin-bottom: 1rem; line-height:1.2;">✨<br>Awaken Your Palate</h3>
-                <p class="subtle" style="font-size: 1.1rem; line-height: 1.5; color: var(--color-text-muted);">Select a culinary path from the filters above to begin.</p>
-            </div>`;
-    }
-
     function renderOutputDeck(schema) {
-      state.currentSuggestions = structuredClone(schema);
+      if(schema) state.currentSuggestions = schema;
       const s = document.getElementById('suggestions'); 
       s.innerHTML = '';
-      if (!schema.length) { 
+      if (!schema || !schema.length) { 
           s.innerHTML = `<div class="empty"><h3>Empty Pool</h3><p class="subtle">No meals found for this selection.</p></div>`; 
           return; 
       }
@@ -775,7 +774,7 @@
               bookmarkSvg.setAttribute('stroke', 'currentColor');
           } else {
               card.isQueued = true; 
-              pendingApprovals.push({ category: card.category, meal: card.name, diet: card.diet, ingredients: card.ingredients });
+              pendingApprovals.push({ category: card.category || card.time, meal: card.name, diet: card.diet, ingredients: card.ingredients });
               bookmarkSvg.setAttribute('fill', 'var(--color-success)'); 
               bookmarkSvg.setAttribute('stroke', 'var(--color-success)');
           }
@@ -812,7 +811,7 @@
           }
       }
       
-      const searchQ = encodeURIComponent(card.name.trim() + ' recipe');
+      const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
       if (action === 'share-card') { 
           window.open(`whatsapp://send?text=${encodeURIComponent(`🍽️ *${card.name.trim()}*\n\n🔍 _https://www.google.com/search?q=${searchQ}_\n\n▶️ _https://www.youtube.com/results?search_query=${searchQ}_`)}`, '_blank'); 
       }
@@ -822,10 +821,13 @@
       if (action === 'youtube') {
           window.open(`https://www.youtube.com/results?search_query=${searchQ}`, '_blank');
       }
+      if (action === 'nutrition') {
+          window.open(`https://www.google.com/search?q=${searchQ}+nutritional+factual+information+calories`, '_blank');
+      }
     });
 
     function shareDailyMenuToWhatsApp() {
-        if (!state.currentSuggestions || state.currentSuggestions.length === 0) {
+        if (!state.currentSuggestions || !Array.isArray(state.currentSuggestions)) {
             showToast("Please generate a menu first."); 
             return;
         }
@@ -836,7 +838,8 @@
         }
         let text = "🍽️ *Today's Menu*\n\n";
         lockedCards.forEach(card => { 
-            text += `*${card.category}:* ${card.name.trim()}\n🔍 _https://www.google.com/search?q=${encodeURIComponent(card.name.trim() + ' recipe')}_\n\n`; 
+            const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
+            text += `*${card.category}:* ${card.name.trim()}\n🔍 _https://www.google.com/search?q=${searchQ}_\n\n`; 
         });
         window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
     }
@@ -1140,11 +1143,17 @@
     }
 
     function updateCookbookStats() {
-        document.getElementById('cb-mymeals').innerText = state.savedMeals.filter(m => m.diet === appSettings.diet && ['Breakfast','Lunch','Dinner'].includes(m.category)).length;
-        document.getElementById('cb-global').innerText = state.globalMeals.filter(m => m.diet === appSettings.diet && ['Breakfast','Lunch','Dinner'].includes(m.category)).length;
-        document.getElementById('cb-dessert').innerText = state.savedMeals.filter(m=>m.category==='Dessert').length + state.globalMeals.filter(m=>m.category==='Dessert').length;
-        document.getElementById('cb-drinks').innerText = state.savedMeals.filter(m=>m.category==='Drinks').length + state.globalMeals.filter(m=>m.category==='Drinks').length;
-        document.getElementById('cb-cocktails').innerText = state.savedMeals.filter(m=>m.category==='Cocktails').length + state.globalMeals.filter(m=>m.category==='Cocktails').length;
+        try {
+            const safeDiet = appSettings.diet || 'veg';
+            const sm = state.savedMeals || [];
+            const gm = state.globalMeals || [];
+            
+            document.getElementById('cb-mymeals').innerText = sm.filter(m => (m.diet || 'veg') === safeDiet && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).length;
+            document.getElementById('cb-global').innerText = gm.filter(m => (m.diet || 'veg') === safeDiet && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).length;
+            document.getElementById('cb-dessert').innerText = sm.filter(m=>(m.category||'').toLowerCase()==='dessert').length + gm.filter(m=>(m.category||'').toLowerCase()==='dessert').length;
+            document.getElementById('cb-drinks').innerText = sm.filter(m=>(m.category||'').toLowerCase()==='drinks').length + gm.filter(m=>(m.category||'').toLowerCase()==='drinks').length;
+            document.getElementById('cb-cocktails').innerText = sm.filter(m=>(m.category||'').toLowerCase()==='cocktails').length + gm.filter(m=>(m.category||'').toLowerCase()==='cocktails').length;
+        } catch(e) { console.error(e); }
     }
 
     function filterCookbookSearch() {
@@ -1168,10 +1177,13 @@
 
         const term = document.getElementById('cookbookSearchInput').value.trim();
         let items = [];
+        const safeDiet = appSettings.diet || 'veg';
+        const sm = state.savedMeals || [];
+        const gm = state.globalMeals || [];
 
-        if (cat === 'MyMeals') items = state.savedMeals.filter(m => m.diet === appSettings.diet && ['Breakfast','Lunch','Dinner'].includes(m.category)).map(m=>({...m, src:'Local DB'}));
-        else if (cat === 'Global') items = state.globalMeals.filter(m => m.diet === appSettings.diet && ['Breakfast','Lunch','Dinner'].includes(m.category)).map(m=>({...m, src:'AI Pool'}));
-        else items = [...state.savedMeals.filter(m=>m.category===cat).map(m=>({...m, src:'Local DB'})), ...state.globalMeals.filter(m=>m.category===cat).map(m=>({...m, src:'AI Pool'}))];
+        if (cat === 'MyMeals') items = sm.filter(m => (m.diet || 'veg') === safeDiet && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).map(m=>({...m, src:'Local DB'}));
+        else if (cat === 'Global') items = gm.filter(m => (m.diet || 'veg') === safeDiet && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).map(m=>({...m, src:'AI Pool'}));
+        else items = [...sm.filter(m=>(m.category || '').toLowerCase()===cat.toLowerCase()).map(m=>({...m, src:'Local DB'})), ...gm.filter(m=>(m.category || '').toLowerCase()===cat.toLowerCase()).map(m=>({...m, src:'AI Pool'}))];
 
         if (term) items = items.filter(i => fuzzyMatch(term, i.name));
         items.sort((a, b) => a.name.localeCompare(b.name));
@@ -1221,7 +1233,23 @@
       pendingApprovals.forEach((item, idx) => {
         const li = document.createElement('li'); 
         li.className = 'review-queue-item';
-        li.innerHTML = `<div style="display:flex; align-items:center; gap:0.75rem; flex-grow:1;"><span style="font-weight:600; font-family:var(--font-display);">${escapeHtml(item.meal)}</span></div><button class="trash-btn" data-remove-queue="${idx}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
+        
+        const catSelect = `
+        <select onchange="pendingApprovals[${idx}].category = this.value">
+            <option value="Breakfast" ${(item.category||'').toLowerCase()==='breakfast'?'selected':''}>Breakfast</option>
+            <option value="Lunch" ${(item.category||'').toLowerCase()==='lunch'?'selected':''}>Lunch</option>
+            <option value="Dinner" ${(item.category||'').toLowerCase()==='dinner'?'selected':''}>Dinner</option>
+            <option value="Dessert" ${(item.category||'').toLowerCase()==='dessert'?'selected':''}>Dessert</option>
+            <option value="Drinks" ${(item.category||'').toLowerCase()==='drinks'?'selected':''}>Drinks</option>
+            <option value="Cocktails" ${(item.category||'').toLowerCase()==='cocktails'?'selected':''}>Cocktails</option>
+        </select>`;
+
+        li.innerHTML = `
+        <div style="display:flex; align-items:center; gap:0.75rem; flex-grow:1;">
+            <span style="font-weight:600; font-family:var(--font-display);">${escapeHtml(item.meal)}</span> 
+            ${catSelect}
+        </div>
+        <button class="trash-btn" data-remove-queue="${idx}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
         ql.appendChild(li);
       });
     }
@@ -1246,7 +1274,7 @@
         } 
     });
     
-    function submitQueueForApproval() {
+    async function submitQueueForApproval() {
       if (!pendingApprovals.length) return;
       const btn = document.getElementById('submitApprovalBtn'); 
       btn.innerHTML = `Syncing...`;
@@ -1325,7 +1353,7 @@
     }
 
     function saveStateLocally() { 
-        localStorage.setItem('mp_data_v9', JSON.stringify(state)); 
+        localStorage.setItem('mp_data_v10', JSON.stringify(state)); 
         localStorage.setItem('mp_settings', JSON.stringify(appSettings)); 
     }
 
@@ -1338,13 +1366,15 @@
       setDietPref(appSettings.diet || 'veg');
       
       try {
-          const cached = localStorage.getItem('mp_data_v9');
+          const cached = localStorage.getItem('mp_data_v10');
           if (cached) { 
               state = JSON.parse(cached); 
               if(!state.grocery) state.grocery = [];
               if(!state.savedMeals) state.savedMeals = [];
               if(!state.globalMeals) state.globalMeals = [];
               if(!state.currentSuggestions) state.currentSuggestions = [];
+          } else {
+              state = { grocery: [], savedMeals: [], globalMeals: [], currentSuggestions: [] };
           }
       } catch(e) {
           state = { grocery: [], savedMeals: [], globalMeals: [], currentSuggestions: [] };
