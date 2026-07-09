@@ -263,7 +263,7 @@
         </div>
         
         <div style="display:flex; justify-content:flex-end; margin-bottom: 12px;">
-            <button class="ghost-btn" style="border-radius: 1.5rem; padding: 6px 16px; font-size: 12px; height: 36px; font-weight: 600;" onclick="clearActiveCart()">🗑️ Checkout Cart</button>
+            <button class="ghost-btn" style="border-radius: 1.5rem; padding: 6px 16px; font-size: 12px; height: 36px; font-weight: 600;" onclick="clearActiveCart()">🗑️ Clear Cart</button>
         </div>
         
         <div class="cart-accordion-header" onclick="toggleCartDropdown()">
@@ -658,7 +658,7 @@
         let deck = [];
 
         if (activeCategory === 'Meals') {
-            const valid = pool.filter(m => (m.diet || 'veg') === appSettings.diet && !['Dessert', 'Drinks', 'Cocktails'].includes((m.category || '').toLowerCase()));
+            const valid = pool.filter(m => (m.diet || 'veg').toLowerCase() === appSettings.diet && !['dessert', 'drinks', 'cocktails'].includes((m.category || '').toLowerCase()));
             const b = valid.filter(m => (m.category || '').toLowerCase() === 'breakfast');
             const l = valid.filter(m => (m.category || '').toLowerCase() === 'lunch');
             const d = valid.filter(m => (m.category || '').toLowerCase() === 'dinner');
@@ -667,7 +667,7 @@
             if(l.length) deck.push(buildCard('Lunch', l[Math.floor(Math.random()*l.length)], activeSource));
             if(d.length) deck.push(buildCard('Dinner', d[Math.floor(Math.random()*d.length)], activeSource));
         } else {
-            const valid = pool.filter(m => (m.category || '').toLowerCase() === activeCategory.toLowerCase() && ((m.diet || 'veg') === appSettings.diet));
+            const valid = pool.filter(m => (m.category || '').toLowerCase() === activeCategory.toLowerCase() && ((m.diet || 'veg').toLowerCase() === appSettings.diet));
             if (valid.length > 0) deck.push(buildCard(activeCategory, valid[Math.floor(Math.random()*valid.length)], activeSource));
         }
 
@@ -704,6 +704,7 @@
     function getCardInnerHTML(item, index) {
       const isRecent = cookedWithinAWeek(item.lastServed);
       const safeName = escapeHtml(item.name);
+      const safeDiet = (item.diet || 'veg').toLowerCase();
       
       let cartHtml = (item.ingredients && item.ingredients !== '[]') 
             ? `<div class="icon-circle" data-action="add-to-cart" data-index="${index}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div>` : '';
@@ -714,7 +715,7 @@
         <div class="card-header-row">
             <div class="card-header-left">
                 <span class="eyebrow">${item.time}</span>
-                <span class="badge ${item.diet==='non-veg'?'tag-nonveg':''}">${item.diet==='non-veg'?'Non-Veg':'Veg'}</span>
+                <span class="badge ${safeDiet==='non-veg'?'tag-nonveg':''}">${safeDiet==='non-veg'?'Non-Veg':'Veg'}</span>
                 ${isRecent ? '<span class="badge warning">Served recently</span>' : ''}
             </div>
             <div class="top-actions">${cartHtml}${bookmarkHtml}</div>
@@ -977,27 +978,22 @@
     }
     
     function clearActiveCart() { 
-        let hasCheckout = false;
+        let hasChanges = false;
         state.grocery.forEach(i => {
             if(i.inCart && i.checked) {
-                if(i.category === 'Ghost') {
-                    i.inCart = false; 
-                } else { 
-                    i.count++; 
-                    i.inCart = false; 
-                    i.checked = false; 
-                    i.mealContext = ''; 
-                }
-                hasCheckout = true;
+                i.inCart = false; 
+                i.checked = false; 
+                i.mealContext = ''; 
+                hasChanges = true;
             }
         });
         
         state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart)); 
         
-        if(hasCheckout) { 
+        if(hasChanges) { 
             renderCart(); 
             saveStateLocally(); 
-            runServer('checkoutCart'); 
+            runServer('syncCart', {cart: state.grocery.filter(i=>i.inCart)}); 
         }
     }
     
@@ -1153,8 +1149,8 @@
             const sm = state.savedMeals || [];
             const gm = state.globalMeals || [];
             
-            document.getElementById('cb-mymeals').innerText = sm.filter(m => (m.diet || 'veg') === safeDiet && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).length;
-            document.getElementById('cb-global').innerText = gm.filter(m => (m.diet || 'veg') === safeDiet && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).length;
+            document.getElementById('cb-mymeals').innerText = sm.filter(m => (m.diet || 'veg').toLowerCase() === safeDiet && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).length;
+            document.getElementById('cb-global').innerText = gm.filter(m => (m.diet || 'veg').toLowerCase() === safeDiet && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).length;
             document.getElementById('cb-dessert').innerText = sm.filter(m=>(m.category||'').toLowerCase()==='dessert').length + gm.filter(m=>(m.category||'').toLowerCase()==='dessert').length;
             document.getElementById('cb-drinks').innerText = sm.filter(m=>(m.category||'').toLowerCase()==='drinks').length + gm.filter(m=>(m.category||'').toLowerCase()==='drinks').length;
             document.getElementById('cb-cocktails').innerText = sm.filter(m=>(m.category||'').toLowerCase()==='cocktails').length + gm.filter(m=>(m.category||'').toLowerCase()==='cocktails').length;
@@ -1186,8 +1182,8 @@
         const sm = state.savedMeals || [];
         const gm = state.globalMeals || [];
 
-        if (cat === 'MyMeals') items = sm.filter(m => (m.diet || 'veg') === safeDiet && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).map(m=>({...m, src:'Local DB'}));
-        else if (cat === 'Global') items = gm.filter(m => (m.diet || 'veg') === safeDiet && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).map(m=>({...m, src:'AI Pool'}));
+        if (cat === 'MyMeals') items = sm.filter(m => (m.diet || 'veg').toLowerCase() === safeDiet && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).map(m=>({...m, src:'Local DB'}));
+        else if (cat === 'Global') items = gm.filter(m => (m.diet || 'veg').toLowerCase() === safeDiet && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).map(m=>({...m, src:'AI Pool'}));
         else items = [...sm.filter(m=>(m.category || '').toLowerCase()===cat.toLowerCase()).map(m=>({...m, src:'Local DB'})), ...gm.filter(m=>(m.category || '').toLowerCase()===cat.toLowerCase()).map(m=>({...m, src:'AI Pool'}))];
 
         if (term) items = items.filter(i => fuzzyMatch(term, i.name));
@@ -1245,14 +1241,15 @@
         const li = document.createElement('li'); 
         li.className = 'review-queue-item';
         
+        const itemCat = (item.category || '').toLowerCase();
         const catSelect = `
         <select onchange="pendingApprovals[${idx}].category = this.value">
-            <option value="Breakfast" ${(item.category||'').toLowerCase()==='breakfast'?'selected':''}>Breakfast</option>
-            <option value="Lunch" ${(item.category||'').toLowerCase()==='lunch'?'selected':''}>Lunch</option>
-            <option value="Dinner" ${(item.category||'').toLowerCase()==='dinner'?'selected':''}>Dinner</option>
-            <option value="Dessert" ${(item.category||'').toLowerCase()==='dessert'?'selected':''}>Dessert</option>
-            <option value="Drinks" ${(item.category||'').toLowerCase()==='drinks'?'selected':''}>Drinks</option>
-            <option value="Cocktails" ${(item.category||'').toLowerCase()==='cocktails'?'selected':''}>Cocktails</option>
+            <option value="Breakfast" ${itemCat === 'breakfast' ? 'selected' : ''}>Breakfast</option>
+            <option value="Lunch" ${itemCat === 'lunch' ? 'selected' : ''}>Lunch</option>
+            <option value="Dinner" ${itemCat === 'dinner' ? 'selected' : ''}>Dinner</option>
+            <option value="Dessert" ${itemCat === 'dessert' ? 'selected' : ''}>Dessert</option>
+            <option value="Drinks" ${itemCat === 'drinks' ? 'selected' : ''}>Drinks</option>
+            <option value="Cocktails" ${itemCat === 'cocktails' ? 'selected' : ''}>Cocktails</option>
         </select>`;
 
         li.innerHTML = `
@@ -1298,7 +1295,6 @@
       btn.innerHTML = `Syncing...`;
       
       pendingApprovals.forEach(i => { 
-          const catLower = (i.category || '').toLowerCase();
           state.savedMeals.push({name: i.meal, category: i.category, diet: i.diet, lastServed: '', ingredients: i.ingredients}); 
       });
       runServer('sync_meals', { data: JSON.stringify(pendingApprovals) });
@@ -1376,7 +1372,7 @@
     }
 
     function saveStateLocally() { 
-        localStorage.setItem('mp_data_v12', JSON.stringify(state)); 
+        localStorage.setItem('mp_data_v13', JSON.stringify(state)); 
         localStorage.setItem('mp_settings', JSON.stringify(appSettings)); 
     }
 
@@ -1389,7 +1385,7 @@
       setDietPref(appSettings.diet || 'veg');
       
       try {
-          const cached = localStorage.getItem('mp_data_v12');
+          const cached = localStorage.getItem('mp_data_v13');
           if (cached) { 
               state = JSON.parse(cached); 
               if(!state.grocery) state.grocery = [];
