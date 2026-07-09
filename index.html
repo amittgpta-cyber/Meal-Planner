@@ -127,8 +127,8 @@
     .floating-share-fab.fab-hidden { transform: scale(0); opacity: 0; pointer-events: none; }
 
     .cart-tools { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; width: 100%; }
-    .cart-tools input { flex: 3; padding: 14px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); transition: 0.2s; min-width: 0; height: 56px; }
-    .cart-tools select { flex: 1; padding: 0 12px; height: 56px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-family: var(--font-body); font-size: 0.95rem; -webkit-appearance: none; appearance: none; outline: none; text-overflow: ellipsis; }
+    .cart-tools input { flex: 1; padding: 14px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); transition: 0.2s; min-width: 0; height: 56px; }
+    .cart-tools select { flex: 0 0 100px; width: 100px; padding: 0 8px; height: 56px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-family: var(--font-body); font-size: 0.85rem; -webkit-appearance: none; appearance: none; outline: none; text-overflow: ellipsis; }
     
     .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); font-weight: bold; margin: 24px 0 12px; }
     
@@ -257,9 +257,9 @@
         </div>
         
         <div class="cart-tools">
-            <input id="manualCartAdd" placeholder="Add custom item...">
-            <select id="cartCategorySelect"></select>
-            <button class="primary-btn" style="flex: 0 0 80px; width: 80px; border-radius: 1.5rem; padding: 0; height: 56px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;" onclick="addManualCartItem()">+</button>
+            <input id="manualCartAdd" placeholder="Add custom item..." style="flex: 1; padding: 14px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); transition: 0.2s; min-width: 0; height: 56px;">
+            <select id="cartCategorySelect" style="flex: 0 0 100px; width: 100px; padding: 0 8px; height: 56px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-family: var(--font-body); font-size: 0.85rem; -webkit-appearance: none; appearance: none; outline: none; text-overflow: ellipsis;"></select>
+            <button class="primary-btn" style="flex: 0 0 90px; width: 90px; border-radius: 1.5rem; padding: 0; height: 56px; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="addManualCartItem()">+</button>
         </div>
         
         <div style="display:flex; justify-content:flex-end; margin-bottom: 12px;">
@@ -327,6 +327,21 @@
             <div class="filter-ribbon" id="masterCategoryRibbon"></div>
         </div>
         <div class="master-scroll-box" id="ml-content"></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="modal" id="mealDeleteModal">
+    <section class="dialog" style="max-width: 320px;">
+      <div class="dialog-head">
+        <h4 style="font-family: var(--font-display); font-size: 1.25rem; color: var(--color-error);">Delete Meal?</h4>
+      </div>
+      <div class="dialog-body" style="padding: 20px; display:flex; flex-direction:column; gap:12px; text-align: center;">
+        <p style="color: var(--color-text-muted); font-size: 0.95rem;">Are you sure you want to permanently delete <b id="deleteMealTargetName" style="color: var(--color-text);"></b>?</p>
+        <div style="display:flex; gap:10px; margin-top: 10px;">
+            <button class="ghost-btn" style="flex:1; border-radius: 1.5rem;" onclick="closeModal('mealDeleteModal')">Cancel</button>
+            <button class="primary-btn" style="flex:1; border-radius: 1.5rem; background: var(--color-error); color: var(--color-bg); border: none;" onclick="confirmMealDeletion()">Delete</button>
+        </div>
       </div>
     </section>
   </div>
@@ -408,6 +423,7 @@
     let pendingApprovals = []; let graveyard = []; let deckCache = {}; 
     let activeTab = 'plan'; let activeMasterCategory = 'All'; let isCartExpanded = false;
     let activeSource = 'cookbook'; let activeCategory = null;
+    let currentRenderedCacheKey = '';
 
     function runServer(action, payload = {}, silent = true) {
         if (!silent) document.getElementById('syncIndicator').classList.add('active');
@@ -616,6 +632,10 @@
         activeSource = src;
         document.getElementById('btn-src-cookbook').classList.toggle('active', src === 'cookbook');
         document.getElementById('btn-src-global').classList.toggle('active', src === 'global');
+        
+        document.getElementById('suggestions').innerHTML = '';
+        renderEmptyState();
+        currentRenderedCacheKey = '';
     }
 
     function setCategory(cat) {
@@ -623,6 +643,9 @@
             activeCategory = null;
             document.querySelectorAll('.cat-btn, .meal-btn-full').forEach(btn => btn.classList.remove('active'));
             document.getElementById('generateBtn').style.opacity = '0.5';
+            document.getElementById('suggestions').innerHTML = '';
+            renderEmptyState();
+            currentRenderedCacheKey = '';
             return;
         }
         
@@ -632,11 +655,21 @@
         else document.getElementById(`btn-cat-${cat.toLowerCase()}`).classList.add('active');
         
         document.getElementById('generateBtn').style.opacity = '1';
+        document.getElementById('suggestions').innerHTML = '';
+        renderEmptyState();
+        currentRenderedCacheKey = '';
     }
 
     document.getElementById('generateBtn').addEventListener('click', () => {
         if (activeTab === 'cart') toggleMainView(); 
         if (!activeCategory) return;
+        
+        const cacheKey = `${activeSource}_${activeCategory}`;
+        if (currentRenderedCacheKey !== cacheKey && deckCache[cacheKey] && deckCache[cacheKey].length > 0) {
+            renderOutputDeck(deckCache[cacheKey]);
+            currentRenderedCacheKey = cacheKey;
+            return;
+        }
 
         const pool = activeSource === 'cookbook' ? (state.savedMeals || []) : (state.globalMeals || []);
         let deck = [];
@@ -660,9 +693,9 @@
             return; 
         }
         
-        const cacheKey = `${activeSource}_${activeCategory}`;
         deckCache[cacheKey] = deck; 
         renderOutputDeck(deck);
+        currentRenderedCacheKey = cacheKey;
     });
 
     function buildCard(time, mObj, source) { 
@@ -831,7 +864,7 @@
       
       const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
       if (action === 'share-card') { 
-          window.open(`whatsapp://send?text=${encodeURIComponent(`🍽️ *${card.name.trim()}*\n\n🔍 _https://www.google.com/search?q=${searchQ}_\n▶️ _https://www.youtube.com/results?search_query=${searchQ}_`)}`, '_blank'); 
+          window.open(`whatsapp://send?text=${encodeURIComponent(`🍽️ *${card.name.trim()}*\n\n🔍 _https://www.google.com/search?q=${searchQ}_\n\n▶️ _https://www.youtube.com/results?search_query=${searchQ}_`)}`, '_blank'); 
       }
       if (action === 'google') {
           window.open(`https://www.google.com/search?q=${searchQ}`, '_blank');
@@ -840,7 +873,7 @@
           window.open(`https://www.youtube.com/results?search_query=${searchQ}`, '_blank');
       }
       if (action === 'nutrition') {
-          window.open(`https://www.google.com/search?q=${searchQ}+nutritional+factual+information+calories`, '_blank');
+          window.open(`https://www.google.com/search?q=${searchQ}+nutritional+info+calories+in+table+format`, '_blank');
       }
     });
 
@@ -857,7 +890,7 @@
         let text = "🍽️ *Today's Menu*\n\n";
         lockedCards.forEach(card => { 
             const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
-            text += `*${card.category}:* ${card.name.trim()}\n🔍 _https://www.google.com/search?q=${searchQ}_\n▶️ _https://www.youtube.com/results?search_query=${searchQ}_\n\n`; 
+            text += `*${card.category}:* ${card.name.trim()}\n\n🔍 _https://www.google.com/search?q=${searchQ}_\n\n▶️ _https://www.youtube.com/results?search_query=${searchQ}_\n\n`; 
         });
         window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
     }
@@ -911,6 +944,44 @@
             closeModal('ghostPromoteModal');
             showToast(`${name} permanently saved.`);
         }
+    }
+
+    // ------------------------------------------------
+    // COOKBOOK LONG PRESS DELETE
+    // ------------------------------------------------
+    let mealPressTimer;
+    let mealToDeleteName = '';
+    let mealToDeleteSource = '';
+
+    function touchStartMeal(e, name, src) {
+        mealPressTimer = setTimeout(() => {
+            mealToDeleteName = name;
+            mealToDeleteSource = src;
+            document.getElementById('deleteMealTargetName').innerText = name;
+            openModal('mealDeleteModal');
+            if(navigator.vibrate) navigator.vibrate(50);
+        }, 500);
+    }
+    
+    function touchEndMeal(e) { 
+        clearTimeout(mealPressTimer); 
+    }
+    
+    function touchMoveMeal(e) { 
+        clearTimeout(mealPressTimer); 
+    }
+    
+    function confirmMealDeletion() {
+        if(mealToDeleteSource === 'Local DB') {
+            state.savedMeals = state.savedMeals.filter(m => m.name !== mealToDeleteName);
+        } else {
+            state.globalMeals = state.globalMeals.filter(m => m.name !== mealToDeleteName);
+        }
+        runServer('deleteSavedMeal', {mealName: mealToDeleteName, sourceSheet: mealToDeleteSource});
+        closeModal('mealDeleteModal');
+        showToast(`${mealToDeleteName} deleted.`);
+        saveStateLocally();
+        filterCookbookSearch();
     }
 
     // ------------------------------------------------
@@ -1236,7 +1307,19 @@
         if(!items.length) { 
             html = '<p class="subtle" style="text-align:center; padding: 20px;">No items found in this category.</p>'; 
         } else { 
-            items.forEach(i => html += `<div class="data-row"><span>${escapeHtml(i.name)}</span><span class="badge" style="font-size:0.65rem; background:transparent; border:1px solid var(--color-border); color:var(--color-text-muted);">${i.src}</span></div>`); 
+            const groups = {};
+            items.forEach(i => {
+                let c = i.category || 'Uncategorized';
+                if(!groups[c]) groups[c] = [];
+                groups[c].push(i);
+            });
+            for(let g in groups) {
+                html += `<h5 style="color:var(--color-primary); margin: 16px 0 8px 4px; font-size: 0.85rem; text-transform:uppercase; letter-spacing:1px;">${g}</h5>`;
+                groups[g].forEach(i => {
+                    const safeName = escapeHtml(i.name);
+                    html += `<div class="data-row" ontouchstart="touchStartMeal(event, '${safeName}', '${i.src}')" ontouchend="touchEndMeal(event)" ontouchmove="touchMoveMeal(event)"><span>${safeName}</span><span class="badge" style="font-size:0.65rem; background:transparent; border:1px solid var(--color-border); color:var(--color-text-muted);">${i.src}</span></div>`;
+                });
+            }
         }
         document.getElementById('cookbookOutput').innerHTML = html;
     }
@@ -1247,11 +1330,9 @@
         document.getElementById('toggleNonVeg').classList.toggle('active', pref === 'non-veg');
         deckCache = {}; 
         
-        if (!activeCategory) {
-            renderEmptyState();
-        } else {
-            document.getElementById('generateBtn').click();
-        }
+        document.getElementById('suggestions').innerHTML = '';
+        renderEmptyState();
+        currentRenderedCacheKey = '';
         
         saveStateLocally();
         updateCookbookStats();
@@ -1415,7 +1496,7 @@
     }
 
     function saveStateLocally() { 
-        localStorage.setItem('mp_data_v14', JSON.stringify(state)); 
+        localStorage.setItem('mp_data_v15', JSON.stringify(state)); 
         localStorage.setItem('mp_settings', JSON.stringify(appSettings)); 
     }
 
@@ -1428,7 +1509,7 @@
       setDietPref(appSettings.diet || 'veg');
       
       try {
-          const cached = localStorage.getItem('mp_data_v14');
+          const cached = localStorage.getItem('mp_data_v15');
           if (cached) { 
               state = JSON.parse(cached); 
               if(!state.grocery) state.grocery = [];
@@ -1448,6 +1529,7 @@
       activeCategory = null;
       document.querySelectorAll('.cat-btn, .meal-btn-full').forEach(btn => btn.classList.remove('active'));
       document.getElementById('generateBtn').style.opacity = '0.5';
+      document.getElementById('suggestions').innerHTML = '';
       renderEmptyState();
       
       if (!GOOGLE_SHEETS_API_URL || GOOGLE_SHEETS_API_URL.includes("PASTE")) return;
