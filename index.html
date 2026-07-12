@@ -133,16 +133,16 @@
     .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); font-weight: bold; margin: 24px 0 12px; }
     
     .list-item-row { display: flex; align-items: center; justify-content: space-between; background: var(--color-surface); padding: 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); margin-bottom: 12px; transition: transform 0.2s var(--ease-fluid), opacity 0.3s; width: 100%; }
-    .list-item-row:active { transform: scale(0.97); }
     .list-item-row.dimmed { opacity: 0.45; background: transparent; }
-    .list-item-left { display: flex; align-items: center; gap: 16px; flex: 1; cursor: pointer; }
+    .list-item-left { display: flex; align-items: center; gap: 16px; flex: 1; cursor: pointer; padding-right: 12px; }
     .checkbox { width: 24px; height: 24px; border: 2px solid var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: transparent; transition: 0.2s var(--ease-fluid); flex-shrink: 0; font-weight: bold; }
     .list-item-row.checked .checkbox { background: var(--color-primary); color: var(--color-bg); }
     .item-name { font-size: 1.125rem; font-weight: 600; text-transform: capitalize; color: var(--color-text); }
     .trash-btn { background: none; border: none; font-size: 1.25rem; color: var(--color-error); padding: 8px; border-radius: 50%; cursor: pointer; transition: transform 0.2s var(--ease-fluid); }
-    .trash-btn:active { transform: scale(0.8); }
+    .trash-btn:active, .list-item-left:active { transform: scale(0.97); }
     
     .cart-group-title { font-size: 0.85rem; font-weight: bold; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.05em; margin: 15px 0 5px 8px; }
+    .cart-group-list { display: flex; flex-direction: column; width: 100%; }
     .cart-accordion-header { display: flex; justify-content: space-between; align-items: center; background: var(--color-surface-2); padding: 16px 20px; border-radius: 1.5rem; border: 1px solid var(--color-border); cursor: pointer; user-select: none; margin-bottom: 16px; }
     .cart-group-header { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; color: var(--color-primary); margin: 0; padding: 0; }
     .cart-chevron { font-size: 1.25rem; transition: transform 0.3s var(--ease-fluid); color: var(--color-text-muted); }
@@ -156,7 +156,9 @@
     .master-header-box { padding: 20px 20px 0 20px; flex-shrink: 0; }
     .master-scroll-box { padding: 0 20px 20px 20px; overflow-y: auto; flex: 1; }
     
-    .master-search-bar { width: 100%; padding: 14px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-size: 1rem; color: var(--color-text); margin-bottom: 12px; }
+    .search-wrapper { position: relative; margin-bottom: 12px; width: 100%; display: flex; align-items: center; }
+    .master-search-bar { width: 100%; padding: 14px 40px 14px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-size: 1rem; color: var(--color-text); margin-bottom: 0; }
+    .clear-btn { position: absolute; right: 8px; width: 32px; height: 32px; border: none; background: transparent; color: var(--color-text-muted); font-size: 1.1rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
     
     .filter-ribbon { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; margin-bottom: 8px; -ms-overflow-style: none; scrollbar-width: none; }
     .filter-ribbon::-webkit-scrollbar { display: none; }
@@ -305,13 +307,13 @@
   <div class="modal" id="ghostPromoteModal">
     <section class="dialog" style="max-width: 350px;">
       <div class="dialog-head">
-        <h4 style="font-family: var(--font-display); font-size: 1.25rem;">Save to Grocery list</h4>
+        <h4 style="font-family: var(--font-display); font-size: 1.25rem;">Save to Master List</h4>
         <button class="icon-btn" style="border-radius: 50%; width:32px; height:32px;" onclick="closeModal('ghostPromoteModal')">✕</button>
       </div>
       <div class="dialog-body" style="padding: 20px; display:flex; flex-direction:column; gap:12px;">
         <input id="ghostPromoteName" class="master-search-bar" style="margin:0;" type="text" />
         <select id="ghostPromoteCategory" class="master-search-bar" style="margin:0; padding:12px 16px;"></select>
-        <button class="primary-btn" style="width:100%; border-radius: 1.5rem; padding: 14px;" onclick="confirmGhostPromotion()">Save</button>
+        <button class="primary-btn" style="width:100%; border-radius: 1.5rem; padding: 14px;" onclick="confirmGhostPromotion()">Save Item</button>
       </div>
     </section>
   </div>
@@ -326,7 +328,10 @@
       </div>
       <div class="dialog-body">
         <div class="master-header-box">
-            <input type="text" id="masterSearchInput" class="master-search-bar" placeholder="Search saved items..." onkeyup="filterMasterList()">
+            <div class="search-wrapper">
+                <input type="text" id="masterSearchInput" class="master-search-bar" placeholder="Search saved items..." oninput="onSearchInput(filterMasterList)">
+                <button class="clear-btn" onclick="clearSearch('masterSearchInput', filterMasterList)">✕</button>
+            </div>
             <div class="filter-ribbon" id="masterCategoryRibbon"></div>
         </div>
         <div class="master-scroll-box" id="ml-content"></div>
@@ -402,7 +407,10 @@
                 </div>
             </div>
             
-            <input type="text" id="cookbookSearchInput" class="master-search-bar" style="margin-bottom: 20px;" placeholder="Search cookbook..." onkeyup="filterCookbookSearch()">
+            <div class="search-wrapper">
+                <input type="text" id="cookbookSearchInput" class="master-search-bar" placeholder="Search cookbook..." oninput="onSearchInput(filterCookbookSearch)">
+                <button class="clear-btn" onclick="clearSearch('cookbookSearchInput', filterCookbookSearch)">✕</button>
+            </div>
             
             <div id="reviewQueuePanel" style="display:none; padding:15px; background:var(--color-surface-2); border-radius:1.5rem; border:1px solid var(--color-success); margin-bottom: 20px;">
                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
@@ -428,36 +436,96 @@
     let activeSource = 'cookbook'; let activeCategory = null;
     let currentRenderedCacheKey = '';
 
+    // ------------------------------------------------
+    // THE SMART LOCK & DEBOUNCED QUEUE (Network Stability)
+    // ------------------------------------------------
+    let pendingSaves = 0;
+    let mutationTimer = null;
+    const MUTATION_DELAY = 1500;
+    const DEADMAN_TIMEOUT = 5000;
+    
+    function queueLocalSave() {
+        if (window.localSaveTimer) clearTimeout(window.localSaveTimer);
+        window.localSaveTimer = setTimeout(() => { saveStateLocally(); }, 500);
+    }
+
+    function queueCartSync() {
+        pendingSaves++;
+        if (mutationTimer) clearTimeout(mutationTimer);
+        mutationTimer = setTimeout(() => { flushCartSync(); }, MUTATION_DELAY);
+    }
+
+    function flushCartSync() {
+        if (pendingSaves === 0) return;
+        if (mutationTimer) { clearTimeout(mutationTimer); mutationTimer = null; }
+        
+        const payload = state.grocery.filter(i => i.inCart);
+        let syncResolved = false;
+        
+        fetch(GOOGLE_SHEETS_API_URL, {
+            method: 'POST', body: JSON.stringify({ action: 'syncCart', cart: payload })
+        }).then(r => r.json()).then(res => {
+            syncResolved = true; pendingSaves = 0;
+        }).catch(e => {
+            syncResolved = true; pendingSaves = 0;
+            showToast("Sync failed. Using offline cache.");
+        });
+
+        setTimeout(() => {
+            if (!syncResolved) { pendingSaves = 0; showToast("Network lag. Unlocking interface."); }
+        }, DEADMAN_TIMEOUT);
+    }
+
+    // ------------------------------------------------
+    // SYNC ISOLATION (Safe Background Updates)
+    // ------------------------------------------------
     function silentSync() {
+        if (pendingSaves > 0) return; // THE SMART LOCK: Block incoming syncs if we are typing/tapping
         if (!GOOGLE_SHEETS_API_URL || GOOGLE_SHEETS_API_URL.includes("PASTE")) return;
+        
         fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAllData' }) })
         .then(res => res.json())
         .then(parsed => {
+            if (pendingSaves > 0) return; // Double check in case of tap during fetch
             if (parsed.success && parsed.data) {
                 const newGrocery = parsed.data.grocery || [];
                 const newSaved = parsed.data.savedMeals || [];
                 const newGlobal = parsed.data.globalMeals || [];
                 
-                if(JSON.stringify(newGrocery) !== JSON.stringify(state.grocery) ||
-                   JSON.stringify(newSaved) !== JSON.stringify(state.savedMeals) ||
-                   JSON.stringify(newGlobal) !== JSON.stringify(state.globalMeals)) {
-                    
-                    state.grocery = newGrocery;
-                    state.savedMeals = newSaved;
-                    state.globalMeals = newGlobal;
-                    saveStateLocally();
-                    
-                    populateCategoryDropdowns();
-                    if (activeTab === 'cart') renderCart();
-                    const activeBtn = document.querySelector('.stat-btn.active');
-                    if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
-                    updateCookbookStats();
-                }
+                // Local Priority Merge: Never overwrite active cart states
+                newGrocery.forEach(cloudItem => {
+                    const localItem = state.grocery.find(i => i.name.toLowerCase() === cloudItem.name.toLowerCase());
+                    if (localItem && localItem.inCart) {
+                        cloudItem.inCart = localItem.inCart;
+                        cloudItem.checked = localItem.checked;
+                        cloudItem.mealContext = localItem.mealContext;
+                    }
+                });
+                
+                // Append offline ghost items that haven't merged to cloud yet
+                const localGhosts = state.grocery.filter(i => i.category === 'Ghost');
+                localGhosts.forEach(g => {
+                    if (!newGrocery.find(i => i.name.toLowerCase() === g.name.toLowerCase())) {
+                        newGrocery.push(g);
+                    }
+                });
+                
+                state.grocery = newGrocery;
+                state.savedMeals = newSaved;
+                state.globalMeals = newGlobal;
+                saveStateLocally();
+                
+                populateCategoryDropdowns();
+                if (activeTab === 'cart') renderCart();
+                const activeBtn = document.querySelector('.stat-btn.active');
+                if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
+                updateCookbookStats();
             }
         }).catch(e => { });
     }
 
     function manualSync() {
+        if (pendingSaves > 0) flushCartSync(); // Force push first
         document.getElementById('syncIndicator').classList.add('active');
         fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAllData' }) })
         .then(res => res.json())
@@ -481,14 +549,22 @@
         });
     }
 
-    window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') silentSync(); });
+    window.addEventListener('visibilitychange', () => { 
+        if (document.visibilityState === 'visible') {
+            silentSync(); 
+        } else {
+            saveStateLocally(); // Force synchronous save on exit
+            flushCartSync();    // Flush network queue on exit
+            flushGraveyardCache();
+        }
+    });
     window.addEventListener('focus', silentSync);
     window.addEventListener('pageshow', silentSync);
+    window.addEventListener('pagehide', () => { flushGraveyardCache(); flushCartSync(); });
 
     function runServer(action, payload = {}, silent = true) {
         if (!silent) document.getElementById('syncIndicator').classList.add('active');
         payload.action = action;
-        
         fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify(payload) })
         .then(res => res.json())
         .then(parsed => {
@@ -498,6 +574,9 @@
         });
     }
 
+    // ------------------------------------------------
+    // UI & TYPO-TOLERANT SEARCH
+    // ------------------------------------------------
     let currentTextSize = parseInt(localStorage.getItem('mp_text_size') || '0', 10);
     applyTextSize();
     
@@ -516,7 +595,6 @@
 
     let lastScrollY = window.scrollY; 
     const bottomNav = document.getElementById('bottomNav');
-    
     window.addEventListener('scroll', () => {
         const currentScrollY = window.scrollY;
         if (currentScrollY > lastScrollY && currentScrollY > 60) bottomNav.classList.add('nav-hidden');
@@ -533,15 +611,6 @@
             activeTab = 'plan';
         }
     }
-
-    let touchstartX = 0; let touchendX = 0;
-    document.addEventListener('touchstart', e => { touchstartX = e.changedTouches[0].screenX; }, {passive: true});
-    document.addEventListener('touchend', e => { 
-        if (document.querySelector('.modal.open') || document.getElementById('guided-overlay').classList.contains('active')) return;
-        touchendX = e.changedTouches[0].screenX; 
-        if (touchendX < touchstartX - 100 && activeTab === 'plan') toggleMainView();
-        if (touchendX > touchstartX + 100 && activeTab === 'cart') toggleMainView();
-    }, {passive: true});
 
     function toggleCartDropdown() {
         isCartExpanded = !isCartExpanded;
@@ -564,24 +633,63 @@
         setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3500);
     }
 
+    // Levenshtein Typo Tolerance
+    function levenshtein(a, b) {
+        if(a.length === 0) return b.length;
+        if(b.length === 0) return a.length;
+        let matrix = [];
+        for(let i = 0; i <= b.length; i++) matrix[i] = [i];
+        for(let j = 0; j <= a.length; j++) matrix[0][j] = j;
+        for(let i = 1; i <= b.length; i++) {
+            for(let j = 1; j <= a.length; j++) {
+                if(b.charAt(i-1) === a.charAt(j-1)) {
+                    matrix[i][j] = matrix[i-1][j-1];
+                } else {
+                    matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, Math.min(matrix[i][j-1] + 1, matrix[i-1][j] + 1));
+                }
+            }
+        }
+        return matrix[b.length][a.length];
+    }
+
     function fuzzyMatch(query, target) {
         let q = query.toLowerCase().replace(/omelette/g, 'omelet');
         let t = target.toLowerCase().replace(/omelette/g, 'omelet');
+        if (t.includes(q)) return true;
+        
         const terms = q.split(' ').filter(Boolean);
-        return terms.every(term => t.includes(term));
+        return terms.every(term => {
+            if (t.includes(term)) return true;
+            const targetWords = t.split(' ');
+            for (let word of targetWords) {
+                if (word.length >= 4 && levenshtein(term, word) <= 1) return true;
+                if (word.length > 5 && levenshtein(term, word) <= 2) return true;
+            }
+            return false;
+        });
+    }
+    
+    let searchTimeout;
+    function onSearchInput(callback) {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(callback, 150);
+    }
+    
+    function clearSearch(inputId, callback) {
+        document.getElementById(inputId).value = '';
+        callback();
     }
 
     function escapeHtml(str) { 
         return String(str).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); 
     }
-    
-    function openModal(modalId) { 
-        document.getElementById(modalId).classList.add('open'); 
+    function unescapeHtml(str) {
+        const doc = new DOMParser().parseFromString(str, "text/html");
+        return doc.documentElement.textContent;
     }
     
-    function closeModal(modalId) { 
-        document.getElementById(modalId).classList.remove('open'); 
-    }
+    function openModal(modalId) { document.getElementById(modalId).classList.add('open'); }
+    function closeModal(modalId) { document.getElementById(modalId).classList.remove('open'); }
 
     (() => {
       const themeBtn = document.querySelector('[data-theme-toggle]');
@@ -640,12 +748,12 @@
                 item.mealContext = '';
                 if(item.category === 'Ghost') state.grocery.splice(idx, 1);
                 renderCart(); 
-                saveStateLocally(); 
-                runServer('syncCart', {cart: state.grocery.filter(i=>i.inCart)});
+                queueLocalSave(); 
+                queueCartSync();
             } else if (context === 'master') {
                 state.grocery.splice(idx, 1);
                 filterMasterList(); 
-                saveStateLocally(); 
+                queueLocalSave(); 
                 runServer('deleteMasterItem', {item: item.name});
             }
             updateUndoButton();
@@ -666,12 +774,12 @@
                 state.grocery.push(last.item); 
             }
             renderCart(); 
-            saveStateLocally(); 
-            runServer('syncCart', {cart: state.grocery.filter(i=>i.inCart)});
+            queueLocalSave(); 
+            queueCartSync();
         } else if (last.context === 'master') {
             state.grocery.splice(last.originalIndex, 0, last.item);
             filterMasterList(); 
-            saveStateLocally(); 
+            queueLocalSave(); 
             runServer('addMasterItem', {item: last.item.name, category: last.item.category});
         }
         updateUndoButton();
@@ -679,21 +787,18 @@
     
     function flushGraveyardCache() {
         if (!graveyard.length) return;
-        runServer('syncCart', {cart: state.grocery.filter(i=>i.inCart)});
+        queueCartSync();
         graveyard = []; 
         updateUndoButton();
     }
 
-    window.addEventListener("visibilitychange", () => { 
-        if (document.visibilityState === "hidden") flushGraveyardCache(); 
-    });
-    window.addEventListener("pagehide", flushGraveyardCache);
-
+    // ------------------------------------------------
+    // MEAL PLANNER
+    // ------------------------------------------------
     function setSource(src) {
         activeSource = src;
         document.getElementById('btn-src-cookbook').classList.toggle('active', src === 'cookbook');
         document.getElementById('btn-src-global').classList.toggle('active', src === 'global');
-        
         document.getElementById('suggestions').innerHTML = '';
         renderEmptyState();
         currentRenderedCacheKey = '';
@@ -709,7 +814,6 @@
             currentRenderedCacheKey = '';
             return;
         }
-        
         activeCategory = cat;
         document.querySelectorAll('.cat-btn, .meal-btn-full').forEach(btn => btn.classList.remove('active'));
         if(cat === 'Meals') document.getElementById('btn-cat-meals').classList.add('active');
@@ -761,16 +865,9 @@
 
     function buildCard(time, mObj, source) { 
         return { 
-            time: time, 
-            name: mObj.name || '', 
-            category: mObj.category || time, 
-            diet: mObj.diet || 'veg', 
-            ingredients: mObj.ingredients || '[]', 
-            lastServed: mObj.lastServed || '', 
-            source: source, 
-            isLocked: false, 
-            isQueued: false,
-            poolContext: mObj.category || time
+            time: time, name: mObj.name || '', category: mObj.category || time, diet: mObj.diet || 'veg', 
+            ingredients: mObj.ingredients || '[]', lastServed: mObj.lastServed || '', source: source, 
+            isLocked: false, isQueued: false, poolContext: mObj.category || time
         }; 
     }
 
@@ -849,7 +946,6 @@
       if (action === 'prev-meal' || action === 'next-meal') {
           const pool = activeSource === 'cookbook' ? (state.savedMeals || []) : (state.globalMeals || []);
           let valid = [];
-          
           if (activeCategory === 'Meals') {
               valid = pool.filter(m => (m.diet || 'veg').toLowerCase() === appSettings.diet && !['dessert', 'drinks', 'cocktails'].includes((m.category || '').toLowerCase()) && (m.category || '').toLowerCase() === card.time.toLowerCase());
           } else {
@@ -863,7 +959,6 @@
               let newMeal = valid[newIdx];
               
               state.currentSuggestions[idx] = buildCard(card.time, newMeal, activeSource);
-              
               const article = document.getElementById(`card-${idx}`);
               article.className = 'meal-card';
               article.innerHTML = getCardInnerHTML(state.currentSuggestions[idx], idx);
@@ -919,7 +1014,7 @@
           const cacheKey = `${activeSource}_${activeCategory}`;
           if (deckCache[cacheKey]) deckCache[cacheKey] = [...state.currentSuggestions];
           
-          saveStateLocally();
+          queueLocalSave();
       }
       
       if (action === 'add-to-cart') {
@@ -936,27 +1031,15 @@
       if (action === 'share-card') { 
           window.open(`whatsapp://send?text=${encodeURIComponent(`🍽️ *${card.name.trim()}*\n\n🔍 _https://www.google.com/search?q=${searchQ}_\n\n▶️ _https://www.youtube.com/results?search_query=${searchQ}_`)}`, '_blank'); 
       }
-      if (action === 'google') {
-          window.open(`https://www.google.com/search?q=${searchQ}`, '_blank');
-      }
-      if (action === 'youtube') {
-          window.open(`https://www.youtube.com/results?search_query=${searchQ}`, '_blank');
-      }
-      if (action === 'nutrition') {
-          window.open(`https://www.google.com/search?q=${searchQ}+nutritional+info+calories+in+table+format`, '_blank');
-      }
+      if (action === 'google') { window.open(`https://www.google.com/search?q=${searchQ}`, '_blank'); }
+      if (action === 'youtube') { window.open(`https://www.youtube.com/results?search_query=${searchQ}`, '_blank'); }
+      if (action === 'nutrition') { window.open(`https://www.google.com/search?q=${searchQ}+nutritional+info+calories+in+table+format`, '_blank'); }
     });
 
     function shareDailyMenuToWhatsApp() {
-        if (!state.currentSuggestions || !Array.isArray(state.currentSuggestions)) {
-            showToast("Please generate a menu first."); 
-            return;
-        }
+        if (!state.currentSuggestions || !Array.isArray(state.currentSuggestions)) { showToast("Please generate a menu first."); return; }
         const lockedCards = state.currentSuggestions.filter(card => card.isLocked);
-        if (lockedCards.length === 0) { 
-            showToast("Please lock (✓ On Menu) at least one meal to share the menu."); 
-            return; 
-        }
+        if (lockedCards.length === 0) { showToast("Please lock (✓ On Menu) at least one meal to share the menu."); return; }
         let text = "🍽️ *Today's Menu*\n\n";
         lockedCards.forEach(card => { 
             const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
@@ -966,79 +1049,59 @@
     }
 
     // ------------------------------------------------
-    // GHOST ITEM LONG PRESS POP-UP
+    // SAVE ICON & DUPLICATE PREVENTION (The Ghost Fix)
     // ------------------------------------------------
-    let pressTimer;
-    
-    function touchStartGhost(e, itemName, isGhost) {
-      if(!isGhost) return;
-      
-      const safeName = escapeHtml(itemName);
-      
-      pressTimer = setTimeout(() => {
-        document.getElementById('ghostPromoteName').value = itemName;
-        
+    function promoteGhostItem(itemName) {
+        document.getElementById('ghostPromoteName').value = unescapeHtml(itemName);
         const sortedCats = getSortedCategories();
         document.getElementById('ghostPromoteCategory').innerHTML = `<option value="📦 Uncategorized">📦 Category</option>` + 
             sortedCats.filter(c => !['All', '🔥 Top Picks', '📦 Uncategorized'].includes(c.id))
                       .map(c => `<option value="${c.id}">${c.label}</option>`).join('');
-                      
         openModal('ghostPromoteModal');
-        if(navigator.vibrate) navigator.vibrate(50);
-      }, 500);
     }
-    
-    function touchEndGhost(e) { 
-        clearTimeout(pressTimer); 
-    }
-    
-    function touchMoveGhost(e) { 
-        clearTimeout(pressTimer); 
-    } 
 
     function confirmGhostPromotion() {
         const name = document.getElementById('ghostPromoteName').value.trim();
         const category = document.getElementById('ghostPromoteCategory').value;
+        if(!name) return;
         
-        if(name) {
-            let existing = state.grocery.find(i => i.name.toLowerCase() === name.toLowerCase());
-            if(existing) {
-                if(category && category !== '📦 Uncategorized') existing.category = category;
-                existing.inCart = true; 
-                existing.checked = true;
-                existing.mealContext = '';
+        const nameLower = name.toLowerCase();
+        const existing = state.grocery.find(i => i.name.toLowerCase() === nameLower && i.category !== 'Ghost');
+        
+        if(existing) {
+            existing.inCart = true; 
+            existing.checked = true;
+            existing.mealContext = '';
+            // Delete the duplicate ghost
+            state.grocery = state.grocery.filter(i => !(i.name.toLowerCase() === nameLower && i.category === 'Ghost'));
+            showToast(`${name} already in database. Added to cart.`);
+        } else {
+            let ghost = state.grocery.find(i => i.name.toLowerCase() === nameLower && i.category === 'Ghost');
+            if (ghost) {
+                ghost.category = (category && category !== '📦 Uncategorized') ? category : '📦 Uncategorized';
+                ghost.mealContext = '';
             }
-            renderCart(); 
-            saveStateLocally(); 
             runServer('addMasterItem', {item: name, category: category});
-            closeModal('ghostPromoteModal');
             showToast(`${name} permanently saved.`);
         }
+        
+        renderCart(); 
+        queueLocalSave(); 
+        queueCartSync();
+        closeModal('ghostPromoteModal');
     }
 
     // ------------------------------------------------
-    // COOKBOOK LONG PRESS DELETE
+    // COOKBOOK MEAL DELETION (Dedicated Button Fix)
     // ------------------------------------------------
-    let mealPressTimer;
     let mealToDeleteName = '';
     let mealToDeleteSource = '';
 
-    function touchStartMeal(e, name, src) {
-        mealPressTimer = setTimeout(() => {
-            mealToDeleteName = name;
-            mealToDeleteSource = src;
-            document.getElementById('deleteMealTargetName').innerText = name;
-            openModal('mealDeleteModal');
-            if(navigator.vibrate) navigator.vibrate(50);
-        }, 500);
-    }
-    
-    function touchEndMeal(e) { 
-        clearTimeout(mealPressTimer); 
-    }
-    
-    function touchMoveMeal(e) { 
-        clearTimeout(mealPressTimer); 
+    function confirmMealDeletionPrompt(name, src) {
+        mealToDeleteName = unescapeHtml(name);
+        mealToDeleteSource = src;
+        document.getElementById('deleteMealTargetName').innerText = mealToDeleteName;
+        openModal('mealDeleteModal');
     }
     
     function confirmMealDeletion() {
@@ -1050,28 +1113,26 @@
         runServer('deleteSavedMeal', {mealName: mealToDeleteName, sourceSheet: mealToDeleteSource});
         closeModal('mealDeleteModal');
         showToast(`${mealToDeleteName} deleted.`);
-        saveStateLocally();
+        queueLocalSave();
         filterCookbookSearch();
     }
 
     // ------------------------------------------------
-    // CART LOGIC
+    // CART & DOM REORDERING
     // ------------------------------------------------
     function pushToCartLocally(ingredientsList, mealContext) {
         ingredientsList.reverse().forEach(ing => {
           const safeIng = ing.toLowerCase().trim();
           let existing = state.grocery.find(i => i.name.toLowerCase() === safeIng);
           if (existing) {
-              existing.inCart = true; 
-              existing.checked = true; 
-              existing.mealContext = mealContext;
+              existing.inCart = true; existing.checked = true; existing.mealContext = mealContext;
           } else {
               state.grocery.unshift({ name: ing, count: 0, lastOrdered: '', category: 'Ghost', inCart: true, checked: true, mealContext: mealContext });
           }
         });
         renderCart(); 
-        saveStateLocally(); 
-        runServer('addRecipeToCart', {ingredients: ingredientsList, mealName: mealContext});
+        queueLocalSave(); 
+        queueCartSync();
         if (activeTab !== 'cart') toggleMainView();
     }
 
@@ -1084,21 +1145,18 @@
     }
 
     function removeMealGroup(mealContext) {
-        const rawContext = mealContext.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+        const rawContext = unescapeHtml(mealContext);
         let hasChanges = false;
         state.grocery.forEach(i => {
             if (i.inCart && i.mealContext === rawContext) {
-                i.inCart = false;
-                i.checked = false;
-                i.mealContext = '';
-                hasChanges = true;
+                i.inCart = false; i.checked = false; i.mealContext = ''; hasChanges = true;
             }
         });
         state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart));
         if (hasChanges) {
             renderCart();
-            saveStateLocally();
-            runServer('syncCart', {cart: state.grocery.filter(i=>i.inCart)});
+            queueLocalSave();
+            queueCartSync();
         }
     }
 
@@ -1130,34 +1188,54 @@
               html += `<div class="cart-group-title">${group}</div>`;
           }
           
+          html += `<div class="cart-group-list">`;
+          
+          // Pre-sort: Checked on top
+          groups[group].sort((a, b) => (b.checked === a.checked) ? 0 : b.checked ? 1 : -1);
+
           groups[group].forEach(item => {
               const isGhost = item.category === 'Ghost';
               const safeName = escapeHtml(item.name);
               
               html += `
-              <div class="list-item-row ${item.checked ? 'checked' : 'dimmed'}" ontouchstart="touchStartGhost(event, '${safeName}', ${isGhost})" ontouchend="touchEndGhost(event)" ontouchmove="touchMoveGhost(event)">
-                <div class="list-item-left" onclick="toggleCartItem('${safeName}')">
+              <div class="list-item-row ${item.checked ? 'checked' : 'dimmed'}" id="cart-row-${btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '')}">
+                <div class="list-item-left" onclick="toggleCartItem('${safeName}', this.parentElement)">
                     <div class="checkbox">${item.checked ? '✓' : ''}</div>
-                    <div><div class="item-name">${safeName} ${isGhost ? '👻' : ''}</div></div>
+                    <div><div class="item-name">${safeName}</div></div>
                 </div>
-                <button class="trash-btn" onclick="executeSoftDelete('cart', '${safeName}')">
-                    <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                </button>
+                <div style="display:flex; align-items:center; gap: 8px;">
+                    ${isGhost ? `<button class="ghost-btn" style="border:none; padding:8px;" onclick="promoteGhostItem('${safeName}')">💾</button>` : ''}
+                    <button class="trash-btn" onclick="executeSoftDelete('cart', '${safeName}')">
+                        <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
               </div>`;
           });
+          html += `</div>`;
       }
       container.innerHTML = html;
     }
 
-    function toggleCartItem(name) { 
-        const rawName = name.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    // NATIVE DOM REORDERING (No Laggy List Redraws!)
+    function toggleCartItem(name, rowElement) { 
+        const rawName = unescapeHtml(name);
         const item = state.grocery.find(i => i.name.toLowerCase() === rawName.toLowerCase());
         
         if(item) {
             item.checked = !item.checked;
-            renderCart(); 
-            saveStateLocally(); 
-            runServer('syncCart', {cart: state.grocery.filter(i=>i.inCart)});
+            rowElement.className = `list-item-row ${item.checked ? 'checked' : 'dimmed'}`;
+            rowElement.querySelector('.checkbox').innerText = item.checked ? '✓' : '';
+            
+            // Reorder smoothly within its group container
+            const container = rowElement.parentElement;
+            if (item.checked) {
+                container.insertBefore(rowElement, container.firstChild);
+            } else {
+                container.appendChild(rowElement);
+            }
+            
+            queueLocalSave(); 
+            queueCartSync();
         }
     }
     
@@ -1165,40 +1243,36 @@
         let hasChanges = false;
         state.grocery.forEach(i => {
             if(i.inCart && i.checked) {
-                i.inCart = false; 
-                i.checked = false; 
-                i.mealContext = ''; 
-                hasChanges = true;
+                i.inCart = false; i.checked = false; i.mealContext = ''; hasChanges = true;
             }
         });
-        
         state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart)); 
-        
         if(hasChanges) { 
-            renderCart(); 
-            saveStateLocally(); 
-            runServer('syncCart', {cart: state.grocery.filter(i=>i.inCart)}); 
+            renderCart(); queueLocalSave(); queueCartSync(); 
         }
     }
     
     function addManualCartItem() { 
         const name = document.getElementById('manualCartAdd').value.trim(); 
         const category = document.getElementById('cartCategorySelect').value;
-        if(name) { 
-            let existing = state.grocery.find(i => i.name.toLowerCase() === name.toLowerCase());
-            if(existing) {
-                if(category && category !== '📦 Uncategorized') existing.category = category;
-                existing.inCart = true; 
-                existing.checked = true;
-                existing.mealContext = '';
-            } else {
-                state.grocery.unshift({name: name, count: 0, lastOrdered:'', category: category, inCart: true, checked: true, mealContext: ''}); 
-            }
-            document.getElementById('manualCartAdd').value = ''; 
-            renderCart(); 
-            saveStateLocally(); 
+        if(!name) return;
+        
+        const nameLower = name.toLowerCase();
+        let existing = state.grocery.find(i => i.name.toLowerCase() === nameLower);
+        if(existing) {
+            if(category && category !== '📦 Uncategorized' && existing.category === 'Ghost') existing.category = category;
+            existing.inCart = true; existing.checked = true; existing.mealContext = '';
+            showToast("Item already in list.");
+        } else {
+            state.grocery.unshift({name: name, count: 0, lastOrdered:'', category: category, inCart: true, checked: true, mealContext: ''}); 
+        }
+        document.getElementById('manualCartAdd').value = ''; 
+        renderCart(); 
+        queueLocalSave(); 
+        queueCartSync();
+        if(!existing || existing.category === 'Ghost') {
             runServer('addMasterItem', {item: name, category: category});
-        } 
+        }
     }
 
     // ------------------------------------------------
@@ -1245,9 +1319,7 @@
     }
 
     function setMasterCategory(catId) { 
-        activeMasterCategory = catId; 
-        renderCategoryRibbon(); 
-        filterMasterList(); 
+        activeMasterCategory = catId; renderCategoryRibbon(); filterMasterList(); 
     }
 
     function filterMasterList() {
@@ -1284,24 +1356,21 @@
     }
 
     function toggleMasterItem(name) {
-      const rawName = name.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+      const rawName = unescapeHtml(name);
       let item = state.grocery.find(i => i.name.toLowerCase() === rawName.toLowerCase());
-      if(item) { 
-          item.inCart = !item.inCart; 
-          if(item.inCart) item.checked = true; 
-      }
+      if(item) { item.inCart = !item.inCart; if(item.inCart) item.checked = true; }
       filterMasterList(); 
       renderCart(); 
-      saveStateLocally(); 
-      runServer('syncCart', {cart: state.grocery.filter(i=>i.inCart)});
+      queueLocalSave(); 
+      queueCartSync();
     }
 
     function editMasterItem(itemName, newCategory) {
-        const rawName = itemName.replace(/&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+        const rawName = unescapeHtml(itemName);
         const item = state.grocery.find(i => i.name.toLowerCase() === rawName.toLowerCase());
         if (item) {
             item.category = newCategory; 
-            saveStateLocally(); 
+            queueLocalSave(); 
             filterMasterList();
             runServer('editMasterItemCategory', { item: rawName, category: newCategory }); 
             showToast(`Category updated`);
@@ -1310,15 +1379,11 @@
 
     function openMasterList() { 
         document.getElementById('masterSearchInput').value = ''; 
-        populateCategoryDropdowns(); 
-        renderCategoryRibbon(); 
-        filterMasterList(); 
-        openModal('masterListModal'); 
+        populateCategoryDropdowns(); renderCategoryRibbon(); filterMasterList(); openModal('masterListModal'); 
     }
     
     function openCookbook() { 
-        updateCookbookStats(); 
-        openModal('dataModal'); 
+        updateCookbookStats(); openModal('dataModal'); 
     }
     
     function forceRefill() { 
@@ -1338,7 +1403,7 @@
             document.getElementById('cb-dessert').innerText = sm.filter(m=>(m.category||'').toLowerCase()==='dessert').length + gm.filter(m=>(m.category||'').toLowerCase()==='dessert').length;
             document.getElementById('cb-drinks').innerText = sm.filter(m=>(m.category||'').toLowerCase()==='drinks').length + gm.filter(m=>(m.category||'').toLowerCase()==='drinks').length;
             document.getElementById('cb-cocktails').innerText = sm.filter(m=>(m.category||'').toLowerCase()==='cocktails').length + gm.filter(m=>(m.category||'').toLowerCase()==='cocktails').length;
-        } catch(e) { console.error(e); }
+        } catch(e) {}
     }
 
     function filterCookbookSearch() {
@@ -1388,16 +1453,19 @@
             const sortedKeys = Object.keys(groups).sort((a, b) => {
                 let iA = catOrder.findIndex(c => c.toLowerCase() === a.toLowerCase());
                 let iB = catOrder.findIndex(c => c.toLowerCase() === b.toLowerCase());
-                if (iA === -1) iA = 99;
-                if (iB === -1) iB = 99;
-                return iA - iB;
+                if (iA === -1) iA = 99; if (iB === -1) iB = 99; return iA - iB;
             });
             
             for(let g of sortedKeys) {
                 html += `<h5 style="color:var(--color-primary); margin: 16px 0 8px 4px; font-size: 0.85rem; text-transform:uppercase; letter-spacing:1px;">${g}</h5>`;
                 groups[g].forEach(i => {
                     const safeName = escapeHtml(i.name);
-                    html += `<div class="data-row" ontouchstart="touchStartMeal(event, '${safeName}', '${i.src}')" ontouchend="touchEndMeal(event)" ontouchmove="touchMoveMeal(event)"><span>${safeName}</span><span class="badge" style="font-size:0.65rem; background:transparent; border:1px solid var(--color-border); color:var(--color-text-muted);">${i.src}</span></div>`;
+                    html += `<div class="data-row">
+                                <div style="flex:1;"><span>${safeName}</span><span class="badge" style="font-size:0.65rem; background:transparent; border:1px solid var(--color-border); color:var(--color-text-muted); margin-left:8px;">${i.src}</span></div>
+                                <button class="trash-btn" style="padding:4px;" onclick="confirmMealDeletionPrompt('${safeName}', '${i.src}')">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                </button>
+                             </div>`;
                 });
             }
         }
@@ -1414,9 +1482,8 @@
         renderEmptyState();
         currentRenderedCacheKey = '';
         
-        saveStateLocally();
+        queueLocalSave();
         updateCookbookStats();
-        
         const activeBtn = document.querySelector('.stat-btn.active');
         if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat);
     }
@@ -1432,19 +1499,13 @@
     }
     
     function renderReviewQueue() {
-      const ql = document.getElementById('reviewQueueList'); 
-      ql.innerHTML = '';
+      const ql = document.getElementById('reviewQueueList'); ql.innerHTML = '';
       const qp = document.getElementById('reviewQueuePanel');
-      if (!pendingApprovals.length) { 
-          qp.style.display = 'none'; 
-          return; 
-      }
+      if (!pendingApprovals.length) { qp.style.display = 'none'; return; }
       
       qp.style.display = 'block';
       pendingApprovals.forEach((item, idx) => {
-        const li = document.createElement('li'); 
-        li.className = 'review-queue-item';
-        
+        const li = document.createElement('li'); li.className = 'review-queue-item';
         const itemCat = (item.category || '').toLowerCase();
         const catSelect = `
         <select onchange="pendingApprovals[${idx}].category = this.value">
@@ -1458,8 +1519,7 @@
 
         li.innerHTML = `
         <div style="display:flex; align-items:center; gap:0.75rem; flex-grow:1;">
-            <span style="font-weight:600; font-family:var(--font-display);">${escapeHtml(item.meal)}</span> 
-            ${catSelect}
+            <span style="font-weight:600; font-family:var(--font-display);">${escapeHtml(item.meal)}</span> ${catSelect}
         </div>
         <button class="trash-btn" data-remove-queue="${idx}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
         ql.appendChild(li);
@@ -1478,10 +1538,7 @@
                     if (card.name === removedItem.meal && card.isQueued) {
                         card.isQueued = false;
                         const bookmarkSvg = document.getElementById(`bookmark-${cardIdx}`);
-                        if (bookmarkSvg) {
-                            bookmarkSvg.setAttribute('fill', 'none');
-                            bookmarkSvg.setAttribute('stroke', 'currentColor');
-                        }
+                        if (bookmarkSvg) { bookmarkSvg.setAttribute('fill', 'none'); bookmarkSvg.setAttribute('stroke', 'currentColor'); }
                     }
                 });
             }
@@ -1495,42 +1552,53 @@
     
     async function submitQueueForApproval() {
       if (!pendingApprovals.length) return;
-      const btn = document.getElementById('submitApprovalBtn'); 
-      btn.innerHTML = `Syncing...`;
+      const btn = document.getElementById('submitApprovalBtn'); btn.innerHTML = `Syncing...`;
       
-      pendingApprovals.forEach(i => { 
-          state.savedMeals.push({name: i.meal, category: i.category, diet: i.diet, lastServed: '', ingredients: i.ingredients}); 
-      });
+      pendingApprovals.forEach(i => { state.savedMeals.push({name: i.meal, category: i.category, diet: i.diet, lastServed: '', ingredients: i.ingredients}); });
       runServer('sync_meals', { data: JSON.stringify(pendingApprovals) });
       
-      pendingApprovals = []; 
-      renderReviewQueue(); 
-      updateCookbookStats(); 
-      saveStateLocally();
-      
-      deckCache = {}; 
-      
+      pendingApprovals = []; renderReviewQueue(); updateCookbookStats(); queueLocalSave(); deckCache = {}; 
       document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
       
-      btn.innerHTML = "✓ Synced"; 
-      setTimeout(() => btn.innerHTML = "Push to Cloud", 2000);
+      btn.innerHTML = "✓ Synced"; setTimeout(() => btn.innerHTML = "Push to Cloud", 2000);
     }
 
+    // ------------------------------------------------
+    // GUIDED SHOPPING (Payload Checkout & Deep Links)
+    // ------------------------------------------------
     let shoppingQueue = []; 
     let shoppingIndex = 0; 
     let activePlatform = 'swiggy';
+    let actuallyBought = []; // explicit payload
+    
+    function launchShoppingApp(query, platform) {
+        const encodedQuery = encodeURIComponent(query);
+        const start = Date.now();
+        
+        if (platform === 'swiggy') {
+            const appUrl = `swiggy://instamart/search?query=${encodedQuery}`;
+            const webUrl = `https://www.swiggy.com/instamart/search?custom_query=${encodedQuery}`;
+            window.location.href = appUrl;
+            setTimeout(() => { if (Date.now() - start < 700) window.location.href = webUrl; }, 500);
+        } else {
+            const appUrl = `blinkit://search?q=${encodedQuery}`; 
+            const webUrl = `https://blinkit.com/s/?q=${encodedQuery}`;
+            window.location.href = appUrl;
+            setTimeout(() => { if (Date.now() - start < 700) window.location.href = webUrl; }, 500);
+        }
+    }
     
     function startGuidedShopping(platform) {
+      flushCartSync(); // Instantly kill the debounce timer and force network save before switching context
       shoppingQueue = state.grocery.filter(i => i.inCart && i.checked); 
-      if(!shoppingQueue.length) { 
-          showToast("Please check at least one item to shop."); 
-          return; 
-      }
+      if(!shoppingQueue.length) { showToast("Please check at least one item to shop."); return; }
+      
       activePlatform = platform; 
       shoppingIndex = 0; 
+      actuallyBought = [];
       updateGuidedUI(); 
       document.getElementById('guided-overlay').classList.add('active'); 
-      window.location.href = activePlatform === 'swiggy' ? `swiggy://instamart/search?query=${encodeURIComponent(shoppingQueue[shoppingIndex].name)}` : `https://blinkit.com/s/?q=${encodeURIComponent(shoppingQueue[shoppingIndex].name)}`;
+      launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
     }
     
     function updateGuidedUI() {
@@ -1540,34 +1608,28 @@
     
     function markFoundAndNext() {
       const current = shoppingQueue[shoppingIndex];
-      let item = state.grocery.find(i => i.name === current.name);
-      if(item) { 
-          item.inCart = false; 
-          item.checked = false; 
-          item.count++; 
-          item.mealContext=''; 
-      }
-      state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart)); 
-      saveStateLocally();
-      shoppingIndex++;
+      actuallyBought.push(current.name);
       
+      // Update local memory instantly
+      let item = state.grocery.find(i => i.name === current.name);
+      if(item) { item.inCart = false; item.checked = false; item.count++; item.mealContext=''; }
+      state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart)); 
+      queueLocalSave();
+      
+      shoppingIndex++;
       if(shoppingIndex >= shoppingQueue.length) { 
           closeGuidedShopping(); 
-          runServer('checkoutCart'); 
+          runServer('processExplicitCheckout', { boughtItems: actuallyBought }); // Explicit payload execution
       } else { 
           updateGuidedUI(); 
-          window.location.href = activePlatform === 'swiggy' ? `swiggy://instamart/search?query=${encodeURIComponent(shoppingQueue[shoppingIndex].name)}` : `https://blinkit.com/s/?q=${encodeURIComponent(shoppingQueue[shoppingIndex].name)}`; 
+          launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
       }
     }
     
     function markNotFoundAndNext() {
       shoppingIndex++;
-      if(shoppingIndex >= shoppingQueue.length) { 
-          closeGuidedShopping(); 
-      } else { 
-          updateGuidedUI(); 
-          window.location.href = activePlatform === 'swiggy' ? `swiggy://instamart/search?query=${encodeURIComponent(shoppingQueue[shoppingIndex].name)}` : `https://blinkit.com/s/?q=${encodeURIComponent(shoppingQueue[shoppingIndex].name)}`; 
-      }
+      if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); } 
+      else { updateGuidedUI(); launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform); }
     }
     
     function closeGuidedShopping() { 
@@ -1599,9 +1661,7 @@
           } else {
               state = { grocery: [], savedMeals: [], globalMeals: [], currentSuggestions: [] };
           }
-      } catch(e) {
-          state = { grocery: [], savedMeals: [], globalMeals: [], currentSuggestions: [] };
-      }
+      } catch(e) { state = { grocery: [], savedMeals: [], globalMeals: [], currentSuggestions: [] }; }
       
       populateCategoryDropdowns(); 
       renderCart(); 
@@ -1627,9 +1687,7 @@
                 renderCart();
             }
             document.getElementById('syncIndicator').classList.remove('active');
-        }).catch(e => { 
-            document.getElementById('syncIndicator').classList.remove('active'); 
-        });
+        }).catch(e => { document.getElementById('syncIndicator').classList.remove('active'); });
     }
 
     init();
