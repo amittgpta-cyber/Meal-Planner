@@ -716,6 +716,9 @@
         const doc = new DOMParser().parseFromString(str, "text/html");
         return doc.documentElement.textContent;
     }
+    function escapeJsArg(str) {
+        return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
     
     function openModal(modalId) { document.getElementById(modalId).classList.add('open'); }
     function closeModal(modalId) { document.getElementById(modalId).classList.remove('open'); }
@@ -1097,7 +1100,7 @@
         let text = "🍽️ *Today's Menu*\n\n";
         lockedCards.forEach(card => { 
             const searchQ = card.name.trim() + ' ' + (card.time || '').trim() + ' recipe';
-            text += `*${card.category}:* ${card.name.trim()}\n\n🔍 _https://www.google.com/search?q=${encodeURIComponent(searchQ)}_\n\n▶️ _https://www.youtube.com/results?search_query=${encodeURIComponent(searchQ)}_\n\n`; 
+            text += `*${card.category}:* ${card.name.trim()}\n\n🔍 _https://www.google.com/search?q=${searchQ}_\n\n▶️ _https://www.youtube.com/results?search_query=${searchQ}_\n\n`; 
         });
         window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
     }
@@ -1241,11 +1244,11 @@
           if (group !== 'Groceries') {
               const mealContext = group.replace('For ', '');
               html += `<div style="display:flex; justify-content:space-between; align-items:center; margin: 15px 0 5px 8px;">
-                          <div class="cart-group-title" style="margin:0;">${group}</div>
-                          <button class="ghost-btn" style="color:var(--color-error); border:none; height:32px; width:32px; padding:0; font-weight:bold; font-size:1.5rem; display:flex; justify-content:center; align-items:center;" onclick="removeMealGroup('${escapeHtml(mealContext)}')">-</button>
+                          <div class="cart-group-title" style="margin:0;">${escapeHtml(group)}</div>
+                          <button class="ghost-btn" style="color:var(--color-error); border:none; height:32px; width:32px; padding:0; font-weight:bold; font-size:1.5rem; display:flex; justify-content:center; align-items:center;" onclick="removeMealGroup('${escapeJsArg(mealContext)}')">-</button>
                        </div>`;
           } else {
-              html += `<div class="cart-group-title">${group}</div>`;
+              html += `<div class="cart-group-title">${escapeHtml(group)}</div>`;
           }
           
           html += `<div class="cart-group-list">`;
@@ -1256,16 +1259,17 @@
           groups[group].forEach(item => {
               const isGhost = item.category === 'Ghost';
               const safeName = escapeHtml(item.name);
+              const jsSafeName = escapeJsArg(item.name);
               
               html += `
               <div class="list-item-row ${item.checked ? 'checked' : 'dimmed'}" id="cart-row-${btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '')}">
-                <div class="list-item-left" onclick="toggleCartItem('${safeName}', this.parentElement)">
+                <div class="list-item-left" onclick="toggleCartItem('${jsSafeName}', this.parentElement)">
                     <div class="checkbox">${item.checked ? '✓' : ''}</div>
                     <div><div class="item-name">${safeName}</div></div>
                 </div>
                 <div style="display:flex; align-items:center; gap: 8px;">
-                    ${isGhost ? `<button class="ghost-btn" style="border:none; padding:8px;" onclick="promoteGhostItem('${safeName}')">💾</button>` : ''}
-                    <button class="trash-btn" onclick="executeSoftDelete('cart', '${safeName}')">
+                    ${isGhost ? `<button class="ghost-btn" style="border:none; padding:8px;" onclick="promoteGhostItem('${jsSafeName}')">💾</button>` : ''}
+                    <button class="trash-btn" onclick="executeSoftDelete('cart', '${jsSafeName}')">
                         <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
@@ -1407,20 +1411,23 @@
                 subTextParts.push(item.category);
             }
             let subTextHtml = subTextParts.length > 0 ? `<div class="item-flag" style="font-size: 0.85rem; opacity: 0.8; margin-top: 2px;">${subTextParts.join(' · ')}</div>` : '';
+            
+            const safeName = escapeHtml(item.name);
+            const jsSafeName = escapeJsArg(item.name);
 
             return `
             <div class="list-item-row ${item.inCart ? 'checked' : ''}">
-                <div class="list-item-left" onclick="toggleMasterItem('${escapeHtml(item.name)}', this.parentElement)">
+                <div class="list-item-left" onclick="toggleMasterItem('${jsSafeName}', this.parentElement)">
                     <div>
-                        <div class="item-name">${escapeHtml(item.name)}</div>
+                        <div class="item-name">${safeName}</div>
                         ${subTextHtml}
                     </div>
                 </div>
                 <div style="display:flex; align-items:center; gap: 8px;">
-                    <select onchange="editMasterItem('${escapeHtml(item.name)}', this.value)" style="background:transparent; color:inherit; border:none; padding:4px; font-size:1.1rem; width:32px; -webkit-appearance:none; appearance:none; outline:none; direction:rtl; cursor:pointer;">
+                    <select onchange="editMasterItem('${jsSafeName}', this.value)" style="background:transparent; color:inherit; border:none; padding:4px; font-size:1.1rem; width:32px; -webkit-appearance:none; appearance:none; outline:none; direction:rtl; cursor:pointer;">
                         <option value="" disabled selected>✏️</option>${catOptions}
                     </select>
-                    <button class="trash-btn" onclick="executeSoftDelete('master', '${escapeHtml(item.name)}')">
+                    <button class="trash-btn" onclick="executeSoftDelete('master', '${jsSafeName}')">
                         <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
@@ -1539,9 +1546,10 @@
                 html += `<h5 style="color:var(--color-primary); margin: 16px 0 8px 4px; font-size: 0.85rem; text-transform:uppercase; letter-spacing:1px;">${g}</h5>`;
                 groups[g].forEach(i => {
                     const safeName = escapeHtml(i.name);
+                    const jsSafeName = escapeJsArg(i.name);
                     html += `<div class="data-row">
                                 <div style="flex:1;"><span>${safeName}</span></div>
-                                <button class="trash-btn" style="padding:4px;" onclick="confirmMealDeletionPrompt('${safeName}', '${i.src}')">
+                                <button class="trash-btn" style="padding:4px;" onclick="confirmMealDeletionPrompt('${jsSafeName}', '${i.src}')">
                                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 </button>
                              </div>`;
@@ -1571,6 +1579,15 @@
         const m = document.getElementById('unified-meal-input').value.trim(); 
         const c = document.getElementById('unified-meal-category').value;
         if (m) { 
+            const nameLower = m.toLowerCase();
+            const inQueue = pendingApprovals.some(p => p.meal.toLowerCase() === nameLower);
+            const inDb = state.savedMeals.some(s => s.name.toLowerCase() === nameLower);
+            
+            if (inQueue || inDb) {
+                showToast("Meal already exists in cookbook or queue.");
+                return;
+            }
+
             pendingApprovals.push({ category: c, meal: m, diet: appSettings.diet, ingredients: '[]' }); 
             document.getElementById('unified-meal-input').value = ''; 
             renderReviewQueue(); 
@@ -1634,17 +1651,29 @@
       if (!pendingApprovals.length) return;
       const btn = document.getElementById('submitApprovalBtn'); btn.innerHTML = `Syncing...`;
       
-      pendingApprovals.forEach(i => { state.savedMeals.push({name: i.meal, category: i.category, diet: i.diet, lastServed: '', ingredients: i.ingredients}); });
-      runServer('sync_meals', { data: JSON.stringify(pendingApprovals) });
-      
-      pendingApprovals = []; 
-      renderReviewQueue(); 
-      updateCookbookStats(); 
-      updateCookbookIconState();
-      queueLocalSave(); 
-      deckCache = {}; 
-      
-      btn.innerHTML = "✓ Synced"; setTimeout(() => btn.innerHTML = "Push to Cloud", 2000);
+      try {
+          const payload = { action: 'sync_meals', data: JSON.stringify(pendingApprovals) };
+          const response = await fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify(payload) });
+          const parsed = await response.json();
+          
+          if (parsed.success !== false) {
+              pendingApprovals.forEach(i => { state.savedMeals.push({name: i.meal, category: i.category, diet: i.diet, lastServed: '', ingredients: i.ingredients}); });
+              pendingApprovals = []; 
+              renderReviewQueue(); 
+              updateCookbookStats(); 
+              updateCookbookIconState();
+              queueLocalSave(); 
+              deckCache = {}; 
+              
+              btn.innerHTML = "✓ Synced"; 
+          } else {
+              throw new Error("Server rejected sync");
+          }
+      } catch (error) {
+          showToast("Sync failed. Items saved locally in queue.");
+          btn.innerHTML = "Retry Sync";
+      }
+      setTimeout(() => { if (btn.innerHTML === "✓ Synced" || btn.innerHTML === "Retry Sync") btn.innerHTML = "Push to Cloud"; }, 2000);
     }
 
     // ------------------------------------------------
