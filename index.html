@@ -1078,7 +1078,7 @@
     function shareDailyMenuToWhatsApp() {
         if (!state.currentSuggestions || !Array.isArray(state.currentSuggestions)) { showToast("Please generate a menu first."); return; }
         const lockedCards = state.currentSuggestions.filter(card => card.isLocked);
-        if (lockedCards.length === 0) { showToast("Please lock (✓ On Menu) at least one meal to share the menu."); return; }
+        if (lockedCards.length === 0) { showToast("Please select a meal to share."); return; }
         let text = "🍽️ *Today's Menu*\n\n";
         lockedCards.forEach(card => { 
             const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
