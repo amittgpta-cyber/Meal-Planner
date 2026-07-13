@@ -477,20 +477,29 @@
         if (pendingSaves === 0) return;
         if (mutationTimer) { clearTimeout(mutationTimer); mutationTimer = null; }
         
+        let savesProcessing = pendingSaves; // Snapshot
         const payload = state.grocery.filter(i => i.inCart);
         let syncResolved = false;
         
         fetch(GOOGLE_SHEETS_API_URL, {
             method: 'POST', keepalive: true, body: JSON.stringify({ action: 'syncCart', cart: payload })
         }).then(r => r.json()).then(res => {
-            syncResolved = true; pendingSaves = 0;
+            syncResolved = true; 
+            pendingSaves = Math.max(0, pendingSaves - savesProcessing);
+            if (pendingSaves > 0) queueCartSync(); // Retrigger if new changes happened
         }).catch(e => {
-            syncResolved = true; pendingSaves = 0;
+            syncResolved = true; 
+            pendingSaves = Math.max(0, pendingSaves - savesProcessing);
             showToast("Sync failed. Using offline cache.");
+            if (pendingSaves > 0) queueCartSync();
         });
 
         setTimeout(() => {
-            if (!syncResolved) { pendingSaves = 0; showToast("Network lag. Unlocking interface."); }
+            if (!syncResolved) { 
+                pendingSaves = Math.max(0, pendingSaves - savesProcessing); 
+                showToast("Network lag. Unlocking interface."); 
+                if (pendingSaves > 0) queueCartSync();
+            }
         }, DEADMAN_TIMEOUT);
     }
 
@@ -1100,7 +1109,7 @@
         let text = "🍽️ *Today's Menu*\n\n";
         lockedCards.forEach(card => { 
             const searchQ = card.name.trim() + ' ' + (card.time || '').trim() + ' recipe';
-            text += `*${card.category}:* ${card.name.trim()}\n\n🔍 _https://www.google.com/search?q=${searchQ}_\n\n▶️ _https://www.youtube.com/results?search_query=${searchQ}_\n\n`; 
+            text += `*${card.category}:* ${card.name.trim()}\n\n🔍 _https://www.google.com/search?q=${encodeURIComponent(searchQ)}_\n\n▶️ _https://www.youtube.com/results?search_query=${encodeURIComponent(searchQ)}_\n\n`; 
         });
         window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
     }
@@ -1162,10 +1171,11 @@
     }
     
     function confirmMealDeletion() {
+        const targetLower = mealToDeleteName.toLowerCase();
         if(mealToDeleteSource === 'Local DB') {
-            state.savedMeals = state.savedMeals.filter(m => m.name !== mealToDeleteName);
+            state.savedMeals = state.savedMeals.filter(m => m.name.toLowerCase() !== targetLower);
         } else {
-            state.globalMeals = state.globalMeals.filter(m => m.name !== mealToDeleteName);
+            state.globalMeals = state.globalMeals.filter(m => m.name.toLowerCase() !== targetLower);
         }
         runServer('deleteSavedMeal', {mealName: mealToDeleteName, sourceSheet: mealToDeleteSource});
         closeModal('mealDeleteModal');
