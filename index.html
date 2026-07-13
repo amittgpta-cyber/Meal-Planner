@@ -265,7 +265,7 @@
         </div>
         
         <div class="cart-accordion-header" onclick="toggleCartDropdown()">
-            <div class="cart-group-header">🛒 Cart</div>
+            <div class="cart-group-header">🛒</div>
             <div id="cartChevron" class="cart-chevron">▼</div>
         </div>
         
@@ -295,8 +295,8 @@
   </button>
 
   <div class="bottom-nav" id="bottomNav">
-      <button class="ghost-btn" id="navToggleBtn" onclick="toggleMainView()" style="flex: 1; height: 56px; font-size: 1.1rem; justify-content: center; background: color-mix(in oklab, var(--color-surface) 90%, transparent); backdrop-filter: blur(24px); border: 1px solid var(--color-border); color: var(--color-text);">🛒 Cart</button>
-      <button class="primary-btn" id="generateBtn" style="flex: 2.5; height: 56px; font-size: 1.2rem; justify-content: center; opacity: 0.5; transition: 0.3s var(--ease-fluid);">🎲 Generate</button>
+      <button class="primary-btn" id="generateBtn" style="flex: 1; height: 56px; font-size: 1.2rem; justify-content: center; opacity: 0.5; transition: 0.3s var(--ease-fluid);">🎲 Generate</button>
+      <button class="ghost-btn" id="navToggleBtn" onclick="toggleMainView()" style="flex: 0 0 auto; padding: 0 24px; min-width: 64px; height: 56px; font-size: 1.1rem; justify-content: center; background: color-mix(in oklab, var(--color-surface) 90%, transparent); backdrop-filter: blur(24px); border: 1px solid var(--color-border); color: var(--color-text);">🛒</button>
   </div>
 
   <div class="guided-overlay" id="guided-overlay">
@@ -743,7 +743,7 @@
           topbar.classList.remove('topbar-hidden'); 
           planFab.classList.remove('fab-hidden'); 
           cartFab.classList.add('fab-hidden'); 
-          genBtn.style.display = 'flex'; navToggleBtn.innerHTML = '🛒 Cart';
+          genBtn.style.display = 'flex'; navToggleBtn.innerHTML = '🛒';
       }
     }
 
@@ -1376,7 +1376,7 @@
 
             return `
             <div class="list-item-row ${item.inCart ? 'checked' : ''}">
-                <div class="list-item-left" onclick="toggleMasterItem('${escapeHtml(item.name)}')">
+                <div class="list-item-left" onclick="toggleMasterItem('${escapeHtml(item.name)}', this.parentElement)">
                     <div>
                         <div class="item-name">${escapeHtml(item.name)}</div>
                         ${subTextHtml}
@@ -1394,11 +1394,17 @@
         }).join('') || '<p class="subtle" style="text-align:center; margin-top:20px;">No items match.</p>';
     }
 
-    function toggleMasterItem(name) {
+    function toggleMasterItem(name, rowElement) {
       const rawName = unescapeHtml(name);
       let item = state.grocery.find(i => i.name.toLowerCase() === rawName.toLowerCase());
-      if(item) { item.inCart = !item.inCart; if(item.inCart) item.checked = true; }
-      filterMasterList(); 
+      if(item) { 
+          item.inCart = !item.inCart; 
+          if(item.inCart) item.checked = true; 
+          
+          if(rowElement) {
+              rowElement.className = `list-item-row ${item.inCart ? 'checked' : ''}`;
+          }
+      }
       renderCart(); 
       queueLocalSave(); 
       queueCartSync();
