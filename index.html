@@ -452,6 +452,7 @@
     let activeSource = 'cookbook'; let activeCategory = null;
     let currentRenderedCacheKey = '';
     let showBoughtCount = false;
+    let isShoppingActive = false;
 
     // ------------------------------------------------
     // THE SMART LOCK & DEBOUNCED QUEUE (Network Stability)
@@ -480,7 +481,7 @@
         let syncResolved = false;
         
         fetch(GOOGLE_SHEETS_API_URL, {
-            method: 'POST', body: JSON.stringify({ action: 'syncCart', cart: payload })
+            method: 'POST', keepalive: true, body: JSON.stringify({ action: 'syncCart', cart: payload })
         }).then(r => r.json()).then(res => {
             syncResolved = true; pendingSaves = 0;
         }).catch(e => {
@@ -497,6 +498,7 @@
     // SYNC ISOLATION (Safe Background Updates)
     // ------------------------------------------------
     function silentSync() {
+        if (isShoppingActive) return; // Block syncs during guided shopping app switching
         if (pendingSaves > 0) return; // THE SMART LOCK: Block incoming syncs if we are typing/tapping
         if (!GOOGLE_SHEETS_API_URL || GOOGLE_SHEETS_API_URL.includes("PASTE")) return;
         
@@ -578,16 +580,21 @@
             saveStateLocally(); // Force synchronous save on exit
             flushCartSync();    // Flush network queue on exit
             flushGraveyardCache();
+            // Emergency payload check if app is force-closed during shopping trip
+            if (isShoppingActive && actuallyBought.length > 0) {
+                runServer('processExplicitCheckout', { boughtItems: actuallyBought }, true, true);
+                actuallyBought = [];
+            }
         }
     });
     window.addEventListener('focus', silentSync);
     window.addEventListener('pageshow', silentSync);
     window.addEventListener('pagehide', () => { flushGraveyardCache(); flushCartSync(); });
 
-    function runServer(action, payload = {}, silent = true) {
+    function runServer(action, payload = {}, silent = true, keepalive = false) {
         if (!silent) document.getElementById('syncIndicator').classList.add('active');
         payload.action = action;
-        fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify(payload) })
+        fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify(payload), keepalive: keepalive })
         .then(res => res.json())
         .then(parsed => {
             if (!silent) document.getElementById('syncIndicator').classList.remove('active');
@@ -719,16 +726,20 @@
       let theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       root.setAttribute('data-theme', theme);
       const renderThemeIcon = () => { 
-          themeBtn.innerHTML = theme === 'dark' 
-            ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>' 
-            : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'; 
+          if(themeBtn) {
+            themeBtn.innerHTML = theme === 'dark' 
+              ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>' 
+              : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'; 
+          }
       };
       renderThemeIcon();
-      themeBtn.addEventListener('click', () => { 
-          theme = theme === 'dark' ? 'light' : 'dark'; 
-          root.setAttribute('data-theme', theme); 
-          renderThemeIcon(); 
-      });
+      if(themeBtn) {
+        themeBtn.addEventListener('click', () => { 
+            theme = theme === 'dark' ? 'light' : 'dark'; 
+            root.setAttribute('data-theme', theme); 
+            renderThemeIcon(); 
+        });
+      }
     })();
 
     function switchTab(tabId) {
@@ -752,6 +763,19 @@
           genBtn.style.visibility = 'visible'; 
           navToggleBtn.innerHTML = '🛒';
       }
+    }
+
+    function updateCookbookIconState() {
+        const hasPending = pendingApprovals.length > 0;
+        const fill = hasPending ? 'var(--color-primary)' : 'none';
+        
+        const svgContent = `<svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="${fill}" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
+        
+        const mainBtn = document.getElementById('openDataBtn');
+        if (mainBtn) mainBtn.innerHTML = svgContent;
+        
+        const modalIcon = document.getElementById('modalCookbookIcon');
+        if (modalIcon) modalIcon.setAttribute('fill', fill);
     }
 
     function updateUndoButton() {
@@ -1019,17 +1043,8 @@
               bookmarkSvg.setAttribute('stroke', 'var(--color-success)');
           }
           renderReviewQueue(); 
-          if(pendingApprovals.length > 0) {
-              const activeSvg = `<svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="var(--color-primary)" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
-              document.getElementById('openDataBtn').innerHTML = activeSvg;
-              const modalIcon = document.getElementById('modalCookbookIcon');
-              if (modalIcon) modalIcon.setAttribute('fill', 'var(--color-primary)');
-          } else {
-              const inactiveSvg = `<svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
-              document.getElementById('openDataBtn').innerHTML = inactiveSvg;
-              const modalIcon = document.getElementById('modalCookbookIcon');
-              if (modalIcon) modalIcon.setAttribute('fill', 'none');
-          }
+          updateCookbookIconState();
+          queueLocalSave();
       }
 
       if (action === 'lock') { 
@@ -1078,11 +1093,11 @@
     function shareDailyMenuToWhatsApp() {
         if (!state.currentSuggestions || !Array.isArray(state.currentSuggestions)) { showToast("Please generate a menu first."); return; }
         const lockedCards = state.currentSuggestions.filter(card => card.isLocked);
-        if (lockedCards.length === 0) { showToast("Please select a meal to share."); return; }
+        if (lockedCards.length === 0) { showToast("Please Select a meal to share"); return; }
         let text = "🍽️ *Today's Menu*\n\n";
         lockedCards.forEach(card => { 
-            const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
-            text += `*${card.category}:* ${card.name.trim()}\n\n🔍 _https://www.google.com/search?q=${searchQ}_\n\n▶️ _https://www.youtube.com/results?search_query=${searchQ}_\n\n`; 
+            const searchQ = card.name.trim() + ' ' + (card.time || '').trim() + ' recipe';
+            text += `*${card.category}:* ${card.name.trim()}\n\n🔍 _https://www.google.com/search?q=${encodeURIComponent(searchQ)}_\n\n▶️ _https://www.youtube.com/results?search_query=${encodeURIComponent(searchQ)}_\n\n`; 
         });
         window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
     }
@@ -1154,6 +1169,12 @@
         showToast(`${mealToDeleteName} deleted.`);
         queueLocalSave();
         filterCookbookSearch();
+        
+        // Purge the deck cache so ghost cards vanish immediately
+        deckCache = {}; 
+        document.getElementById('suggestions').innerHTML = '';
+        renderEmptyState();
+        currentRenderedCacheKey = '';
     }
 
     // ------------------------------------------------
@@ -1553,6 +1574,8 @@
             pendingApprovals.push({ category: c, meal: m, diet: appSettings.diet, ingredients: '[]' }); 
             document.getElementById('unified-meal-input').value = ''; 
             renderReviewQueue(); 
+            updateCookbookIconState();
+            queueLocalSave();
         }
     }
     
@@ -1566,7 +1589,7 @@
         const li = document.createElement('li'); li.className = 'review-queue-item';
         const itemCat = (item.category || '').toLowerCase();
         const catSelect = `
-        <select onchange="pendingApprovals[${idx}].category = this.value">
+        <select onchange="pendingApprovals[${idx}].category = this.value; queueLocalSave();">
             <option value="Breakfast" ${itemCat === 'breakfast' ? 'selected' : ''}>Breakfast</option>
             <option value="Lunch" ${itemCat === 'lunch' ? 'selected' : ''}>Lunch</option>
             <option value="Dinner" ${itemCat === 'dinner' ? 'selected' : ''}>Dinner</option>
@@ -1602,12 +1625,8 @@
             }
 
             renderReviewQueue(); 
-            if (pendingApprovals.length === 0) {
-                const inactiveSvg = `<svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
-                document.getElementById('openDataBtn').innerHTML = inactiveSvg;
-                const modalIcon = document.getElementById('modalCookbookIcon');
-                if (modalIcon) modalIcon.setAttribute('fill', 'none');
-            }
+            updateCookbookIconState();
+            queueLocalSave();
         } 
     });
     
@@ -1618,12 +1637,12 @@
       pendingApprovals.forEach(i => { state.savedMeals.push({name: i.meal, category: i.category, diet: i.diet, lastServed: '', ingredients: i.ingredients}); });
       runServer('sync_meals', { data: JSON.stringify(pendingApprovals) });
       
-      pendingApprovals = []; renderReviewQueue(); updateCookbookStats(); queueLocalSave(); deckCache = {}; 
-      
-      const inactiveSvg = `<svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
-      document.getElementById('openDataBtn').innerHTML = inactiveSvg;
-      const modalIcon = document.getElementById('modalCookbookIcon');
-      if (modalIcon) modalIcon.setAttribute('fill', 'none');
+      pendingApprovals = []; 
+      renderReviewQueue(); 
+      updateCookbookStats(); 
+      updateCookbookIconState();
+      queueLocalSave(); 
+      deckCache = {}; 
       
       btn.innerHTML = "✓ Synced"; setTimeout(() => btn.innerHTML = "Push to Cloud", 2000);
     }
@@ -1650,6 +1669,7 @@
       shoppingQueue = state.grocery.filter(i => i.inCart && i.checked); 
       if(!shoppingQueue.length) { showToast("Please check at least one item to shop."); return; }
       
+      isShoppingActive = true;
       activePlatform = platform; 
       shoppingIndex = 0; 
       actuallyBought = [];
@@ -1671,12 +1691,13 @@
       let item = state.grocery.find(i => i.name === current.name);
       if(item) { item.inCart = false; item.checked = false; item.count++; item.mealContext=''; }
       state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart)); 
+      
       queueLocalSave();
+      queueCartSync();
       
       shoppingIndex++;
       if(shoppingIndex >= shoppingQueue.length) { 
           closeGuidedShopping(); 
-          runServer('processExplicitCheckout', { boughtItems: actuallyBought }); // Explicit payload execution
       } else { 
           updateGuidedUI(); 
           launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
@@ -1690,13 +1711,21 @@
     }
     
     function closeGuidedShopping() { 
+        isShoppingActive = false;
         document.getElementById('guided-overlay').classList.remove('active'); 
         renderCart(); 
+        
+        // Execute explicit checkout only if items were successfully found
+        if (actuallyBought.length > 0) {
+            runServer('processExplicitCheckout', { boughtItems: actuallyBought }, true, true); 
+            actuallyBought = [];
+        }
     }
 
     function saveStateLocally() { 
         localStorage.setItem('mp_data_v17', JSON.stringify(state)); 
         localStorage.setItem('mp_settings', JSON.stringify(appSettings)); 
+        localStorage.setItem('mp_pending_v17', JSON.stringify(pendingApprovals));
     }
 
     function init() {
@@ -1720,6 +1749,12 @@
           }
       } catch(e) { state = { grocery: [], savedMeals: [], globalMeals: [], currentSuggestions: [] }; }
       
+      try {
+          const cachedPending = localStorage.getItem('mp_pending_v17');
+          if (cachedPending) pendingApprovals = JSON.parse(cachedPending);
+      } catch(e) {}
+
+      updateCookbookIconState();
       populateCategoryDropdowns(); 
       renderCart(); 
       
