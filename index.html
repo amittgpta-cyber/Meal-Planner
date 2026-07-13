@@ -203,8 +203,6 @@
     .toast-container { position: fixed; top: env(safe-area-inset-top, 20px); left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; margin-top: 20px; width: 90%; max-width: 400px;}
     .toast { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); padding: 16px 20px; border-radius: 1.5rem; box-shadow: var(--shadow-md); font-weight: 600; font-size: 0.95rem; text-align: center; animation: toastSlide 0.3s var(--ease-fluid) forwards; transition: opacity 0.3s; pointer-events: auto; }
     @keyframes toastSlide { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    
-    .top-settings-bar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 20px; background: var(--color-surface-2); padding: 12px; border-radius: 1.5rem; border: 1px solid var(--color-border); }
   </style>
 </head>
 <body>
@@ -250,14 +248,7 @@
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; padding-top: calc(1rem + env(safe-area-inset-top));">
           <h2 style="font-family:var(--font-display); font-size:2rem; font-weight:600;">Grocery Cart</h2>
           <div style="display:flex; gap:8px; align-items: center;">
-            <button class="ghost-btn" id="undoBtn" style="opacity: 0.3; pointer-events: none; padding: 0 12px; border:none; background:transparent; color:var(--color-primary); font-size: 0.95rem; font-weight: 700;" onclick="undoDelete()">⟲ Undo</button>
-            <button class="icon-btn" onclick="manualSync()">
-                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 1 0 2.13-5.83L2 9"></path></svg>
-            </button>
-            <button class="icon-btn" onclick="shareCartToWhatsApp()">
-                <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" width="20" height="20"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
-            </button>
-            <button class="ghost-btn" style="border-radius: 2rem; padding: 8px 16px;" onclick="openMasterList()">Items list ▾</button>
+            <button class="primary-btn" style="border-radius: 2rem; padding: 10px 20px; font-size: 1.1rem;" onclick="openMasterList()">➕ Pantry</button>
           </div>
         </div>
         
@@ -267,15 +258,20 @@
             <button class="primary-btn" style="flex: 0 0 90px; width: 90px; border-radius: 1.5rem; padding: 0; height: 56px; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="addManualCartItem()">+</button>
         </div>
         
-        <div style="display:flex; justify-content:flex-end; margin-bottom: 12px;">
-            <button class="ghost-btn" style="border-radius: 1.5rem; padding: 6px 16px; font-size: 12px; height: 36px; font-weight: 600;" onclick="clearActiveCart()">🗑️ Clear Cart</button>
-        </div>
-        
         <div class="cart-accordion-header" onclick="toggleCartDropdown()">
             <div class="cart-group-header">🛒 Cart</div>
             <div id="cartChevron" class="cart-chevron">▼</div>
         </div>
-        <div id="unified-cart-items" style="display: none;"></div>
+        
+        <div id="cart-dropdown-content" style="display: none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; padding: 0 8px;">
+                <button class="ghost-btn" id="undoBtn" style="opacity: 0.3; pointer-events: none; padding: 0 12px; border:none; background:transparent; color:var(--color-primary); font-size: 0.95rem; font-weight: 700;" onclick="undoDelete()">⟲ Undo</button>
+                <button class="icon-btn" style="border:none; background:transparent; color:var(--color-error); padding:8px; width:auto; height:auto;" onclick="clearActiveCart()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+            </div>
+            <div id="unified-cart-items"></div>
+        </div>
         
         <div style="display:flex; gap:10px; margin-top:30px; margin-bottom:24px;">
             <button class="primary-btn" style="flex: 1; background: #fc8019;" onclick="startGuidedShopping('swiggy')">🛒 Swiggy</button>
@@ -285,7 +281,10 @@
     </main>
   </div>
 
-  <button class="floating-share-fab" id="floatingShareFab" onclick="shareDailyMenuToWhatsApp()">
+  <button class="floating-share-fab" id="floatingSharePlanFab" onclick="shareDailyMenuToWhatsApp()">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
+  </button>
+  <button class="floating-share-fab fab-hidden" id="floatingShareCartFab" onclick="shareCartToWhatsApp()">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
   </button>
 
@@ -307,7 +306,7 @@
   <div class="modal" id="ghostPromoteModal">
     <section class="dialog" style="max-width: 350px;">
       <div class="dialog-head">
-        <h4 style="font-family: var(--font-display); font-size: 1.25rem;">Save to Master List</h4>
+        <h4 style="font-family: var(--font-display); font-size: 1.25rem;">Save to Pantry</h4>
         <button class="icon-btn" style="border-radius: 50%; width:32px; height:32px;" onclick="closeModal('ghostPromoteModal')">✕</button>
       </div>
       <div class="dialog-body" style="padding: 20px; display:flex; flex-direction:column; gap:12px;">
@@ -321,7 +320,7 @@
   <div class="modal" id="masterListModal">
     <section class="dialog">
       <div class="dialog-head">
-          <h4 style="font-family: var(--font-display); font-size: 1.5rem;">Master Groceries</h4>
+          <h4 style="font-family: var(--font-display); font-size: 1.5rem;">Pantry</h4>
           <button class="icon-btn" style="border-radius: 50%;" onclick="closeModal('masterListModal')">
               <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
@@ -370,7 +369,10 @@
             <button class="diet-btn nonveg" id="toggleNonVeg" onclick="setDietPref('non-veg')">🥩 Non-Veg</button>
         </div>
           
-        <button class="primary-btn" style="width: 100%; border-radius: 1.5rem; padding: 16px; margin-bottom: 24px; font-size: 1.1rem;" onclick="forceRefill()" id="refillBtn">⚡ Refill</button>
+        <div style="display: flex; gap: 10px; margin-bottom: 24px;">
+            <button class="primary-btn" style="flex: 1; border-radius: 1.5rem; padding: 16px; font-size: 1.1rem;" onclick="forceRefill()" id="refillBtn">⚡ Refill</button>
+            <button class="ghost-btn" style="flex: 1; border-radius: 1.5rem; padding: 16px; font-size: 1.1rem; border: 1px solid var(--color-primary); color: var(--color-primary);" onclick="manualSync()" id="syncBtn">🔄 Sync</button>
+        </div>
           
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
             <button class="ghost-btn stat-btn" data-cbcat="MyMeals" onclick="renderCookbookList('MyMeals')">
@@ -526,6 +528,9 @@
 
     function manualSync() {
         if (pendingSaves > 0) flushCartSync(); // Force push first
+        const btn = document.getElementById('syncBtn');
+        if(btn) btn.innerHTML = `Syncing...`;
+        
         document.getElementById('syncIndicator').classList.add('active');
         fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAllData' }) })
         .then(res => res.json())
@@ -542,8 +547,10 @@
                 updateCookbookStats();
                 showToast("Data Synced!");
             }
+            if(btn) btn.innerHTML = `🔄 Sync`;
             document.getElementById('syncIndicator').classList.remove('active');
         }).catch(e => { 
+            if(btn) btn.innerHTML = `🔄 Sync`;
             document.getElementById('syncIndicator').classList.remove('active'); 
             showToast("Sync failed. Check connection.");
         });
@@ -614,7 +621,7 @@
 
     function toggleCartDropdown() {
         isCartExpanded = !isCartExpanded;
-        document.getElementById('unified-cart-items').style.display = isCartExpanded ? 'block' : 'none';
+        document.getElementById('cart-dropdown-content').style.display = isCartExpanded ? 'block' : 'none';
         document.getElementById('cartChevron').style.transform = isCartExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
     }
 
@@ -713,11 +720,20 @@
       silentSync();
       document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
       document.getElementById(`page-${tabId}`).classList.add('active');
-      const topbar = document.getElementById('mainTopbar'), fab = document.getElementById('floatingShareFab'), genBtn = document.getElementById('generateBtn'), navToggleBtn = document.getElementById('navToggleBtn');
+      const topbar = document.getElementById('mainTopbar'), genBtn = document.getElementById('generateBtn'), navToggleBtn = document.getElementById('navToggleBtn');
+      const planFab = document.getElementById('floatingSharePlanFab');
+      const cartFab = document.getElementById('floatingShareCartFab');
+      
       if (tabId === 'cart') {
-          topbar.classList.add('topbar-hidden'); fab.classList.add('fab-hidden'); genBtn.style.display = 'none'; navToggleBtn.innerHTML = '🍽️ Plan';
+          topbar.classList.add('topbar-hidden'); 
+          planFab.classList.add('fab-hidden'); 
+          cartFab.classList.remove('fab-hidden'); 
+          genBtn.style.display = 'none'; navToggleBtn.innerHTML = '🍽️ Plan';
       } else {
-          topbar.classList.remove('topbar-hidden'); fab.classList.remove('fab-hidden'); genBtn.style.display = 'flex'; navToggleBtn.innerHTML = '🛒 Cart';
+          topbar.classList.remove('topbar-hidden'); 
+          planFab.classList.remove('fab-hidden'); 
+          cartFab.classList.add('fab-hidden'); 
+          genBtn.style.display = 'flex'; navToggleBtn.innerHTML = '🛒 Cart';
       }
     }
 
@@ -1461,7 +1477,7 @@
                 groups[g].forEach(i => {
                     const safeName = escapeHtml(i.name);
                     html += `<div class="data-row">
-                                <div style="flex:1;"><span>${safeName}</span><span class="badge" style="font-size:0.65rem; background:transparent; border:1px solid var(--color-border); color:var(--color-text-muted); margin-left:8px;">${i.src}</span></div>
+                                <div style="flex:1;"><span>${safeName}</span></div>
                                 <button class="trash-btn" style="padding:4px;" onclick="confirmMealDeletionPrompt('${safeName}', '${i.src}')">
                                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 </button>
@@ -1572,13 +1588,13 @@
     let actuallyBought = []; // explicit payload
     
     function launchShoppingApp(query, platform) {
-    const encodedQuery = encodeURIComponent(query);
-    if (platform === 'swiggy') {
-        window.location.href = `swiggy://instamart/search?query=${encodedQuery}`;
-    } else {
-        window.location.href = `https://blinkit.com/s/?q=${encodedQuery}`;
+        const encodedQuery = encodeURIComponent(query);
+        if (platform === 'swiggy') {
+            window.location.href = `swiggy://instamart/search?query=${encodedQuery}`;
+        } else {
+            window.location.href = `https://blinkit.com/s/?q=${encodedQuery}`;
+        }
     }
-}
     
     function startGuidedShopping(platform) {
       flushCartSync(); // Instantly kill the debounce timer and force network save before switching context
