@@ -219,10 +219,8 @@
     <div class="topbar-main">
       <div class="brand"><img class="brand-logo" src="icon-512x512.png" alt="Logo" style="object-fit: cover; padding: 0; border: none; background: transparent;" /><h1>Meal Planner</h1></div>
       <div class="header-actions" id="topbar-plan-actions">
-        <button class="icon-btn" onclick="toggleTextSize()" style="font-family: var(--font-display); font-size: 1.2rem; font-weight: 700; padding: 0;">Aa</button>
-        <button class="icon-btn" data-theme-toggle></button>
         <button class="ghost-btn" id="openDataBtn" onclick="openCookbook()">
-            <svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            <svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
         </button>
       </div>
     </div>
@@ -296,7 +294,7 @@
 
   <div class="bottom-nav" id="bottomNav">
       <button class="primary-btn" id="generateBtn" style="flex: 1; height: 56px; font-size: 1.2rem; justify-content: center; opacity: 0.5; transition: 0.3s var(--ease-fluid);">🎲 Generate</button>
-      <button class="ghost-btn" id="navToggleBtn" onclick="toggleMainView()" style="flex: 0 0 auto; padding: 0 24px; min-width: 64px; height: 56px; font-size: 1.1rem; justify-content: center; background: color-mix(in oklab, var(--color-surface) 90%, transparent); backdrop-filter: blur(24px); border: 1px solid var(--color-border); color: var(--color-text);">🛒</button>
+      <button class="ghost-btn" id="navToggleBtn" onclick="toggleMainView()" style="flex: 0 0 auto; padding: 0; width: 64px; height: 56px; font-size: 1.6rem; justify-content: center; background: color-mix(in oklab, var(--color-surface) 90%, transparent); backdrop-filter: blur(24px); border: 1px solid var(--color-border); color: var(--color-text);">🛒</button>
   </div>
 
   <div class="guided-overlay" id="guided-overlay">
@@ -365,10 +363,17 @@
   <div class="modal" id="dataModal">
     <section class="dialog" style="padding: 0;">
       <div class="dialog-head">
-        <h4 style="font-family: var(--font-display); font-size: 1.5rem;">Core Database</h4>
-        <button class="icon-btn" style="border-radius: 50%;" onclick="closeModal('dataModal')">
-            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 6L6 18M6 6l12 12"/></svg>
-        </button>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <svg id="modalCookbookIcon" style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            <h4 style="font-family: var(--font-display); font-size: 1.5rem; margin:0;">Database</h4>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <button class="icon-btn" onclick="toggleTextSize()" style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; padding: 0; width: 38px; height: 38px;">Aa</button>
+            <button class="icon-btn" data-theme-toggle style="width: 38px; height: 38px;"></button>
+            <button class="icon-btn" style="border-radius: 50%; width: 38px; height: 38px;" onclick="closeModal('dataModal')">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
       </div>
       
       <div class="dialog-body" style="overflow-y: auto; padding: 20px;" id="cookBookScrollArea">
@@ -738,12 +743,14 @@
           topbar.classList.add('topbar-hidden'); 
           planFab.classList.add('fab-hidden'); 
           cartFab.classList.remove('fab-hidden'); 
-          genBtn.style.display = 'none'; navToggleBtn.innerHTML = '🍽️ Plan';
+          genBtn.style.visibility = 'hidden'; 
+          navToggleBtn.innerHTML = '🍽️';
       } else {
           topbar.classList.remove('topbar-hidden'); 
           planFab.classList.remove('fab-hidden'); 
           cartFab.classList.add('fab-hidden'); 
-          genBtn.style.display = 'flex'; navToggleBtn.innerHTML = '🛒';
+          genBtn.style.visibility = 'visible'; 
+          navToggleBtn.innerHTML = '🛒';
       }
     }
 
@@ -1013,9 +1020,15 @@
           }
           renderReviewQueue(); 
           if(pendingApprovals.length > 0) {
-              document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="var(--color-primary)" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
+              const activeSvg = `<svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="var(--color-primary)" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
+              document.getElementById('openDataBtn').innerHTML = activeSvg;
+              const modalIcon = document.getElementById('modalCookbookIcon');
+              if (modalIcon) modalIcon.setAttribute('fill', 'var(--color-primary)');
           } else {
-              document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
+              const inactiveSvg = `<svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
+              document.getElementById('openDataBtn').innerHTML = inactiveSvg;
+              const modalIcon = document.getElementById('modalCookbookIcon');
+              if (modalIcon) modalIcon.setAttribute('fill', 'none');
           }
       }
 
@@ -1590,7 +1603,10 @@
 
             renderReviewQueue(); 
             if (pendingApprovals.length === 0) {
-                document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
+                const inactiveSvg = `<svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
+                document.getElementById('openDataBtn').innerHTML = inactiveSvg;
+                const modalIcon = document.getElementById('modalCookbookIcon');
+                if (modalIcon) modalIcon.setAttribute('fill', 'none');
             }
         } 
     });
@@ -1603,7 +1619,11 @@
       runServer('sync_meals', { data: JSON.stringify(pendingApprovals) });
       
       pendingApprovals = []; renderReviewQueue(); updateCookbookStats(); queueLocalSave(); deckCache = {}; 
-      document.getElementById('openDataBtn').innerHTML = `<svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
+      
+      const inactiveSvg = `<svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>`;
+      document.getElementById('openDataBtn').innerHTML = inactiveSvg;
+      const modalIcon = document.getElementById('modalCookbookIcon');
+      if (modalIcon) modalIcon.setAttribute('fill', 'none');
       
       btn.innerHTML = "✓ Synced"; setTimeout(() => btn.innerHTML = "Push to Cloud", 2000);
     }
