@@ -510,7 +510,7 @@
         if (pendingSaves === 0) return;
         if (mutationTimer) { clearTimeout(mutationTimer); mutationTimer = null; }
         
-        let savesProcessing = pendingSaves; // Snapshot
+        let savesProcessing = pendingSaves; 
         const payload = state.grocery.filter(i => i.inCart);
         let syncResolved = false;
         
@@ -519,7 +519,7 @@
         }).then(r => r.json()).then(res => {
             syncResolved = true; 
             pendingSaves = Math.max(0, pendingSaves - savesProcessing);
-            if (pendingSaves > 0) queueCartSync(); // Retrigger if new changes happened
+            if (pendingSaves > 0) queueCartSync(); 
         }).catch(e => {
             syncResolved = true; 
             pendingSaves = Math.max(0, pendingSaves - savesProcessing);
@@ -996,8 +996,6 @@
 
       // Diet identifier to bind specific border colors safely via CSS tokens
       const dietClassSelector = safeDiet === 'non-veg' ? 'nonveg' : (safeDiet === 'egg' ? 'egg' : 'veg');
-      const dietBadgeLabel = safeDiet === 'non-veg' ? 'Non-Veg' : (safeDiet === 'egg' ? 'Egg' : 'Veg');
-      const dietBadgeClass = safeDiet === 'non-veg' ? 'tag-nonveg' : (safeDiet === 'egg' ? 'tag-egg' : '');
 
       return `
         <div class="card-header-row">
@@ -1009,14 +1007,11 @@
         </div>
         <div class="meal-title">${safeName}</div>
         
-        <!-- Under-Title Swap: Warning alerts inject immediately under title text -->
+        <!-- Under-Title Swap: Warning alerts inject immediately under title text. Redundant Diet/Time labels surgically removed here. -->
+        ${isRecent ? `
         <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 0.5rem; margin-top: -2px;">
-            <div style="display: flex; gap: 6px; align-items: center;">
-                <span class="badge ${dietBadgeClass}">${dietBadgeLabel}</span>
-                <span class="eyebrow" style="font-size: 0.75rem;">${item.time}</span>
-            </div>
-            ${isRecent ? '<span class="badge warning">⚠️ Served recently</span>' : ''}
-        </div>
+            <span class="badge warning">⚠️ Served recently</span>
+        </div>` : ''}
 
         <!-- Secondary Navigation Row and Main Border-to-Fill primary button layout restructure -->
         <div style="display:flex; flex-direction: column; gap: 8px; width: 100%;">
@@ -1261,18 +1256,45 @@
     }
 
     // ------------------------------------------------
-    // CART & DOM REORDERING
+    // CART & DOM REORDERING (With Intelligent Semantic Matcher)
     // ------------------------------------------------
     function pushToCartLocally(ingredientsList, mealContext) {
+        // Helper function to gently remove basic English plurals
+        const depluralize = (str) => str.endsWith('s') ? (str.endsWith('es') ? str.slice(0, -2) : str.slice(0, -1)) : str;
+        
         ingredientsList.reverse().forEach(ing => {
-          const safeIng = ing.toLowerCase().trim();
-          let existing = state.grocery.find(i => i.name.toLowerCase() === safeIng);
-          if (existing) {
-              existing.inCart = true; existing.checked = true; existing.mealContext = mealContext;
-          } else {
-              state.grocery.unshift({ name: ing, count: 0, lastOrdered: '', category: 'Ghost', inCart: true, checked: true, mealContext: mealContext });
-          }
+            const rawIng = ing.toLowerCase().trim();
+            const deplurIng = depluralize(rawIng);
+            
+            // Intelligent Matching Engine
+            let existing = state.grocery.find(i => {
+                if (i.category === 'Ghost' && i.mealContext !== mealContext) return false;
+                
+                const dbName = i.name.toLowerCase().trim();
+                const deplurDb = depluralize(dbName);
+                
+                // 1. Exact or De-pluralized Match ("Potatoes" == "Potato")
+                if (dbName === rawIng || deplurDb === deplurIng || dbName === deplurIng || deplurDb === rawIng) return true;
+                
+                // 2. Brand Tolerance (Pantry contains Recipe item: "Aashirvaad Whole Wheat Flour" includes "Whole Wheat Flour")
+                if (dbName.includes(rawIng) || dbName.includes(deplurIng)) return true;
+                
+                // 3. Adjective Tolerance (Recipe contains Pantry item: "Yellow Moong Dal" includes "Moong Dal")
+                // Minimum length check (3) ensures we don't accidentally match "oil" to "boil"
+                if (dbName.length > 3 && (rawIng.includes(dbName) || deplurIng.includes(deplurDb))) return true;
+                
+                return false;
+            });
+
+            if (existing) {
+                existing.inCart = true; 
+                existing.checked = true; 
+                existing.mealContext = mealContext;
+            } else {
+                state.grocery.unshift({ name: ing, count: 0, lastOrdered: '', category: 'Ghost', inCart: true, checked: true, mealContext: mealContext });
+            }
         });
+        
         renderCart(); 
         queueLocalSave(); 
         queueCartSync();
@@ -1869,7 +1891,6 @@
           if (cachedSettings) {
               appSettings = JSON.parse(cachedSettings);
               // SILENT STORAGE MIGRATION PIPELINE
-              // If legacy string parameter setup exists, migrate it to array format seamlessly
               if (appSettings.diet && typeof appSettings.diet === 'string') {
                   appSettings.diets = [appSettings.diet.toLowerCase()];
                   delete appSettings.diet;
@@ -1877,7 +1898,6 @@
           }
       } catch(e) {}
       
-      // Safety bounds verification for app settings diets structure arrays
       if (!appSettings.diets || !Array.isArray(appSettings.diets) || appSettings.diets.length === 0) {
           appSettings.diets = ['veg'];
       }
