@@ -1695,10 +1695,11 @@
     }
     
     function forceRefill() { 
-        document.getElementById('refillBtn').innerHTML = `Syncing...`; 
-        runServer('forceRefill', {}, false); 
-        setTimeout(()=> document.getElementById('refillBtn').innerHTML=`⚡ Refill`, 2000); 
-    }
+    document.getElementById('refillBtn').innerHTML = `Syncing...`; 
+    // We now inject { activeDiets: appSettings.diets } into the payload
+    runServer('forceRefill', { activeDiets: appSettings.diets }, false); 
+    setTimeout(()=> document.getElementById('refillBtn').innerHTML=`⚡ Refill`, 2000); 
+}
 
     function updateCookbookStats() {
         try {
