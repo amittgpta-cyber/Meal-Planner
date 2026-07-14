@@ -29,7 +29,7 @@
       --shadow-md: 0 12px 32px rgba(0,0,0,0.1); 
       --ease-fluid: cubic-bezier(0.2, 0, 0, 1); 
       
-      /* Diet Border Colors (Light Mode Tokens) */
+      /* Diet Border Colors */
       --diet-veg-color: #38661c;
       --diet-egg-color: #e8af34;
       --diet-nonveg-color: #8f266d;
@@ -50,7 +50,7 @@
       --color-error: #e57373;
       --shadow-md: 0 16px 40px rgba(0,0,0, 1);
 
-      /* Diet Border Colors (Dark Mode Tokens) */
+      /* Diet Border Colors */
       --diet-veg-color: #78a85d;
       --diet-egg-color: #e6c57a;
       --diet-nonveg-color: #e57373;
@@ -80,7 +80,10 @@
     .accent-btn { background: var(--color-secondary); color: var(--color-bg); }
     button:active { transform: scale(0.92); }
 
-    /* SCROLL CLEARANCE: Increased bottom padding to 9rem to fully isolate from floating WhatsApp overlay anchors */
+    /* Quick Settings Lit/Active State */
+    .util-btn { transition: 0.2s var(--ease-fluid); }
+    .util-btn.active { background: var(--color-primary) !important; color: var(--color-bg) !important; border-color: var(--color-primary) !important; }
+
     .shell { max-width: 70rem; margin: 0 auto; padding: 1rem 1rem calc(9rem + env(safe-area-inset-bottom)); }
     .page { display: none; animation: fadePeek 0.35s var(--ease-fluid); }
     .page.active { display: block; }
@@ -106,10 +109,7 @@
     .card-header-row { display: flex; justify-content: space-between; align-items: flex-start; }
     .card-header-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .eyebrow { font-size: 0.8rem; text-transform: uppercase; color: var(--color-text-muted); font-weight: 700; letter-spacing: 0.1em; }
-    .badge { padding: 4px 12px; border-radius: 2rem; font-size: 0.75rem; font-weight: 700; background: color-mix(in oklab, var(--color-success) 15%, transparent); color: var(--color-success); border: 1px solid color-mix(in oklab, var(--color-success) 20%, transparent); }
-    .badge.tag-nonveg { background: color-mix(in oklab, var(--color-error) 15%, transparent); color: var(--color-error); border-color: color-mix(in oklab, var(--color-error) 20%, transparent); }
-    .badge.tag-egg { background: color-mix(in oklab, var(--color-secondary) 15%, transparent); color: var(--color-secondary); border-color: color-mix(in oklab, var(--color-secondary) 20%, transparent); }
-    .badge.warning { background: color-mix(in oklab, var(--color-warning) 15%, transparent); color: var(--color-warning); border-color: color-mix(in oklab, var(--color-warning) 20%, transparent); margin-top: 2px; width: max-content; }
+    .badge.warning { background: color-mix(in oklab, var(--color-warning) 15%, transparent); color: var(--color-warning); border: 1px solid color-mix(in oklab, var(--color-warning) 20%, transparent); padding: 4px 12px; border-radius: 2rem; font-size: 0.75rem; font-weight: 700; margin-top: 2px; width: max-content; }
     
     .meal-title { font-family: var(--font-display); font-size: 2.1rem; line-height: 1.1; font-weight: 600; margin: 0.25rem 0; color: var(--color-text); }
     
@@ -117,25 +117,20 @@
     .icon-circle { width: 36px; height: 36px; border-radius: 50%; background: var(--color-surface-2); display: flex; align-items: center; justify-content: center; border: 1px solid var(--color-border); cursor: pointer; transition: transform 0.2s var(--ease-fluid), background 0.2s; color: var(--color-text); }
     .icon-circle:active { transform: scale(0.85); }
     
-    /* BORDER-TO-FILL CARD ACTION BUTTON ENGINE */
     .card-action { min-height: 52px; font-weight: 600; border: 2px solid var(--color-border); border-radius: 1.25rem; background: transparent; color: var(--color-text); display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0.5rem 1rem; transition: transform 0.2s var(--ease-fluid), background 0.2s, border-color 0.2s, color 0.2s; }
     .card-action:disabled { opacity: 0.3; cursor: not-allowed; }
 
-    /* Static Border Colors assigned when card mounts unselected */
     .card-action.border-veg { border-color: var(--diet-veg-color); color: var(--diet-veg-color); }
     .card-action.border-egg { border-color: var(--diet-egg-color); color: var(--diet-egg-color); }
     .card-action.border-nonveg { border-color: var(--diet-nonveg-color); color: var(--diet-nonveg-color); }
-
-    /* Filled States when card becomes selected */
     .card-action.locked.border-veg { background: var(--diet-veg-color); color: #ffffff; border-color: var(--diet-veg-color); }
-    .card-action.locked.border-egg { background: var(--diet-egg-color); color: #000000 !important; border-color: var(--diet-egg-color); } /* Strict Black Contrast Rule */
+    .card-action.locked.border-egg { background: var(--diet-egg-color); color: #000000 !important; border-color: var(--diet-egg-color); } 
     .card-action.locked.border-nonveg { background: var(--diet-nonveg-color); color: #ffffff; border-color: var(--diet-nonveg-color); }
     
-    /* MORE DROPDOWN BLOCK & FUN FACT ACCORDION STRUCTURE */
     .explore-area { display: flex; flex-direction: column; max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.3s var(--ease-fluid), opacity 0.3s var(--ease-fluid), margin 0.3s var(--ease-fluid); margin-top: -10px; width: 100%; }
     .explore-area.open { max-height: 250px; opacity: 1; margin-top: 5px; padding: 12px 0; border-top: 1px solid var(--color-divider); }
     
-    .fun-fact-box { background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: 1.25rem; padding: 12px 16px; font-size: 0.9rem; line-height: 1.4; color: var(--color-text); margin-bottom: 14px; text-align: left; }
+    .fun-fact-box { background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: 1.25rem; padding: 12px 16px; font-size: 0.9rem; line-height: 1.4; color: var(--color-text-muted); margin-bottom: 14px; text-align: left; font-style: italic; border-left: 4px solid var(--color-primary); }
     .explore-icons-row { display: flex; justify-content: space-around; align-items: center; width: 100%; }
 
     .explore-icon { width: 56px; height: 56px; border-radius: 1rem; background: var(--color-surface); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; transition: transform 0.2s var(--ease-fluid); flex-shrink: 0; color: var(--color-text); flex-direction: column; font-size: 0.65rem; font-weight: bold; gap: 4px; }
@@ -156,8 +151,6 @@
     .cart-tools { display: flex; gap: 8px; margin-bottom: 20px; align-items: center; width: 100%; }
     .cart-tools input { flex: 1; padding: 14px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); transition: 0.2s; min-width: 0; height: 56px; }
     .cart-tools select { flex: 0 0 100px; width: 100px; padding: 0 8px; height: 56px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-family: var(--font-body); font-size: 0.85rem; -webkit-appearance: none; appearance: none; outline: none; text-overflow: ellipsis; }
-    
-    .section-title { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-muted); font-weight: bold; margin: 24px 0 12px; }
     
     .list-item-row { display: flex; align-items: center; justify-content: space-between; background: var(--color-surface); padding: 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); margin-bottom: 12px; transition: transform 0.2s var(--ease-fluid), opacity 0.3s; width: 100%; }
     .list-item-row.dimmed { opacity: 0.45; background: transparent; }
@@ -196,7 +189,6 @@
     .filter-ribbon::-webkit-scrollbar { display: none; }
     .filter-chip { padding: 10px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-weight: 600; font-size: 0.9rem; color: var(--color-text); cursor: pointer; white-space: nowrap; transition: 0.2s var(--ease-fluid); }
     .filter-chip.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-bg); }
-    
     .filter-chip.top-picks { border-color: #ffd700; color: #ffd700; }
     .filter-chip.top-picks.active { background: #ffd700; color: #000; }
     
@@ -221,11 +213,10 @@
     
     .topbar-hidden { display: none !important; }
 
-    /* SINGLE ROW DIET MULTI-SELECT FILTER STRIP */
     .diet-toggle-container { display: flex; background: var(--color-surface-2); border-radius: 2rem; border: 1px solid var(--color-border); padding: 4px; width: 100%; margin-bottom: 20px; gap: 4px; }
     .diet-btn { flex: 1; padding: 12px 4px; font-weight: 600; border-radius: 1.5rem; text-align: center; color: var(--color-text-muted); transition: 0.3s var(--ease-fluid); font-size: 0.9rem; }
     .diet-btn.active.veg { background: var(--color-success); color: var(--color-bg); }
-    .diet-btn.active.egg { background: var(--color-secondary); color: #000000; } /* Contrast protection for egg strip */
+    .diet-btn.active.egg { background: var(--color-secondary); color: #000000; } 
     .diet-btn.active.nonveg { background: var(--color-error); color: var(--color-bg); }
 
     .stat-btn { height: auto; padding: 16px; flex-direction: column; border-radius: 1.5rem; transition: 0.2s var(--ease-fluid); }
@@ -354,7 +345,8 @@
       <div class="dialog-head">
           <div style="display:flex; align-items:center; gap:12px;">
               <h4 style="font-family: var(--font-display); font-size: 1.5rem; margin:0;">Pantry</h4>
-              <button class="ghost-btn" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleBoughtCount()">#</button>
+              <!-- Utility Toggle (Bought Count) -->
+              <button class="ghost-btn util-btn" id="btnBoughtCountToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleBoughtCount()">#</button>
           </div>
           <button class="icon-btn" style="border-radius: 50%;" onclick="closeModal('masterListModal')">
               <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -396,6 +388,8 @@
             <h4 style="font-family: var(--font-display); font-size: 1.5rem; margin:0;">Database</h4>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
+            <!-- Utility Toggle (Info Discovery Mode) -->
+            <button class="icon-btn util-btn" id="infoToggleBtn" onclick="toggleGlobalInfo()" style="font-size: 1.1rem; padding: 0; width: 38px; height: 38px;">ℹ️</button>
             <button class="icon-btn" onclick="toggleTextSize()" style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; padding: 0; width: 38px; height: 38px;">Aa</button>
             <button class="icon-btn" data-theme-toggle style="width: 38px; height: 38px;"></button>
             <button class="icon-btn" style="border-radius: 50%; width: 38px; height: 38px;" onclick="closeModal('dataModal')">
@@ -406,7 +400,6 @@
       
       <div class="dialog-body" style="overflow-y: auto; padding: 20px;" id="cookBookScrollArea">
         
-        <!-- SINGLE ROW DIET MULTI-SELECT TOGGLE CONTAINER (VEG, EGG, NON-VEG PIPELINE) -->
         <div class="diet-toggle-container">
             <button class="diet-btn veg active" id="toggleVeg" onclick="toggleDietPref('veg')">🌿 Veg</button>
             <button class="diet-btn egg" id="toggleEgg" onclick="toggleDietPref('egg')">🍳 Egg</button>
@@ -472,13 +465,22 @@
     </section>
   </div>
 
+  <!-- STANDALONE MEAL CARD MODAL -->
+  <div class="modal" id="mealDetailModal" onclick="if(event.target===this) closeModal('mealDetailModal')" style="z-index: 2050;">
+    <section class="dialog" style="padding: 0; max-width: 500px; background: transparent; border: none; box-shadow: none;">
+       <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+           <button class="icon-btn" style="background: var(--color-surface); border-radius:50%;" onclick="closeModal('mealDetailModal')">✕</button>
+       </div>
+       <div id="standaloneCardContainer" style="width: 100%;"></div>
+    </section>
+  </div>
+
   <script>
     const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzNOXoxn17I3d4-inuxiEqhdPxOQokGlSGCYW8buwLTcO6YJxbvcHBH0dZ1d-fBDzwl/exec"; 
     
     let state = { grocery: [], savedMeals: [], globalMeals: [], currentSuggestions: [] };
     
-    // MULTI-SELECT ARRAY STORAGE ENGINE
-    let appSettings = { diets: ['veg'] }; 
+    let appSettings = { diets: ['veg'], showInfo: false }; 
     
     let pendingApprovals = []; let graveyard = []; let deckCache = {}; 
     let activeTab = 'plan'; let activeMasterCategory = 'All'; let isCartExpanded = false;
@@ -486,9 +488,10 @@
     let currentRenderedCacheKey = '';
     let showBoughtCount = false;
     let isShoppingActive = false;
+    let standaloneMealContext = null; 
 
     // ------------------------------------------------
-    // THE SMART LOCK & DEBOUNCED QUEUE (Network Stability)
+    // THE SMART LOCK & DEBOUNCED QUEUE
     // ------------------------------------------------
     let pendingSaves = 0;
     let mutationTimer = null;
@@ -537,7 +540,7 @@
     }
 
     // ------------------------------------------------
-    // SYNC ISOLATION (Safe Background Updates)
+    // SYNC ISOLATION
     // ------------------------------------------------
     function silentSync() {
         if (isShoppingActive) return; 
@@ -559,6 +562,8 @@
                         cloudItem.inCart = localItem.inCart;
                         cloudItem.checked = localItem.checked;
                         cloudItem.mealContext = localItem.mealContext;
+                        cloudItem.fuzzyOriginal = localItem.fuzzyOriginal;
+                        cloudItem.swappedFromPantry = localItem.swappedFromPantry;
                     }
                 });
                 
@@ -659,6 +664,16 @@
         root.classList.remove('text-scale-110', 'text-scale-120');
         if (currentTextSize === 1) root.classList.add('text-scale-110');
         if (currentTextSize === 2) root.classList.add('text-scale-120');
+    }
+
+    function toggleGlobalInfo() {
+        appSettings.showInfo = !appSettings.showInfo;
+        document.getElementById('infoToggleBtn').classList.toggle('active', appSettings.showInfo);
+        queueLocalSave();
+        
+        if (activeTab === 'plan' && activeCategory) document.getElementById('generateBtn').click();
+        const activeBtn = document.querySelector('.stat-btn.active');
+        if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
     }
 
     let lastScrollY = window.scrollY; 
@@ -938,7 +953,6 @@
         let deck = [];
 
         if (activeCategory === 'Meals') {
-            // "OR" Logic filtering against multiple active selections in appSettings.diets array
             const valid = pool.filter(m => appSettings.diets.includes((m.diet || 'veg').toLowerCase()) && !['dessert', 'drinks', 'cocktails'].includes((m.category || '').toLowerCase()));
             const b = valid.filter(m => (m.category || '').toLowerCase() === 'breakfast');
             const l = valid.filter(m => (m.category || '').toLowerCase() === 'lunch');
@@ -979,60 +993,80 @@
     // ------------------------------------------------
     // ZERO-OVERLAY CARD REDESIGN INJECTION
     // ------------------------------------------------
-    function getCardInnerHTML(item, index) {
+    function getCardInnerHTML(item, index, isStandalone = false) {
       const isRecent = cookedWithinAWeek(item.lastServed);
       const safeName = escapeHtml(item.name);
       const safeDiet = (item.diet || 'veg').toLowerCase();
       
-      // Cuisine & Origin metadata string computed gracefully
-      const cuisineStr = item.cuisine || 'Global';
-      const originStr = item.origin || 'Universal';
-      const metaBreadcrumb = `🌍 ${cuisineStr} · ${originStr}`;
+      let metaBreadcrumbHtml = '';
+      let factHtml = '';
+      
+      if(appSettings.showInfo) {
+          const cuisineStr = item.cuisine || 'Global';
+          const originStr = item.origin || 'Universal';
+          metaBreadcrumbHtml = `<span class="eyebrow" style="text-transform: none; font-size: 0.85rem; font-weight: 500; letter-spacing: 0;">🌍 ${cuisineStr} · ${originStr}</span>`;
+          if(item.fact) {
+              factHtml = `<div class="fun-fact-box">💡 <b>Did you know?</b> ${escapeHtml(item.fact)}</div>`;
+          }
+      }
 
       let cartHtml = (item.ingredients && item.ingredients !== '[]') 
-            ? `<div class="icon-circle" data-action="add-to-cart" data-index="${index}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div>` : '';
+            ? `<div class="icon-circle" data-action="add-to-cart" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div>` : '';
       
-      let bookmarkHtml = item.source === 'global' ? `<div class="icon-circle" data-action="queue-meal" data-index="${index}"><svg id="bookmark-${index}" style="pointer-events:none; transition: 0.3s var(--ease-fluid);" width="20" height="20" viewBox="0 0 24 24" fill="${item.isQueued?'var(--color-success)':'none'}" stroke="${item.isQueued?'var(--color-success)':'currentColor'}" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>` : '';
+      let bookmarkHtml = '';
+      if (item.source === 'global') {
+          const isQueued = pendingApprovals.some(p => p.meal.toLowerCase() === item.name.toLowerCase()) || item.isQueued;
+          const bookmarkFill = isQueued ? 'var(--color-success)' : 'none';
+          const bookmarkStroke = isQueued ? 'var(--color-success)' : 'currentColor';
+          bookmarkHtml = `<div class="icon-circle" data-action="queue-meal" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg id="bookmark-${index}" style="pointer-events:none; transition: 0.3s var(--ease-fluid);" width="20" height="20" viewBox="0 0 24 24" fill="${bookmarkFill}" stroke="${bookmarkStroke}" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>`;
+      }
 
-      // Diet identifier to bind specific border colors safely via CSS tokens
       const dietClassSelector = safeDiet === 'non-veg' ? 'nonveg' : (safeDiet === 'egg' ? 'egg' : 'veg');
+
+      let navRow = '';
+      if (isStandalone) {
+          navRow = `
+          <div style="display:flex; flex-direction: column; gap: 8px; width: 100%;">
+              <button class="card-action border-${dietClassSelector} ${item.isLocked ? 'locked' : ''}" style="width: 100%;" data-action="lock" data-index="${index}" data-standalone="true">
+                  ${item.isLocked ? '✓ On Menu' : item.category}
+              </button>
+              <button class="card-action" style="width: 100%; min-height: 44px;" onclick="document.getElementById('explore-${index}').classList.toggle('open')">⋮ More</button>
+          </div>`;
+      } else {
+          navRow = `
+          <div style="display:flex; flex-direction: column; gap: 8px; width: 100%;">
+              <button class="card-action border-${dietClassSelector} ${item.isLocked ? 'locked' : ''}" style="width: 100%;" data-action="lock" data-index="${index}">
+                  ${item.isLocked ? '✓ On Menu' : item.category}
+              </button>
+              <div style="display: flex; gap: 8px; width: 100%;">
+                  <button class="card-action" style="flex: 1; min-height: 44px;" data-action="prev-meal" data-index="${index}">&lt;&lt;</button>
+                  <button class="card-action" style="flex: 1.5; min-height: 44px;" onclick="document.getElementById('explore-${index}').classList.toggle('open')">⋮ More</button>
+                  <button class="card-action" style="flex: 1; min-height: 44px;" data-action="next-meal" data-index="${index}">&gt;&gt;</button>
+              </div>
+          </div>`;
+      }
 
       return `
         <div class="card-header-row">
-            <div class="card-header-left">
-                <!-- Top-Left Swap: Contextual breadcrumb is mounted here -->
-                <span class="eyebrow" style="text-transform: none; font-size: 0.85rem; font-weight: 500; letter-spacing: 0;">${metaBreadcrumb}</span>
-            </div>
+            <div class="card-header-left">${metaBreadcrumbHtml}</div>
             <div class="top-actions">${cartHtml}${bookmarkHtml}</div>
         </div>
         <div class="meal-title">${safeName}</div>
         
-        <!-- Under-Title Swap: Warning alerts inject immediately under title text. Redundant Diet/Time labels surgically removed here. -->
         ${isRecent ? `
         <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 0.5rem; margin-top: -2px;">
             <span class="badge warning">⚠️ Served recently</span>
         </div>` : ''}
 
-        <!-- Secondary Navigation Row and Main Border-to-Fill primary button layout restructure -->
-        <div style="display:flex; flex-direction: column; gap: 8px; width: 100%;">
-            <button class="card-action border-${dietClassSelector} ${item.isLocked ? 'locked' : ''}" style="width: 100%;" data-action="lock" data-index="${index}">
-                ${item.isLocked ? '✓ On Menu' : item.category}
-            </button>
-            <div style="display: flex; gap: 8px; width: 100%;">
-                <button class="card-action" style="flex: 1; min-height: 44px;" data-action="prev-meal" data-index="${index}">&lt;&lt;</button>
-                <button class="card-action" style="flex: 1.5; min-height: 44px;" onclick="document.getElementById('explore-${index}').classList.toggle('open')">⋮ More</button>
-                <button class="card-action" style="flex: 1; min-height: 44px;" data-action="next-meal" data-index="${index}">&gt;&gt;</button>
-            </div>
-        </div>
+        ${navRow}
 
         <div id="explore-${index}" class="explore-area">
-          <!-- Accordion Injected block: verified fun-fact module container maps natively above actions -->
-          ${item.fact ? `<div class="fun-fact-box">💡 <b>Did you know?</b> ${escapeHtml(item.fact)}</div>` : ''}
+          ${factHtml}
           <div class="explore-icons-row">
-              <button class="explore-icon" data-action="google" data-index="${index}"><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 24c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 21.53 7.7 24 12 24z"/><path fill="#FBBC05" d="M5.84 15.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V8.06H2.18C1.43 9.55 1 11.22 1 13s.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 4.84c1.61 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.63 14.97 0 12 0 7.7 0 3.99 2.47 2.18 6.06l3.66 2.84c.87-2.6 3.3-4.06 6.16-4.06z"/></svg>Recipe</button>
-              <button class="explore-icon" data-action="youtube" data-index="${index}"><svg viewBox="0 0 24 24"><path fill="#FF0000" d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>Video</button>
-              <button class="explore-icon" data-action="nutrition" data-index="${index}"><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>Stats</button>
-              <button class="explore-icon" data-action="share-card" data-index="${index}"><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>Share</button>
+              <button class="explore-icon" data-action="google" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 24c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 21.53 7.7 24 12 24z"/><path fill="#FBBC05" d="M5.84 15.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V8.06H2.18C1.43 9.55 1 11.22 1 13s.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 4.84c1.61 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.63 14.97 0 12 0 7.7 0 3.99 2.47 2.18 6.06l3.66 2.84c.87-2.6 3.3-4.06 6.16-4.06z"/></svg>Recipe</button>
+              <button class="explore-icon" data-action="youtube" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg viewBox="0 0 24 24"><path fill="#FF0000" d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>Video</button>
+              <button class="explore-icon" data-action="nutrition" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>Stats</button>
+              <button class="explore-icon" data-action="share-card" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>Share</button>
           </div>
         </div>`;
     }
@@ -1057,20 +1091,25 @@
         const article = document.createElement('article');
         article.className = 'meal-card' + (item.isLocked ? ' locked' : '');
         article.id = `card-${index}`;
-        article.innerHTML = getCardInnerHTML(item, index);
+        article.innerHTML = getCardInnerHTML(item, index, false);
         s.appendChild(article);
       });
     }
 
-    document.getElementById('suggestions').addEventListener('click', async event => {
+    // Master Event Listener for all Card Actions (Deck & Standalone Modal)
+    document.addEventListener('click', async event => {
       const btn = event.target.closest('[data-action]'); 
       if (!btn) return;
       
-      const idx = Number(btn.dataset.index); 
+      const idxRaw = btn.dataset.index;
+      const isStandalone = btn.dataset.standalone === "true";
       const action = btn.dataset.action; 
-      const card = state.currentSuggestions[idx];
+      
+      let card = isStandalone ? standaloneMealContext : state.currentSuggestions[idxRaw];
+      if (!card) return;
       
       if (action === 'prev-meal' || action === 'next-meal') {
+          if (isStandalone) return; 
           const pool = activeSource === 'cookbook' ? (state.savedMeals || []) : (state.globalMeals || []);
           let valid = [];
           if (activeCategory === 'Meals') {
@@ -1085,10 +1124,10 @@
               let newIdx = action === 'next-meal' ? (currentIdx + 1) % valid.length : (currentIdx - 1 + valid.length) % valid.length;
               let newMeal = valid[newIdx];
               
-              state.currentSuggestions[idx] = buildCard(card.time, newMeal, activeSource);
-              const article = document.getElementById(`card-${idx}`);
+              state.currentSuggestions[idxRaw] = buildCard(card.time, newMeal, activeSource);
+              const article = document.getElementById(`card-${idxRaw}`);
               article.className = 'meal-card';
-              article.innerHTML = getCardInnerHTML(state.currentSuggestions[idx], idx);
+              article.innerHTML = getCardInnerHTML(state.currentSuggestions[idxRaw], idxRaw, false);
               
               const cacheKey = `${activeSource}_${activeCategory}`;
               if (deckCache[cacheKey]) deckCache[cacheKey] = [...state.currentSuggestions];
@@ -1097,18 +1136,17 @@
           }
       }
       
-      if (action === 'toggle-explore') document.getElementById(`explore-${idx}`).classList.toggle('open');
-      
       if (action === 'queue-meal') {
-          const bookmarkSvg = document.getElementById(`bookmark-${idx}`);
-          if (card.isQueued) {
+          const bookmarkSvg = document.getElementById(`bookmark-${idxRaw}`);
+          if (card.isQueued || pendingApprovals.some(p => p.meal.toLowerCase() === card.name.toLowerCase())) {
               card.isQueued = false; 
-              pendingApprovals = pendingApprovals.filter(p => p.meal !== card.name);
-              bookmarkSvg.setAttribute('fill', 'none'); 
-              bookmarkSvg.setAttribute('stroke', 'currentColor');
+              pendingApprovals = pendingApprovals.filter(p => p.meal.toLowerCase() !== card.name.toLowerCase());
+              if (bookmarkSvg) {
+                  bookmarkSvg.setAttribute('fill', 'none'); 
+                  bookmarkSvg.setAttribute('stroke', 'currentColor');
+              }
           } else {
               card.isQueued = true; 
-              // Bookmarking Payload Protection logic safely injected here preserving all meta fields
               pendingApprovals.push({ 
                   category: card.category || card.time, 
                   meal: card.name, 
@@ -1118,8 +1156,10 @@
                   origin: card.origin || '',
                   fact: card.fact || ''
               });
-              bookmarkSvg.setAttribute('fill', 'var(--color-success)'); 
-              bookmarkSvg.setAttribute('stroke', 'var(--color-success)');
+              if (bookmarkSvg) {
+                  bookmarkSvg.setAttribute('fill', 'var(--color-success)'); 
+                  bookmarkSvg.setAttribute('stroke', 'var(--color-success)');
+              }
           }
           renderReviewQueue(); 
           updateCookbookIconState();
@@ -1140,12 +1180,17 @@
           const poolMeal = targetPool.find(m => m.name === card.name);
           if (poolMeal) poolMeal.lastServed = card.lastServed;
 
-          const article = document.getElementById('suggestions').children[idx];
-          article.className = 'meal-card' + (card.isLocked ? ' locked' : ''); 
-          article.innerHTML = getCardInnerHTML(card, idx);
-
-          const cacheKey = `${activeSource}_${activeCategory}`;
-          if (deckCache[cacheKey]) deckCache[cacheKey] = [...state.currentSuggestions];
+          if (isStandalone) {
+              const article = document.getElementById('standalone-card');
+              article.className = 'meal-card' + (card.isLocked ? ' locked' : ''); 
+              article.innerHTML = getCardInnerHTML(card, 'standalone', true);
+          } else {
+              const article = document.getElementById('suggestions').children[idxRaw];
+              article.className = 'meal-card' + (card.isLocked ? ' locked' : ''); 
+              article.innerHTML = getCardInnerHTML(card, idxRaw, false);
+              const cacheKey = `${activeSource}_${activeCategory}`;
+              if (deckCache[cacheKey]) deckCache[cacheKey] = [...state.currentSuggestions];
+          }
           
           queueLocalSave();
       }
@@ -1155,7 +1200,6 @@
               try { 
                   pushToCartLocally(JSON.parse(card.ingredients), card.name); 
                   showToast('Added to Cart!'); 
-                  return; 
               } catch(e) {}
           }
       }
@@ -1182,7 +1226,7 @@
     }
 
     // ------------------------------------------------
-    // SAVE ICON & DUPLICATE PREVENTION (The Ghost Fix)
+    // SAVE ICON & DUPLICATE PREVENTION
     // ------------------------------------------------
     function promoteGhostItem(itemName) {
         document.getElementById('ghostPromoteName').value = unescapeHtml(itemName);
@@ -1224,7 +1268,7 @@
     }
 
     // ------------------------------------------------
-    // COOKBOOK MEAL DELETION (Dedicated Button Fix)
+    // COOKBOOK MEAL DELETION
     // ------------------------------------------------
     let mealToDeleteName = '';
     let mealToDeleteSource = '';
@@ -1256,10 +1300,9 @@
     }
 
     // ------------------------------------------------
-    // CART & DOM REORDERING (With Intelligent Semantic Matcher)
+    // CART ENGINE: SEMANTIC MATCHER & BI-DIRECTIONAL SWAP
     // ------------------------------------------------
     function pushToCartLocally(ingredientsList, mealContext) {
-        // Helper function to gently remove basic English plurals
         const depluralize = (str) => str.endsWith('s') ? (str.endsWith('es') ? str.slice(0, -2) : str.slice(0, -1)) : str;
         
         ingredientsList.reverse().forEach(ing => {
@@ -1273,14 +1316,11 @@
                 const dbName = i.name.toLowerCase().trim();
                 const deplurDb = depluralize(dbName);
                 
-                // 1. Exact or De-pluralized Match ("Potatoes" == "Potato")
+                // 1. Exact or De-pluralized Match
                 if (dbName === rawIng || deplurDb === deplurIng || dbName === deplurIng || deplurDb === rawIng) return true;
-                
-                // 2. Brand Tolerance (Pantry contains Recipe item: "Aashirvaad Whole Wheat Flour" includes "Whole Wheat Flour")
+                // 2. Brand Tolerance 
                 if (dbName.includes(rawIng) || dbName.includes(deplurIng)) return true;
-                
-                // 3. Adjective Tolerance (Recipe contains Pantry item: "Yellow Moong Dal" includes "Moong Dal")
-                // Minimum length check (3) ensures we don't accidentally match "oil" to "boil"
+                // 3. Adjective Tolerance 
                 if (dbName.length > 3 && (rawIng.includes(dbName) || deplurIng.includes(deplurDb))) return true;
                 
                 return false;
@@ -1290,6 +1330,18 @@
                 existing.inCart = true; 
                 existing.checked = true; 
                 existing.mealContext = mealContext;
+                
+                // Apply Fuzzy Tag if it's not a strict exact match
+                const dbName = existing.name.toLowerCase().trim();
+                const deplurDb = depluralize(dbName);
+                const isExactMatch = (dbName === rawIng || deplurDb === deplurIng || dbName === deplurIng || deplurDb === rawIng);
+                
+                if (!isExactMatch) {
+                    existing.fuzzyOriginal = ing; 
+                } else {
+                    delete existing.fuzzyOriginal;
+                    delete existing.swappedFromPantry;
+                }
             } else {
                 state.grocery.unshift({ name: ing, count: 0, lastOrdered: '', category: 'Ghost', inCart: true, checked: true, mealContext: mealContext });
             }
@@ -1299,6 +1351,37 @@
         queueLocalSave(); 
         queueCartSync();
         if (activeTab !== 'cart') toggleMainView();
+    }
+    
+    function executeSwap(itemName) {
+        const rawName = unescapeHtml(itemName);
+        const item = state.grocery.find(i => i.name === rawName);
+        if (!item) return;
+
+        if (item.fuzzyOriginal) {
+            // First Tap: Swap from matched pantry item -> raw Ghost ingredient
+            item.inCart = false;
+            let ghost = state.grocery.find(i => i.name === item.fuzzyOriginal && i.category === 'Ghost');
+            if (ghost) {
+                ghost.inCart = true;
+                ghost.checked = true;
+                ghost.swappedFromPantry = item.name;
+            } else {
+                state.grocery.unshift({ name: item.fuzzyOriginal, count: 0, lastOrdered: '', category: 'Ghost', inCart: true, checked: true, mealContext: item.mealContext, swappedFromPantry: item.name });
+            }
+        } else if (item.swappedFromPantry) {
+            // Second Tap: Swap back from raw Ghost ingredient -> matched pantry item
+            item.inCart = false;
+            let pantry = state.grocery.find(i => i.name === item.swappedFromPantry);
+            if (pantry) {
+                pantry.inCart = true;
+                pantry.checked = true;
+            }
+        }
+        
+        renderCart(); 
+        queueLocalSave(); 
+        queueCartSync();
     }
 
     function shareCartToWhatsApp() {
@@ -1361,7 +1444,10 @@
               const isGhost = item.category === 'Ghost';
               const safeName = escapeHtml(item.name);
               const jsSafeName = escapeJsArg(item.name);
+              const hasSwap = !!(item.fuzzyOriginal || item.swappedFromPantry);
               
+              let swapHtml = hasSwap ? `<button class="ghost-btn" style="border:none; padding:8px; font-size: 1.1rem;" onclick="executeSwap('${jsSafeName}')">🔀</button>` : '';
+
               html += `
               <div class="list-item-row ${item.checked ? 'checked' : 'dimmed'}" id="cart-row-${btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '')}">
                 <div class="list-item-left" onclick="toggleCartItem('${jsSafeName}', this.parentElement)">
@@ -1369,6 +1455,7 @@
                     <div><div class="item-name">${safeName}</div></div>
                 </div>
                 <div style="display:flex; align-items:center; gap: 8px;">
+                    ${swapHtml}
                     ${isGhost ? `<button class="ghost-btn" style="border:none; padding:8px;" onclick="promoteGhostItem('${jsSafeName}')">💾</button>` : ''}
                     <button class="trash-btn" onclick="executeSoftDelete('cart', '${jsSafeName}')">
                         <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -1487,6 +1574,7 @@
 
     function toggleBoughtCount() {
         showBoughtCount = !showBoughtCount;
+        document.getElementById('btnBoughtCountToggle').classList.toggle('active', showBoughtCount);
         filterMasterList();
     }
 
@@ -1582,7 +1670,6 @@
             const sm = state.savedMeals || [];
             const gm = state.globalMeals || [];
             
-            // Stats parse arrays to display accurate aggregations matching any subset inside the active selections
             document.getElementById('cb-mymeals').innerText = sm.filter(m => appSettings.diets.includes((m.diet || 'veg').toLowerCase()) && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).length;
             document.getElementById('cb-global').innerText = gm.filter(m => appSettings.diets.includes((m.diet || 'veg').toLowerCase()) && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).length;
             document.getElementById('cb-dessert').innerText = sm.filter(m=>(m.category||'').toLowerCase()==='dessert').length + gm.filter(m=>(m.category||'').toLowerCase()==='dessert').length;
@@ -1594,6 +1681,25 @@
     function filterCookbookSearch() {
         const activeBtn = document.querySelector('.stat-btn.active');
         if(activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
+    }
+
+    // ------------------------------------------------
+    // STANDALONE COOKBOOK MEAL CARD OPENER
+    // ------------------------------------------------
+    function openStandaloneCard(nameRaw, source) {
+        const name = unescapeHtml(nameRaw);
+        const pool = source === 'Local DB' ? state.savedMeals : state.globalMeals;
+        const meal = pool.find(m => m.name.toLowerCase() === name.toLowerCase());
+        if(!meal) return;
+        
+        standaloneMealContext = buildCard(meal.category || 'Dinner', meal, source === 'Local DB' ? 'cookbook' : 'global');
+        
+        const container = document.getElementById('standaloneCardContainer');
+        container.innerHTML = `<article class="meal-card ${standaloneMealContext.isLocked ? 'locked' : ''}" id="standalone-card">
+            ${getCardInnerHTML(standaloneMealContext, 'standalone', true)}
+        </article>`;
+        
+        openModal('mealDetailModal');
     }
 
     function renderCookbookList(cat, isSearchUpdate = false) {
@@ -1615,7 +1721,6 @@
         const sm = state.savedMeals || [];
         const gm = state.globalMeals || [];
 
-        // Cookbook listing evaluates item matching against active multi-select conditions
         if (cat === 'MyMeals') items = sm.filter(m => appSettings.diets.includes((m.diet || 'veg').toLowerCase()) && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).map(m=>({...m, src:'Local DB'}));
         else if (cat === 'Global') items = gm.filter(m => appSettings.diets.includes((m.diet || 'veg').toLowerCase()) && ['breakfast','lunch','dinner'].includes((m.category || '').toLowerCase())).map(m=>({...m, src:'AI Pool'}));
         else items = [...sm.filter(m=>(m.category || '').toLowerCase()===cat.toLowerCase()).map(m=>({...m, src:'Local DB'})), ...gm.filter(m=>(m.category || '').toLowerCase()===cat.toLowerCase()).map(m=>({...m, src:'AI Pool'}))];
@@ -1646,8 +1751,8 @@
                 groups[g].forEach(i => {
                     const safeName = escapeHtml(i.name);
                     const jsSafeName = escapeJsArg(i.name);
-                    html += `<div class="data-row">
-                                <div style="flex:1;"><span>${safeName}</span></div>
+                    html += `<div class="data-row" style="cursor: pointer;">
+                                <div style="flex:1;" onclick="openStandaloneCard('${jsSafeName}', '${i.src}')"><span>${safeName}</span></div>
                                 <button class="trash-btn" style="padding:4px;" onclick="confirmMealDeletionPrompt('${jsSafeName}', '${i.src}')">
                                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 </button>
@@ -1658,11 +1763,9 @@
         document.getElementById('cookbookOutput').innerHTML = html;
     }
 
-    // MULTI-SELECT ARRAY ROUTING INTERACTION AND TOGGLE REFACTOR
     function toggleDietPref(pref) {
         const idx = appSettings.diets.indexOf(pref);
         if (idx > -1) {
-            // Guarantee at least one path remains activated to prevent null pointer state generation bugs
             if (appSettings.diets.length > 1) {
                 appSettings.diets.splice(idx, 1);
             } else {
@@ -1705,7 +1808,6 @@
                 return;
             }
 
-            // Fallback categorization tag defaults safely to first element of the selection array
             const structuralFallbackDiet = appSettings.diets.length > 0 ? appSettings.diets[0] : 'veg';
             pendingApprovals.push({ category: c, meal: m, diet: structuralFallbackDiet, ingredients: '[]', cuisine: '', origin: '', fact: '' }); 
             document.getElementById('unified-meal-input').value = ''; 
@@ -1778,14 +1880,8 @@
           if (parsed.success !== false) {
               pendingApprovals.forEach(i => { 
                   state.savedMeals.push({
-                      name: i.meal, 
-                      category: i.category, 
-                      diet: i.diet, 
-                      lastServed: '', 
-                      ingredients: i.ingredients,
-                      cuisine: i.cuisine || '',
-                      origin: i.origin || '',
-                      fact: i.fact || ''
+                      name: i.meal, category: i.category, diet: i.diet, lastServed: '', 
+                      ingredients: i.ingredients, cuisine: i.cuisine || '', origin: i.origin || '', fact: i.fact || ''
                   }); 
               });
               pendingApprovals = []; 
@@ -1807,7 +1903,7 @@
     }
 
     // ------------------------------------------------
-    // GUIDED SHOPPING (Payload Checkout & Deep Links)
+    // GUIDED SHOPPING
     // ------------------------------------------------
     let shoppingQueue = []; 
     let shoppingIndex = 0; 
@@ -1890,7 +1986,6 @@
           const cachedSettings = localStorage.getItem('mp_settings');
           if (cachedSettings) {
               appSettings = JSON.parse(cachedSettings);
-              // SILENT STORAGE MIGRATION PIPELINE
               if (appSettings.diet && typeof appSettings.diet === 'string') {
                   appSettings.diets = [appSettings.diet.toLowerCase()];
                   delete appSettings.diet;
@@ -1901,8 +1996,10 @@
       if (!appSettings.diets || !Array.isArray(appSettings.diets) || appSettings.diets.length === 0) {
           appSettings.diets = ['veg'];
       }
+      if (appSettings.showInfo === undefined) appSettings.showInfo = false;
       
       renderDietStripUI();
+      if (appSettings.showInfo) document.getElementById('infoToggleBtn').classList.add('active');
       
       try {
           const cached = localStorage.getItem('mp_data_v17');
