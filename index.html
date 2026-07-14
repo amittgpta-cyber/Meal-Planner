@@ -80,7 +80,7 @@
     .accent-btn { background: var(--color-secondary); color: var(--color-bg); }
     button:active { transform: scale(0.92); }
 
-    /* Quick Settings Lit/Active State */
+    /* Quick Settings Lit/Active Status Feedback Styles */
     .util-btn { transition: 0.2s var(--ease-fluid); }
     .util-btn.active { background: var(--color-primary) !important; color: var(--color-bg) !important; border-color: var(--color-primary) !important; }
 
@@ -187,7 +187,7 @@
     
     .filter-ribbon { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; margin-bottom: 8px; -ms-overflow-style: none; scrollbar-width: none; }
     .filter-ribbon::-webkit-scrollbar { display: none; }
-    .filter-chip { padding: 10px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-weight: 600; font-size: 0.9rem; color: var(--color-text); cursor: pointer; white-space: nowrap; transition: 0.2s var(--ease-fluid); }
+    .filter-chip { padding: 10px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-weight: 600; font-size: 0.9rem; color: var(--text); cursor: pointer; white-space: nowrap; transition: 0.2s var(--ease-fluid); }
     .filter-chip.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-bg); }
     .filter-chip.top-picks { border-color: #ffd700; color: #ffd700; }
     .filter-chip.top-picks.active { background: #ffd700; color: #000; }
@@ -345,7 +345,6 @@
       <div class="dialog-head">
           <div style="display:flex; align-items:center; gap:12px;">
               <h4 style="font-family: var(--font-display); font-size: 1.5rem; margin:0;">Pantry</h4>
-              <!-- Utility Toggle (Bought Count) -->
               <button class="ghost-btn util-btn" id="btnBoughtCountToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleBoughtCount()">#</button>
           </div>
           <button class="icon-btn" style="border-radius: 50%;" onclick="closeModal('masterListModal')">
@@ -388,7 +387,6 @@
             <h4 style="font-family: var(--font-display); font-size: 1.5rem; margin:0;">Database</h4>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
-            <!-- Utility Toggle (Info Discovery Mode) -->
             <button class="icon-btn util-btn" id="infoToggleBtn" onclick="toggleGlobalInfo()" style="font-size: 1.1rem; padding: 0; width: 38px; height: 38px;">ℹ️</button>
             <button class="icon-btn" onclick="toggleTextSize()" style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; padding: 0; width: 38px; height: 38px;">Aa</button>
             <button class="icon-btn" data-theme-toggle style="width: 38px; height: 38px;"></button>
@@ -491,7 +489,7 @@
     let standaloneMealContext = null; 
 
     // ------------------------------------------------
-    // THE SMART LOCK & DEBOUNCED QUEUE
+    // THE SMART LOCK & DEBOUNCED QUEUE (Network Stability)
     // ------------------------------------------------
     let pendingSaves = 0;
     let mutationTimer = null;
@@ -540,7 +538,7 @@
     }
 
     // ------------------------------------------------
-    // SYNC ISOLATION
+    // SYNC ISOLATION (Safe Background Updates)
     // ------------------------------------------------
     function silentSync() {
         if (isShoppingActive) return; 
@@ -564,6 +562,7 @@
                         cloudItem.mealContext = localItem.mealContext;
                         cloudItem.fuzzyOriginal = localItem.fuzzyOriginal;
                         cloudItem.swappedFromPantry = localItem.swappedFromPantry;
+                        cloudItem.checkTime = localItem.checkTime;
                     }
                 });
                 
@@ -859,6 +858,7 @@
                 item.inCart = false; 
                 item.checked = false; 
                 item.mealContext = '';
+                delete item.checkTime;
                 if(item.category === 'Ghost') state.grocery.splice(idx, 1);
                 renderCart(); 
                 queueLocalSave(); 
@@ -883,6 +883,7 @@
                 existing.inCart = true; 
                 existing.checked = last.item.checked; 
                 existing.mealContext = last.item.mealContext; 
+                existing.checkTime = last.item.checkTime;
             } else { 
                 state.grocery.push(last.item); 
             }
@@ -991,7 +992,7 @@
     }
 
     // ------------------------------------------------
-    // ZERO-OVERLAY CARD REDESIGN INJECTION
+    // NEW MINIMALIST CARD REDESIGN ENGINE
     // ------------------------------------------------
     function getCardInnerHTML(item, index, isStandalone = false) {
       const isRecent = cookedWithinAWeek(item.lastServed);
@@ -1021,35 +1022,41 @@
           bookmarkHtml = `<div class="icon-circle" data-action="queue-meal" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg id="bookmark-${index}" style="pointer-events:none; transition: 0.3s var(--ease-fluid);" width="20" height="20" viewBox="0 0 24 24" fill="${bookmarkFill}" stroke="${bookmarkStroke}" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>`;
       }
 
+      let moreIconHtml = `<div class="icon-circle" data-action="toggle-explore" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}>
+          <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <circle cx="12" cy="5" r="2" fill="currentColor"></circle>
+              <circle cx="12" cy="12" r="2" fill="currentColor"></circle>
+              <circle cx="12" cy="19" r="2" fill="currentColor"></circle>
+          </svg>
+      </div>`;
+
       const dietClassSelector = safeDiet === 'non-veg' ? 'nonveg' : (safeDiet === 'egg' ? 'egg' : 'veg');
 
       let navRow = '';
       if (isStandalone) {
           navRow = `
-          <div style="display:flex; flex-direction: column; gap: 8px; width: 100%;">
+          <div style="display:flex; width: 100%;">
               <button class="card-action border-${dietClassSelector} ${item.isLocked ? 'locked' : ''}" style="width: 100%;" data-action="lock" data-index="${index}" data-standalone="true">
                   ${item.isLocked ? '✓ On Menu' : item.category}
               </button>
-              <button class="card-action" style="width: 100%; min-height: 44px;" onclick="document.getElementById('explore-${index}').classList.toggle('open')">⋮ More</button>
           </div>`;
       } else {
           navRow = `
-          <div style="display:flex; flex-direction: column; gap: 8px; width: 100%;">
-              <button class="card-action border-${dietClassSelector} ${item.isLocked ? 'locked' : ''}" style="width: 100%;" data-action="lock" data-index="${index}">
+          <div style="display:flex; align-items:center; gap: 8px; width: 100%;">
+              <button class="card-action" style="flex: 0 0 44px; min-height: 52px; padding: 0;" data-action="prev-meal" data-index="${index}">&lt;&lt;</button>
+              <button class="card-action border-${dietClassSelector} ${item.isLocked ? 'locked' : ''}" style="flex: 1;" data-action="lock" data-index="${index}">
                   ${item.isLocked ? '✓ On Menu' : item.category}
               </button>
-              <div style="display: flex; gap: 8px; width: 100%;">
-                  <button class="card-action" style="flex: 1; min-height: 44px;" data-action="prev-meal" data-index="${index}">&lt;&lt;</button>
-                  <button class="card-action" style="flex: 1.5; min-height: 44px;" onclick="document.getElementById('explore-${index}').classList.toggle('open')">⋮ More</button>
-                  <button class="card-action" style="flex: 1; min-height: 44px;" data-action="next-meal" data-index="${index}">&gt;&gt;</button>
-              </div>
+              <button class="card-action" style="flex: 0 0 44px; min-height: 52px; padding: 0;" data-action="next-meal" data-index="${index}">&gt;&gt;</button>
           </div>`;
       }
+
+      const exploreContainerId = isStandalone ? `explore-standalone` : `explore-${index}`;
 
       return `
         <div class="card-header-row">
             <div class="card-header-left">${metaBreadcrumbHtml}</div>
-            <div class="top-actions">${cartHtml}${bookmarkHtml}</div>
+            <div class="top-actions">${cartHtml}${bookmarkHtml}${moreIconHtml}</div>
         </div>
         <div class="meal-title">${safeName}</div>
         
@@ -1060,7 +1067,7 @@
 
         ${navRow}
 
-        <div id="explore-${index}" class="explore-area">
+        <div id="${exploreContainerId}" class="explore-area">
           ${factHtml}
           <div class="explore-icons-row">
               <button class="explore-icon" data-action="google" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 24c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 21.53 7.7 24 12 24z"/><path fill="#FBBC05" d="M5.84 15.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V8.06H2.18C1.43 9.55 1 11.22 1 13s.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 4.84c1.61 0 3.06.56 4.21 1.64l3.15-3.15C17.45 1.63 14.97 0 12 0 7.7 0 3.99 2.47 2.18 6.06l3.66 2.84c.87-2.6 3.3-4.06 6.16-4.06z"/></svg>Recipe</button>
@@ -1096,7 +1103,7 @@
       });
     }
 
-    // Master Event Listener for all Card Actions (Deck & Standalone Modal)
+    // Master Event Listener for all Card Actions (Deck & Standalone Modal Nodes)
     document.addEventListener('click', async event => {
       const btn = event.target.closest('[data-action]'); 
       if (!btn) return;
@@ -1134,6 +1141,12 @@
           } else {
               showToast("No other meals in this category.");
           }
+      }
+      
+      if (action === 'toggle-explore') {
+          const targetContainerId = isStandalone ? `explore-standalone` : `explore-${idxRaw}`;
+          const containerNode = document.getElementById(targetContainerId);
+          if (containerNode) containerNode.classList.toggle('open');
       }
       
       if (action === 'queue-meal') {
@@ -1226,7 +1239,7 @@
     }
 
     // ------------------------------------------------
-    // SAVE ICON & DUPLICATE PREVENTION
+    // SAVE BUTTON & DUPLICATE PREVENTION
     // ------------------------------------------------
     function promoteGhostItem(itemName) {
         document.getElementById('ghostPromoteName').value = unescapeHtml(itemName);
@@ -1300,7 +1313,7 @@
     }
 
     // ------------------------------------------------
-    // CART ENGINE: SEMANTIC MATCHER & BI-DIRECTIONAL SWAP
+    // CART ENGINE: SEMANTIC MATCHER & STABLE IN-PLACE SWAP
     // ------------------------------------------------
     function pushToCartLocally(ingredientsList, mealContext) {
         const depluralize = (str) => str.endsWith('s') ? (str.endsWith('es') ? str.slice(0, -2) : str.slice(0, -1)) : str;
@@ -1316,11 +1329,8 @@
                 const dbName = i.name.toLowerCase().trim();
                 const deplurDb = depluralize(dbName);
                 
-                // 1. Exact or De-pluralized Match
                 if (dbName === rawIng || deplurDb === deplurIng || dbName === deplurIng || deplurDb === rawIng) return true;
-                // 2. Brand Tolerance 
                 if (dbName.includes(rawIng) || dbName.includes(deplurIng)) return true;
-                // 3. Adjective Tolerance 
                 if (dbName.length > 3 && (rawIng.includes(dbName) || deplurIng.includes(deplurDb))) return true;
                 
                 return false;
@@ -1328,10 +1338,12 @@
 
             if (existing) {
                 existing.inCart = true; 
-                existing.checked = true; 
+                if (!existing.checked) {
+                    existing.checked = true; 
+                    existing.checkTime = Date.now(); // Maintain stable sorting chronology
+                }
                 existing.mealContext = mealContext;
                 
-                // Apply Fuzzy Tag if it's not a strict exact match
                 const dbName = existing.name.toLowerCase().trim();
                 const deplurDb = depluralize(dbName);
                 const isExactMatch = (dbName === rawIng || deplurDb === deplurIng || dbName === deplurIng || deplurDb === rawIng);
@@ -1343,7 +1355,7 @@
                     delete existing.swappedFromPantry;
                 }
             } else {
-                state.grocery.unshift({ name: ing, count: 0, lastOrdered: '', category: 'Ghost', inCart: true, checked: true, mealContext: mealContext });
+                state.grocery.unshift({ name: ing, count: 0, lastOrdered: '', category: 'Ghost', inCart: true, checked: true, checkTime: Date.now(), mealContext: mealContext });
             }
         });
         
@@ -1355,27 +1367,38 @@
     
     function executeSwap(itemName) {
         const rawName = unescapeHtml(itemName);
-        const item = state.grocery.find(i => i.name === rawName);
-        if (!item) return;
+        const idx = state.grocery.findIndex(i => i.name === rawName);
+        if (idx === -1) return;
+        const item = state.grocery[idx];
 
         if (item.fuzzyOriginal) {
-            // First Tap: Swap from matched pantry item -> raw Ghost ingredient
             item.inCart = false;
-            let ghost = state.grocery.find(i => i.name === item.fuzzyOriginal && i.category === 'Ghost');
-            if (ghost) {
-                ghost.inCart = true;
-                ghost.checked = true;
-                ghost.swappedFromPantry = item.name;
+            let gIdx = state.grocery.findIndex(i => i.name === item.fuzzyOriginal && i.category === 'Ghost');
+            if (gIdx > -1) {
+                state.grocery[gIdx].inCart = true;
+                state.grocery[gIdx].checked = true;
+                state.grocery[gIdx].swappedFromPantry = item.name;
+                
+                // Swap array index location positions inline to isolate layout mutations entirely
+                let temp = state.grocery[idx];
+                state.grocery[idx] = state.grocery[gIdx];
+                state.grocery[gIdx] = temp;
             } else {
-                state.grocery.unshift({ name: item.fuzzyOriginal, count: 0, lastOrdered: '', category: 'Ghost', inCart: true, checked: true, mealContext: item.mealContext, swappedFromPantry: item.name });
+                state.grocery.splice(idx, 1, { 
+                    name: item.fuzzyOriginal, count: 0, lastOrdered: '', category: 'Ghost', 
+                    inCart: true, checked: true, checkTime: item.checkTime || Date.now(), mealContext: item.mealContext, swappedFromPantry: item.name 
+                });
             }
         } else if (item.swappedFromPantry) {
-            // Second Tap: Swap back from raw Ghost ingredient -> matched pantry item
             item.inCart = false;
-            let pantry = state.grocery.find(i => i.name === item.swappedFromPantry);
-            if (pantry) {
-                pantry.inCart = true;
-                pantry.checked = true;
+            let pIdx = state.grocery.findIndex(i => i.name === item.swappedFromPantry);
+            if (pIdx > -1) {
+                state.grocery[pIdx].inCart = true;
+                state.grocery[pIdx].checked = true;
+                
+                let temp = state.grocery[idx];
+                state.grocery[idx] = state.grocery[pIdx];
+                state.grocery[pIdx] = temp;
             }
         }
         
@@ -1397,7 +1420,7 @@
         let hasChanges = false;
         state.grocery.forEach(i => {
             if (i.inCart && i.mealContext === rawContext) {
-                i.inCart = false; i.checked = false; i.mealContext = ''; hasChanges = true;
+                i.inCart = false; i.checked = false; i.mealContext = ''; delete i.checkTime; hasChanges = true;
             }
         });
         state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart));
@@ -1438,7 +1461,16 @@
           
           html += `<div class="cart-group-list">`;
           
-          groups[group].sort((a, b) => (b.checked === a.checked) ? 0 : b.checked ? 1 : -1);
+          // Stable Sorting Algorithm: Active items together grouped by strict chronological checkTime index weights
+          groups[group].sort((a, b) => {
+              if (a.checked !== b.checked) {
+                  return a.checked ? -1 : 1; 
+              }
+              if (a.checked) {
+                  return (a.checkTime || 0) - (b.checkTime || 0);
+              }
+              return 0;
+          });
 
           groups[group].forEach(item => {
               const isGhost = item.category === 'Ghost';
@@ -1450,7 +1482,7 @@
 
               html += `
               <div class="list-item-row ${item.checked ? 'checked' : 'dimmed'}" id="cart-row-${btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '')}">
-                <div class="list-item-left" onclick="toggleCartItem('${jsSafeName}', this.parentElement)">
+                <div class="list-item-left" onclick="toggleCartItem('${jsSafeName}')">
                     <div class="checkbox">${item.checked ? '✓' : ''}</div>
                     <div><div class="item-name">${safeName}</div></div>
                 </div>
@@ -1468,22 +1500,18 @@
       container.innerHTML = html;
     }
 
-    function toggleCartItem(name, rowElement) { 
+    function toggleCartItem(name) { 
         const rawName = unescapeHtml(name);
         const item = state.grocery.find(i => i.name.toLowerCase() === rawName.toLowerCase());
         
         if(item) {
             item.checked = !item.checked;
-            rowElement.className = `list-item-row ${item.checked ? 'checked' : 'dimmed'}`;
-            rowElement.querySelector('.checkbox').innerText = item.checked ? '✓' : '';
-            
-            const container = rowElement.parentElement;
             if (item.checked) {
-                container.insertBefore(rowElement, container.firstChild);
+                item.checkTime = Date.now(); // Put re-checked item at bottom of active group segment natively
             } else {
-                container.appendChild(rowElement);
+                delete item.checkTime;
             }
-            
+            renderCart();
             queueLocalSave(); 
             queueCartSync();
         }
@@ -1493,7 +1521,7 @@
         let hasChanges = false;
         state.grocery.forEach(i => {
             if(i.inCart && i.checked) {
-                i.inCart = false; i.checked = false; i.mealContext = ''; hasChanges = true;
+                i.inCart = false; i.checked = false; i.mealContext = ''; delete i.checkTime; hasChanges = true;
             }
         });
         state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart)); 
@@ -1511,10 +1539,10 @@
         let existing = state.grocery.find(i => i.name.toLowerCase() === nameLower);
         if(existing) {
             if(category && category !== '📦 Uncategorized' && existing.category === 'Ghost') existing.category = category;
-            existing.inCart = true; existing.checked = true; existing.mealContext = '';
+            existing.inCart = true; existing.checked = true; existing.checkTime = Date.now(); existing.mealContext = '';
             showToast("Item already in list.");
         } else {
-            state.grocery.unshift({name: name, count: 0, lastOrdered:'', category: category, inCart: true, checked: true, mealContext: ''}); 
+            state.grocery.unshift({name: name, count: 0, lastOrdered:'', category: category, inCart: true, checked: true, checkTime: Date.now(), mealContext: ''}); 
         }
         document.getElementById('manualCartAdd').value = ''; 
         renderCart(); 
@@ -1627,7 +1655,12 @@
       let item = state.grocery.find(i => i.name.toLowerCase() === rawName.toLowerCase());
       if(item) { 
           item.inCart = !item.inCart; 
-          if(item.inCart) item.checked = true; 
+          if(item.inCart) {
+              item.checked = true; 
+              item.checkTime = Date.now();
+          } else {
+              delete item.checkTime;
+          }
           
           if(rowElement) {
               rowElement.className = `list-item-row ${item.inCart ? 'checked' : ''}`;
@@ -1684,7 +1717,7 @@
     }
 
     // ------------------------------------------------
-    // STANDALONE COOKBOOK MEAL CARD OPENER
+    // STANDALONE COOKBOOK POPUP CARD ENGINE
     // ------------------------------------------------
     function openStandaloneCard(nameRaw, source) {
         const name = unescapeHtml(nameRaw);
@@ -1943,7 +1976,7 @@
       actuallyBought.push(current.name);
       
       let item = state.grocery.find(i => i.name === current.name);
-      if(item) { item.inCart = false; item.checked = false; item.count++; item.mealContext=''; }
+      if(item) { item.inCart = false; item.checked = false; item.count++; item.mealContext=''; delete item.checkTime; }
       state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart)); 
       
       queueLocalSave();
