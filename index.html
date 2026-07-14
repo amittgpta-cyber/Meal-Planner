@@ -102,7 +102,7 @@
     .cat-btn.active { border-color: var(--color-primary); background: color-mix(in oklab, var(--color-primary) 10%, var(--color-surface)); }
 
     .cards { display: grid; gap: 1.5rem; }
-    .meal-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 2rem; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; animation: slideUpFade 0.35s var(--ease-fluid) backwards; position: relative; }
+    .meal-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 2rem; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; animation: slideUpFade 0.35s var(--ease-fluid) backwards; position: relative; min-width: 0; overflow: hidden; }
     .meal-card.locked { border-color: color-mix(in oklab, var(--color-success) 50%, transparent); box-shadow: 0 0 20px color-mix(in oklab, var(--color-success) 10%, transparent); }
     @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     
@@ -127,12 +127,13 @@
     .card-action.locked.border-egg { background: var(--diet-egg-color); color: #000000 !important; border-color: var(--diet-egg-color); } 
     .card-action.locked.border-nonveg { background: var(--diet-nonveg-color); color: #ffffff; border-color: var(--diet-nonveg-color); }
     
-    .explore-area { display: flex; flex-direction: column; max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.3s var(--ease-fluid), opacity 0.3s var(--ease-fluid), margin 0.3s var(--ease-fluid); margin-top: -10px; width: 100%; }
+    .explore-area { display: flex; flex-direction: column; max-height: 0; opacity: 0; overflow: hidden; transition: max-height 0.3s var(--ease-fluid), opacity 0.3s var(--ease-fluid), margin 0.3s var(--ease-fluid); margin-top: -10px; width: 100%; min-width: 0; }
     .explore-area.open { max-height: 250px; opacity: 1; margin-top: 5px; padding: 12px 0; border-top: 1px solid var(--color-divider); }
     
     .fun-fact-box { background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: 1.25rem; padding: 12px 16px; font-size: 0.9rem; line-height: 1.4; color: var(--color-text-muted); margin-bottom: 14px; text-align: left; font-style: italic; border-left: 4px solid var(--color-primary); }
     
-    .explore-icons-row { display: flex; justify-content: flex-start; align-items: center; width: 100%; overflow-x: auto; gap: 12px; padding-bottom: 8px; -ms-overflow-style: none; scrollbar-width: none; }
+    /* SCROLLABLE RIBBON ISOLATION - Ensures buttons don't blow out the card width */
+    .explore-icons-row { display: flex; justify-content: flex-start; align-items: center; width: 100%; min-width: 0; overflow-x: auto; gap: 12px; padding-bottom: 8px; -ms-overflow-style: none; scrollbar-width: none; flex-wrap: nowrap; }
     .explore-icons-row::-webkit-scrollbar { display: none; }
 
     .explore-icon { width: 56px; height: 56px; border-radius: 1rem; background: var(--color-surface); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; transition: transform 0.2s var(--ease-fluid); flex-shrink: 0; color: var(--color-text); flex-direction: column; font-size: 0.65rem; font-weight: bold; gap: 4px; }
@@ -465,7 +466,7 @@
     </section>
   </div>
 
-  <!-- STANDALONE MEAL CARD MODAL -->
+  <!-- STANDALONE MEAL CARD MODAL (No Close Button, uses Background Tap) -->
   <div class="modal" id="mealDetailModal" onclick="if(event.target===this) closeModal('mealDetailModal')" style="z-index: 2050;">
     <section class="dialog" style="padding: 0; max-width: 500px; background: transparent; border: none; box-shadow: none;">
        <div id="standaloneCardContainer" style="width: 100%;"></div>
