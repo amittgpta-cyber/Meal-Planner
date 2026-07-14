@@ -131,7 +131,9 @@
     .explore-area.open { max-height: 250px; opacity: 1; margin-top: 5px; padding: 12px 0; border-top: 1px solid var(--color-divider); }
     
     .fun-fact-box { background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: 1.25rem; padding: 12px 16px; font-size: 0.9rem; line-height: 1.4; color: var(--color-text-muted); margin-bottom: 14px; text-align: left; font-style: italic; border-left: 4px solid var(--color-primary); }
-    .explore-icons-row { display: flex; justify-content: space-around; align-items: center; width: 100%; }
+    
+    .explore-icons-row { display: flex; justify-content: flex-start; align-items: center; width: 100%; overflow-x: auto; gap: 12px; padding-bottom: 8px; -ms-overflow-style: none; scrollbar-width: none; }
+    .explore-icons-row::-webkit-scrollbar { display: none; }
 
     .explore-icon { width: 56px; height: 56px; border-radius: 1rem; background: var(--color-surface); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; transition: transform 0.2s var(--ease-fluid); flex-shrink: 0; color: var(--color-text); flex-direction: column; font-size: 0.65rem; font-weight: bold; gap: 4px; }
     .explore-icon svg { width: 20px; height: 20px; }
@@ -466,9 +468,6 @@
   <!-- STANDALONE MEAL CARD MODAL -->
   <div class="modal" id="mealDetailModal" onclick="if(event.target===this) closeModal('mealDetailModal')" style="z-index: 2050;">
     <section class="dialog" style="padding: 0; max-width: 500px; background: transparent; border: none; box-shadow: none;">
-       <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
-           <button class="icon-btn" style="background: var(--color-surface); border-radius:50%;" onclick="closeModal('mealDetailModal')">✕</button>
-       </div>
        <div id="standaloneCardContainer" style="width: 100%;"></div>
     </section>
   </div>
@@ -1012,14 +1011,14 @@
       }
 
       let cartHtml = (item.ingredients && item.ingredients !== '[]') 
-            ? `<div class="icon-circle" data-action="add-to-cart" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg></div>` : '';
+            ? `<button class="explore-icon" data-action="add-to-cart" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>Cart</button>` : '';
       
       let bookmarkHtml = '';
       if (item.source === 'global') {
           const isQueued = pendingApprovals.some(p => p.meal.toLowerCase() === item.name.toLowerCase()) || item.isQueued;
           const bookmarkFill = isQueued ? 'var(--color-success)' : 'none';
           const bookmarkStroke = isQueued ? 'var(--color-success)' : 'currentColor';
-          bookmarkHtml = `<div class="icon-circle" data-action="queue-meal" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg id="bookmark-${index}" style="pointer-events:none; transition: 0.3s var(--ease-fluid);" width="20" height="20" viewBox="0 0 24 24" fill="${bookmarkFill}" stroke="${bookmarkStroke}" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>`;
+          bookmarkHtml = `<button class="explore-icon" data-action="queue-meal" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg id="bookmark-${index}" style="pointer-events:none; transition: 0.3s var(--ease-fluid);" width="20" height="20" viewBox="0 0 24 24" fill="${bookmarkFill}" stroke="${bookmarkStroke}" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>Save</button>`;
       }
 
       let moreIconHtml = `<div class="icon-circle" data-action="toggle-explore" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}>
@@ -1037,17 +1036,17 @@
           navRow = `
           <div style="display:flex; width: 100%;">
               <button class="card-action border-${dietClassSelector} ${item.isLocked ? 'locked' : ''}" style="width: 100%;" data-action="lock" data-index="${index}" data-standalone="true">
-                  ${item.isLocked ? '✓ On Menu' : item.category}
+                  ${item.isLocked ? '✓ Serve It' : item.category}
               </button>
           </div>`;
       } else {
           navRow = `
           <div style="display:flex; align-items:center; gap: 8px; width: 100%;">
-              <button class="card-action" style="flex: 0 0 44px; min-height: 52px; padding: 0;" data-action="prev-meal" data-index="${index}">&lt;&lt;</button>
-              <button class="card-action border-${dietClassSelector} ${item.isLocked ? 'locked' : ''}" style="flex: 1;" data-action="lock" data-index="${index}">
-                  ${item.isLocked ? '✓ On Menu' : item.category}
+              <button class="card-action" style="flex: 1; padding: 0;" data-action="prev-meal" data-index="${index}">&lt;&lt;</button>
+              <button class="card-action border-${dietClassSelector} ${item.isLocked ? 'locked' : ''}" style="flex: 1.5;" data-action="lock" data-index="${index}">
+                  ${item.isLocked ? '✓ Serve It' : item.category}
               </button>
-              <button class="card-action" style="flex: 0 0 44px; min-height: 52px; padding: 0;" data-action="next-meal" data-index="${index}">&gt;&gt;</button>
+              <button class="card-action" style="flex: 1; padding: 0;" data-action="next-meal" data-index="${index}">&gt;&gt;</button>
           </div>`;
       }
 
@@ -1056,7 +1055,7 @@
       return `
         <div class="card-header-row">
             <div class="card-header-left">${metaBreadcrumbHtml}</div>
-            <div class="top-actions">${cartHtml}${bookmarkHtml}${moreIconHtml}</div>
+            <div class="top-actions">${moreIconHtml}</div>
         </div>
         <div class="meal-title">${safeName}</div>
         
@@ -1074,6 +1073,8 @@
               <button class="explore-icon" data-action="youtube" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg viewBox="0 0 24 24"><path fill="#FF0000" d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>Video</button>
               <button class="explore-icon" data-action="nutrition" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>Stats</button>
               <button class="explore-icon" data-action="share-card" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>Share</button>
+              ${cartHtml}
+              ${bookmarkHtml}
           </div>
         </div>`;
     }
@@ -1784,9 +1785,9 @@
                 groups[g].forEach(i => {
                     const safeName = escapeHtml(i.name);
                     const jsSafeName = escapeJsArg(i.name);
-                    html += `<div class="data-row" style="cursor: pointer;">
-                                <div style="flex:1;" onclick="openStandaloneCard('${jsSafeName}', '${i.src}')"><span>${safeName}</span></div>
-                                <button class="trash-btn" style="padding:4px;" onclick="confirmMealDeletionPrompt('${jsSafeName}', '${i.src}')">
+                    html += `<div class="data-row" style="cursor: pointer;" onclick="openStandaloneCard('${jsSafeName}', '${i.src}')">
+                                <div style="flex:1;"><span>${safeName}</span></div>
+                                <button class="trash-btn" style="padding:4px;" onclick="event.stopPropagation(); confirmMealDeletionPrompt('${jsSafeName}', '${i.src}')">
                                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 </button>
                              </div>`;
