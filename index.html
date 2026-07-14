@@ -997,7 +997,7 @@
       // Diet identifier to bind specific border colors safely via CSS tokens
       const dietClassSelector = safeDiet === 'non-veg' ? 'nonveg' : (safeDiet === 'egg' ? 'egg' : 'veg');
 
-      return `
+      return 
         <div class="card-header-row">
             <div class="card-header-left">
                 <!-- Top-Left Swap: Contextual breadcrumb is mounted here -->
@@ -1034,7 +1034,7 @@
               <button class="explore-icon" data-action="nutrition" data-index="${index}"><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>Stats</button>
               <button class="explore-icon" data-action="share-card" data-index="${index}"><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>Share</button>
           </div>
-        </div>`;
+        </div>;
     }
 
     function renderEmptyState() {
@@ -1514,7 +1514,7 @@
             const safeName = escapeHtml(item.name);
             const jsSafeName = escapeJsArg(item.name);
 
-            return `
+            return 
             <div class="list-item-row ${item.inCart ? 'checked' : ''}">
                 <div class="list-item-left" onclick="toggleMasterItem('${jsSafeName}', this.parentElement)">
                     <div>
@@ -1734,11 +1734,11 @@
             <option value="Cocktails" ${itemCat === 'cocktails' ? 'selected' : ''}>Cocktails</option>
         </select>`;
 
-        li.innerHTML = `
+        li.innerHTML = 
         <div style="display:flex; align-items:center; gap:0.75rem; flex-grow:1;">
             <span style="font-weight:600; font-family:var(--font-display);">${escapeHtml(item.meal)}</span> ${catSelect}
         </div>
-        <button class="trash-btn" data-remove-queue="${idx}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
+        <button class="trash-btn" data-remove-queue="${idx}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>;
         ql.appendChild(li);
       });
     }
