@@ -111,8 +111,6 @@
     .card-header-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .eyebrow { font-size: 0.8rem; text-transform: uppercase; color: var(--color-text-muted); font-weight: 700; letter-spacing: 0.1em; }
     
-    /* Removed .badge.warning class as it's no longer used */
-    
     .meal-title { font-family: var(--font-display); font-size: 2.1rem; line-height: 1.1; font-weight: 600; margin: 0.25rem 0; color: var(--color-text); transition: color 0.3s ease; }
     
     .top-actions { display: flex; gap: 8px; flex-direction: row; }
@@ -146,7 +144,7 @@
     
     .bottom-nav { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 400px; display: flex; gap: 12px; z-index: 1000; transition: transform 0.35s var(--ease-fluid), opacity 0.35s var(--ease-fluid); pointer-events: none; }
     .bottom-nav.nav-hidden { transform: translate(-50%, 150%); opacity: 0; }
-    .bottom-nav button { margin: 0; border-radius: 100px; pointer-events: auto; box-shadow: var(--shadow-md); }
+    .bottom-nav button { margin: 0; border-radius: 100px; pointer-events: auto; box-shadow: var(--shadow-md); transition: background 0.3s, color 0.3s, border-color 0.3s; }
 
     .floating-share-fab { position: fixed; bottom: 100px; right: 24px; width: 56px; height: 56px; border-radius: 50%; background: #1a1918; border: 1px solid var(--color-border); color: #e8e6e3; box-shadow: var(--shadow-md); display: flex; align-items: center; justify-content: center; z-index: 999; transition: transform 0.3s var(--ease-fluid), opacity 0.3s; }
     [data-theme="light"] .floating-share-fab { background: #f7f6f2; color: #161514; }
@@ -231,7 +229,7 @@
     .stat-btn.active .stat-num, .stat-btn.active .stat-title { color: var(--color-bg); }
     
     .toast-container { position: fixed; top: env(safe-area-inset-top, 20px); left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; margin-top: 20px; width: 90%; max-width: 400px;}
-    .toast { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); padding: 16px 20px; border-radius: 1.5rem; box-shadow: var(--shadow-md); font-weight: 600; font-size: 0.95rem; text-align: center; animation: toastSlide 0.3s var(--ease-fluid forwards; transition: opacity 0.3s; pointer-events: auto; }
+    .toast { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); padding: 16px 20px; border-radius: 1.5rem; box-shadow: var(--shadow-md); font-weight: 600; font-size: 0.95rem; text-align: center; animation: toastSlide 0.3s var(--ease-fluid forwards); transition: opacity 0.3s; pointer-events: auto; }
     @keyframes toastSlide { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   </style>
 </head>
@@ -256,16 +254,16 @@
         <section class="hero">
           <div class="filter-wrapper">
             <div class="filter-row-1">
-              <div class="source-btn active" id="btn-src-cookbook" onclick="setSource('cookbook')">👤 Cookbook</div>
-              <div class="source-btn" id="btn-src-global" onclick="setSource('global')">🧑‍🍳 Global</div>
+              <div class="source-btn active" id="btn-src-cookbook" onclick="setSource('cookbook')"><span style="font-size: 1.25em; vertical-align: middle;">👤</span> Cookbook</div>
+              <div class="source-btn" id="btn-src-global" onclick="setSource('global')"><span style="font-size: 1.25em; vertical-align: middle;">🧑‍🍳</span> Global</div>
             </div>
             <div class="filter-row-2">
-              <button class="meal-btn-full" id="btn-cat-meals" onclick="setCategory('Meals')">🍽️ Meals</button>
+              <button class="meal-btn-full" id="btn-cat-meals" onclick="setCategory('Meals')"><span style="font-size: 1.25em; vertical-align: middle;">🍽️</span> Meals</button>
             </div>
             <div class="filter-row-3">
-              <button class="cat-btn" id="btn-cat-dessert" onclick="setCategory('Dessert')">🍰 Dessert</button>
-              <button class="cat-btn" id="btn-cat-drinks" onclick="setCategory('Drinks')">🥤 Drinks</button>
-              <button class="cat-btn" id="btn-cat-cocktails" onclick="setCategory('Cocktails')">🥂 Cocktails</button>
+              <button class="cat-btn" id="btn-cat-dessert" onclick="setCategory('Dessert')"><span style="font-size: 1.25em; vertical-align: middle;">🍰</span> Dessert</button>
+              <button class="cat-btn" id="btn-cat-drinks" onclick="setCategory('Drinks')"><span style="font-size: 1.25em; vertical-align: middle;">🥤</span> Drinks</button>
+              <button class="cat-btn" id="btn-cat-cocktails" onclick="setCategory('Cocktails')"><span style="font-size: 1.25em; vertical-align: middle;">🥂</span> Cocktails</button>
             </div>
           </div>
         </section>
@@ -1453,6 +1451,19 @@
       const container = document.getElementById('unified-cart-items');
       const activeCart = state.grocery.filter(item => item.inCart);
       
+      const navBtn = document.getElementById('navToggleBtn');
+      if (navBtn) {
+          if (activeCart.length > 0) {
+              navBtn.style.background = 'var(--color-primary)';
+              navBtn.style.color = 'var(--color-bg)';
+              navBtn.style.borderColor = 'var(--color-primary)';
+          } else {
+              navBtn.style.background = 'color-mix(in oklab, var(--color-surface) 90%, transparent)';
+              navBtn.style.color = 'var(--color-text)';
+              navBtn.style.borderColor = 'var(--color-border)';
+          }
+      }
+
       if (activeCart.length === 0) { 
           container.innerHTML = '<p class="subtle" style="padding: 16px;">Cart is empty.</p>'; 
           return; 
@@ -1819,8 +1830,11 @@
                 groups[g].forEach(i => {
                     const safeName = escapeHtml(i.name);
                     const jsSafeName = escapeJsArg(i.name);
+                    const isRecent = cookedWithinAWeek(i.lastServed);
+                    const titleColorStyle = isRecent ? 'color: var(--color-warning); font-weight: 600;' : '';
+                    
                     html += `<div class="data-row" style="cursor: pointer;" onclick="openStandaloneCard('${jsSafeName}', '${i.src}')">
-                                <div style="flex:1;"><span>${safeName}</span></div>
+                                <div style="flex:1;"><span style="${titleColorStyle}">${safeName}</span></div>
                                 <button class="trash-btn" style="padding:4px;" onclick="event.stopPropagation(); confirmMealDeletionPrompt('${jsSafeName}', '${i.src}')">
                                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 </button>
@@ -1868,12 +1882,30 @@
         const c = document.getElementById('unified-meal-category').value;
         if (m) { 
             const nameLower = m.toLowerCase();
-            const inQueue = pendingApprovals.some(p => p.meal.toLowerCase() === nameLower);
-            const inDb = state.savedMeals.some(s => s.name.toLowerCase() === nameLower);
             
-            if (inQueue || inDb) {
-                showToast("Meal already exists in cookbook or queue.");
-                return;
+            let existingMeal = null;
+            let existingCategory = '';
+            
+            const queuedMatch = pendingApprovals.find(p => p.meal.toLowerCase() === nameLower);
+            if (queuedMatch) {
+                existingMeal = queuedMatch;
+                existingCategory = queuedMatch.category;
+            } else {
+                const dbMatch = state.savedMeals.find(s => s.name.toLowerCase() === nameLower);
+                if (dbMatch) {
+                    existingMeal = dbMatch;
+                    existingCategory = dbMatch.category;
+                }
+            }
+            
+            if (existingMeal) {
+                if ((existingCategory || '').toLowerCase() === c.toLowerCase()) {
+                    showToast("Meal already exists in this category.");
+                    return;
+                } else {
+                    const confirmSave = confirm(`'${existingMeal.name || existingMeal.meal}' is already saved in your ${existingCategory || 'existing'} list. Are you sure you want to add it to ${c} too?`);
+                    if (!confirmSave) return;
+                }
             }
 
             const structuralFallbackDiet = appSettings.diets.length > 0 ? appSettings.diets[0] : 'veg';
@@ -2099,7 +2131,6 @@
       
       if (!GOOGLE_SHEETS_API_URL || GOOGLE_SHEETS_API_URL.includes("PASTE")) return;
       
-      document.getElementById('syncIndicator').classList.add('active'); 
       fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAllData' }) })
         .then(res => res.json())
         .then(parsed => {
