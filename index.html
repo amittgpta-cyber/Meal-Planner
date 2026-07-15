@@ -229,7 +229,7 @@
     .stat-btn.active .stat-num, .stat-btn.active .stat-title { color: var(--color-bg); }
     
     .toast-container { position: fixed; top: env(safe-area-inset-top, 20px); left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; margin-top: 20px; width: 90%; max-width: 400px;}
-    .toast { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); padding: 16px 20px; border-radius: 1.5rem; box-shadow: var(--shadow-md); font-weight: 600; font-size: 0.95rem; text-align: center; animation: toastSlide 0.3s var(--ease-fluid) forwards; transition: opacity 0.3s; pointer-events: auto; }
+    .toast { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); padding: 16px 20px; border-radius: 1.5rem; box-shadow: var(--shadow-md); font-weight: 600; font-size: 0.95rem; text-align: center; animation: toastSlide 0.3s var(--ease-fluid forwards; transition: opacity 0.3s; pointer-events: auto; }
     @keyframes toastSlide { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   </style>
 </head>
@@ -1695,11 +1695,10 @@
     }
     
     function forceRefill() { 
-    document.getElementById('refillBtn').innerHTML = `Syncing...`; 
-    // We now inject { activeDiets: appSettings.diets } into the payload
-    runServer('forceRefill', { activeDiets: appSettings.diets }, false); 
-    setTimeout(()=> document.getElementById('refillBtn').innerHTML=`⚡ Refill`, 2000); 
-}
+        document.getElementById('refillBtn').innerHTML = `Syncing...`; 
+        runServer('forceRefill', { activeDiets: appSettings.diets }, false); 
+        setTimeout(()=> document.getElementById('refillBtn').innerHTML=`⚡ Refill`, 2000); 
+    }
 
     function updateCookbookStats() {
         try {
@@ -1739,11 +1738,12 @@
     }
 
     function renderCookbookList(cat, isSearchUpdate = false) {
+        document.getElementById('cookbookOutput').innerHTML = ''; 
+
         const activeBtn = document.querySelector(`.stat-btn[data-cbcat="${cat}"]`);
         if (!isSearchUpdate) {
             if (activeBtn && activeBtn.classList.contains('active')) { 
                 activeBtn.classList.remove('active'); 
-                document.getElementById('cookbookOutput').innerHTML = ''; 
                 document.getElementById('cookbookSearchInput').value = ''; 
                 return; 
             }
@@ -1762,6 +1762,22 @@
         else items = [...sm.filter(m=>(m.category || '').toLowerCase()===cat.toLowerCase()).map(m=>({...m, src:'Local DB'})), ...gm.filter(m=>(m.category || '').toLowerCase()===cat.toLowerCase()).map(m=>({...m, src:'AI Pool'}))];
 
         if (term) items = items.filter(i => fuzzyMatch(term, i.name));
+        
+        // --- SURGICAL DEDUPLICATION FIX ---
+        // Prevents items that exist in both Local DB and AI Pool from rendering twice 
+        // when category buttons (like 'Desserts') pull from both arrays simultaneously.
+        const uniqueItems = [];
+        const seenNames = new Set();
+        for (const item of items) {
+            const lowerName = item.name.toLowerCase().trim();
+            if (!seenNames.has(lowerName)) {
+                seenNames.add(lowerName);
+                uniqueItems.push(item);
+            }
+        }
+        items = uniqueItems;
+        // ----------------------------------
+        
         items.sort((a, b) => a.name.localeCompare(b.name));
 
         let html = '';
