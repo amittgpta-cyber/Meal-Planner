@@ -11,6 +11,10 @@
   <link rel="apple-touch-icon" href="icon-512x512-1.png">
   <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=boska@400,500,700&display=swap" rel="stylesheet">
   
+  <!-- Firebase Compat Libraries for Hybrid Inject -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
   <style>
     :root, [data-theme="light"] {
       --color-bg: #ffffff; 
@@ -190,7 +194,7 @@
     
     .filter-ribbon { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; margin-bottom: 8px; -ms-overflow-style: none; scrollbar-width: none; }
     .filter-ribbon::-webkit-scrollbar { display: none; }
-    .filter-chip { padding: 10px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-weight: 600; font-size: 0.9rem; color: var(--text); cursor: pointer; white-space: nowrap; transition: 0.2s var(--ease-fluid); }
+    .filter-chip { padding: 10px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-weight: 600; font-size: 0.9rem; color: var(--color-text); cursor: pointer; white-space: nowrap; transition: 0.2s var(--ease-fluid); }
     .filter-chip.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-bg); }
     .filter-chip.top-picks { border-color: #ffd700; color: #ffd700; }
     .filter-chip.top-picks.active { background: #ffd700; color: #000; }
@@ -231,6 +235,26 @@
     .toast-container { position: fixed; top: env(safe-area-inset-top, 20px); left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; margin-top: 20px; width: 90%; max-width: 400px;}
     .toast { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); padding: 16px 20px; border-radius: 1.5rem; box-shadow: var(--shadow-md); font-weight: 600; font-size: 0.95rem; text-align: center; animation: toastSlide 0.3s var(--ease-fluid forwards); transition: opacity 0.3s; pointer-events: auto; }
     @keyframes toastSlide { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Dynamic Grid Layout for Shopping Partners */
+    .partner-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 30px;
+        margin-bottom: 24px;
+    }
+    .partner-grid button:last-child:nth-child(odd) {
+        grid-column: span 2;
+    }
+    
+    .partner-cb-label {
+        display: flex; align-items: center; gap: 12px; font-size: 1.1rem;
+        padding: 12px; background: var(--color-surface-2); border-radius: 1rem; border: 1px solid var(--color-border); cursor: pointer;
+    }
+    .partner-cb-label input {
+        width: 20px; height: 20px; accent-color: var(--color-primary); cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -304,10 +328,9 @@
             <div id="unified-cart-items"></div>
         </div>
         
-        <div style="display:flex; gap:10px; margin-top:30px; margin-bottom:24px;">
-            <button class="primary-btn" style="flex: 1; background: #fc8019;" onclick="startGuidedShopping('swiggy')">🛒 Swiggy</button>
-            <button class="primary-btn" style="flex: 1; background: #f8cb46; color: #000;" onclick="startGuidedShopping('blinkit')">🛒 Blinkit</button>
-        </div>
+        <!-- DYNAMIC SHOPPING PARTNERS GRID -->
+        <div id="shoppingPartnersGrid" class="partner-grid"></div>
+        
       </div>
     </main>
   </div>
@@ -332,6 +355,24 @@
         <button class="primary-btn" style="background:var(--color-success); border-radius: 1.5rem; padding: 18px;" onclick="markFoundAndNext()">✓ Found (Next)</button>
         <button class="ghost-btn" style="border-radius: 1.5rem; padding: 18px; border-color: var(--color-error); color: var(--color-error);" onclick="markNotFoundAndNext()">✕ Not Found (Keep in list)</button>
     </div>
+  </div>
+
+  <!-- SHOPPING PARTNERS MODAL -->
+  <div class="modal" id="partnerModal">
+    <section class="dialog" style="max-width: 350px;">
+      <div class="dialog-head">
+        <h4 style="font-family: var(--font-display); font-size: 1.25rem;">Shopping Partners</h4>
+        <button class="icon-btn" style="border-radius: 50%; width:32px; height:32px;" onclick="closeModal('partnerModal')">✕</button>
+      </div>
+      <div class="dialog-body" style="padding: 20px; display:flex; flex-direction:column; gap:12px;">
+        <label class="partner-cb-label"><input type="checkbox" value="Swiggy" class="partner-cb"> Swiggy Instamart</label>
+        <label class="partner-cb-label"><input type="checkbox" value="Blinkit" class="partner-cb"> Blinkit</label>
+        <label class="partner-cb-label"><input type="checkbox" value="BigBasket" class="partner-cb"> BigBasket</label>
+        <label class="partner-cb-label"><input type="checkbox" value="Amazon Now" class="partner-cb"> Amazon Now</label>
+        <label class="partner-cb-label"><input type="checkbox" value="Flipkart Minutes" class="partner-cb"> Flipkart Minutes</label>
+        <label class="partner-cb-label"><input type="checkbox" value="Zepto" class="partner-cb"> Zepto</label>
+      </div>
+    </section>
   </div>
 
   <div class="modal" id="ghostPromoteModal">
@@ -497,9 +538,21 @@
   <script>
     const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzNOXoxn17I3d4-inuxiEqhdPxOQokGlSGCYW8buwLTcO6YJxbvcHBH0dZ1d-fBDzwl/exec"; 
     
+    // FIREBASE INITIALIZATION FOR CART SYNC
+    const firebaseConfig = {
+      apiKey: "AIzaSyDxvkFhrJBbij-XkJpQhg6vhzCgH7oaiwU",
+      authDomain: "mealplanner-e4954.firebaseapp.com",
+      databaseURL: "https://mealplanner-e4954-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "mealplanner-e4954",
+      storageBucket: "mealplanner-e4954.firebasestorage.app",
+      messagingSenderId: "366670326612",
+      appId: "1:366670326612:web:6c0f281616d05812f6b6c1"
+    };
+    firebase.initializeApp(firebaseConfig);
+    window.firebaseDb = firebase.database();
+
     let state = { grocery: [], savedMeals: [], globalMeals: [], currentSuggestions: [] };
-    
-    let appSettings = { diets: ['veg'], showInfo: false }; 
+    let appSettings = { diets: ['veg'], showInfo: false, partners: ['Swiggy', 'Blinkit'] }; 
     
     let pendingApprovals = []; let graveyard = []; let deckCache = {}; 
     let activeTab = 'plan'; let activeMasterCategory = 'All'; let isCartExpanded = false;
@@ -536,32 +589,52 @@
         
         let savesProcessing = pendingSaves; 
         const payload = state.grocery.filter(i => i.inCart);
-        let syncResolved = false;
         
-        fetch(GOOGLE_SHEETS_API_URL, {
-            method: 'POST', keepalive: true, body: JSON.stringify({ action: 'syncCart', cart: payload })
-        }).then(r => r.json()).then(res => {
-            syncResolved = true; 
+        // Push exclusively to Firebase Realtime DB (Live Cart Sync)
+        window.firebaseDb.ref('cart').set(payload).then(() => {
             pendingSaves = Math.max(0, pendingSaves - savesProcessing);
             if (pendingSaves > 0) queueCartSync(); 
         }).catch(e => {
-            syncResolved = true; 
             pendingSaves = Math.max(0, pendingSaves - savesProcessing);
-            showToast("Sync failed. Using offline cache.");
+            showToast("Sync lag. Using offline cache.");
             if (pendingSaves > 0) queueCartSync();
         });
-
-        setTimeout(() => {
-            if (!syncResolved) { 
-                pendingSaves = Math.max(0, pendingSaves - savesProcessing); 
-                showToast("Network lag. Unlocking interface."); 
-                if (pendingSaves > 0) queueCartSync();
-            }
-        }, DEADMAN_TIMEOUT);
     }
 
+    // FIREBASE REAL-TIME CART LISTENER
+    let isFirstFirebaseLoad = true;
+    window.firebaseDb.ref('cart').on('value', snap => {
+        const remoteCart = snap.val() || [];
+        
+        // Remove cart status from existing state
+        state.grocery.forEach(i => { i.inCart = false; });
+        
+        // Re-apply cart states or add new Ghost items
+        remoteCart.forEach(remoteItem => {
+            let localItem = state.grocery.find(i => i.name.toLowerCase() === remoteItem.name.toLowerCase());
+            if (localItem) {
+                localItem.inCart = true;
+                localItem.checked = remoteItem.checked;
+                localItem.mealContext = remoteItem.mealContext;
+                localItem.checkTime = remoteItem.checkTime;
+                localItem.fuzzyOriginal = remoteItem.fuzzyOriginal;
+                localItem.swappedFromPantry = remoteItem.swappedFromPantry;
+            } else {
+                state.grocery.push(remoteItem);
+            }
+        });
+        
+        // Prune Ghost items that are no longer active in cart
+        state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart));
+        
+        saveStateLocally();
+        if (activeTab === 'cart') renderCart();
+        
+        if (isFirstFirebaseLoad) isFirstFirebaseLoad = false;
+    });
+
     // ------------------------------------------------
-    // SYNC ISOLATION (Safe Background Updates)
+    // SYNC ISOLATION (Safe Background Updates for Google Sheets)
     // ------------------------------------------------
     function silentSync() {
         if (isShoppingActive) return; 
@@ -577,6 +650,7 @@
                 const newSaved = parsed.data.savedMeals || [];
                 const newGlobal = parsed.data.globalMeals || [];
                 
+                // Keep local active cart states intact when refreshing Master Pantry from Sheets
                 newGrocery.forEach(cloudItem => {
                     const localItem = state.grocery.find(i => i.name.toLowerCase() === cloudItem.name.toLowerCase());
                     if (localItem && localItem.inCart) {
@@ -1637,9 +1711,13 @@
     }
 
     function renderCategoryRibbon() {
-        document.getElementById('masterCategoryRibbon').innerHTML = getSortedCategories().map(cat => {
+        let html = getSortedCategories().map(cat => {
             return `<div class="filter-chip ${cat.id === '🔥 Top Picks' ? 'top-picks' : ''} ${activeMasterCategory === cat.id ? 'active' : ''}" onclick="setMasterCategory('${cat.id}')">${cat.label}</div>`;
         }).join('');
+        
+        // Append the Partner Button to the end of the ribbon
+        html += `<div class="filter-chip" onclick="openModal('partnerModal')">🛍️ Partners</div>`;
+        document.getElementById('masterCategoryRibbon').innerHTML = html;
     }
 
     function setMasterCategory(catId) { 
@@ -2051,19 +2129,27 @@
     }
 
     // ------------------------------------------------
-    // GUIDED SHOPPING
+    // GUIDED SHOPPING & PARTNERS
     // ------------------------------------------------
     let shoppingQueue = []; 
     let shoppingIndex = 0; 
-    let activePlatform = 'swiggy';
+    let activePlatform = 'Swiggy';
     let actuallyBought = []; 
     
     function launchShoppingApp(query, platform) {
         const encodedQuery = encodeURIComponent(query);
-        if (platform === 'swiggy') {
+        if (platform === 'Swiggy') {
             window.location.href = `swiggy://instamart/search?query=${encodedQuery}`;
-        } else {
+        } else if (platform === 'Blinkit') {
             window.location.href = `https://blinkit.com/s/?q=${encodedQuery}`;
+        } else if (platform === 'BigBasket') {
+            window.location.href = `https://www.bigbasket.com/ps/?q=${encodedQuery}`;
+        } else if (platform === 'Amazon Now') {
+            window.location.href = `https://www.amazon.in/s?k=${encodedQuery}`;
+        } else if (platform === 'Flipkart Minutes') {
+            window.location.href = `https://www.flipkart.com/search?q=${encodedQuery}`;
+        } else if (platform === 'Zepto') {
+            window.location.href = `https://www.zeptonow.com/search?q=${encodedQuery}`;
         }
     }
     
@@ -2123,6 +2209,41 @@
         }
     }
 
+    function bindPartnerCheckboxes() {
+        document.querySelectorAll('.partner-cb').forEach(cb => {
+            cb.checked = (appSettings.partners || []).includes(cb.value);
+            cb.addEventListener('change', (e) => {
+                if(e.target.checked) {
+                    if(!appSettings.partners.includes(e.target.value)) appSettings.partners.push(e.target.value);
+                } else {
+                    appSettings.partners = appSettings.partners.filter(p => p !== e.target.value);
+                }
+                queueLocalSave();
+                renderShoppingPartners();
+            });
+        });
+    }
+
+    function renderShoppingPartners() {
+        const container = document.getElementById('shoppingPartnersGrid');
+        if(!container) return;
+        const partners = appSettings.partners || ['Swiggy', 'Blinkit'];
+        
+        const configs = {
+            'Swiggy': { color: '#fc8019', textColor: '#fff', label: '🛒 Swiggy' },
+            'Blinkit': { color: '#f8cb46', textColor: '#000', label: '🛒 Blinkit' },
+            'BigBasket': { color: '#689f38', textColor: '#fff', label: '🛒 BigBasket' },
+            'Amazon Now': { color: '#008296', textColor: '#fff', label: '🛒 Amazon Now' },
+            'Flipkart Minutes': { color: '#ff3f6c', textColor: '#fff', label: '🛒 Flipkart' },
+            'Zepto': { color: '#3b0062', textColor: '#fff', label: '🛒 Zepto' }
+        };
+        
+        container.innerHTML = partners.map(p => {
+            const conf = configs[p] || { color: 'var(--color-primary)', textColor: 'var(--color-bg)', label: '🛒 ' + p };
+            return `<button class="primary-btn" style="background: ${conf.color}; color: ${conf.textColor}; font-size: 1.1rem; padding: 14px; border:none;" onclick="startGuidedShopping('${p}')">${conf.label}</button>`;
+        }).join('');
+    }
+
     function saveStateLocally() { 
         localStorage.setItem('mp_data_v17', JSON.stringify(state)); 
         localStorage.setItem('mp_settings', JSON.stringify(appSettings)); 
@@ -2145,9 +2266,15 @@
           appSettings.diets = ['veg'];
       }
       if (appSettings.showInfo === undefined) appSettings.showInfo = false;
+      if (!appSettings.partners || !Array.isArray(appSettings.partners) || appSettings.partners.length === 0) {
+          appSettings.partners = ['Swiggy', 'Blinkit'];
+      }
       
       renderDietStripUI();
       if (appSettings.showInfo) document.getElementById('infoToggleBtn').classList.add('active');
+      
+      bindPartnerCheckboxes();
+      renderShoppingPartners();
       
       try {
           const cached = localStorage.getItem('mp_data_v17');
@@ -2179,11 +2306,33 @@
       
       if (!GOOGLE_SHEETS_API_URL || GOOGLE_SHEETS_API_URL.includes("PASTE")) return;
       
+      // Fallback for Master List Pull - Note that active cart logic is now entirely driven by Firebase DB
       fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAllData' }) })
         .then(res => res.json())
         .then(parsed => {
             if (parsed.success && parsed.data) {
-                state.grocery = parsed.data.grocery || []; 
+                // Keep local cart states intact before merging
+                const fetchedGrocery = parsed.data.grocery || [];
+                fetchedGrocery.forEach(cloudItem => {
+                    const localItem = state.grocery.find(i => i.name.toLowerCase() === cloudItem.name.toLowerCase());
+                    if (localItem && localItem.inCart) {
+                        cloudItem.inCart = localItem.inCart;
+                        cloudItem.checked = localItem.checked;
+                        cloudItem.mealContext = localItem.mealContext;
+                        cloudItem.fuzzyOriginal = localItem.fuzzyOriginal;
+                        cloudItem.swappedFromPantry = localItem.swappedFromPantry;
+                        cloudItem.checkTime = localItem.checkTime;
+                    }
+                });
+                
+                const localGhosts = state.grocery.filter(i => i.category === 'Ghost');
+                localGhosts.forEach(g => {
+                    if (!fetchedGrocery.find(i => i.name.toLowerCase() === g.name.toLowerCase())) {
+                        fetchedGrocery.push(g);
+                    }
+                });
+
+                state.grocery = fetchedGrocery;
                 state.savedMeals = parsed.data.savedMeals || []; 
                 state.globalMeals = parsed.data.globalMeals || [];
                 saveStateLocally(); 
