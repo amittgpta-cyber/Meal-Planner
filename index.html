@@ -562,7 +562,10 @@
         if (mutationTimer) { clearTimeout(mutationTimer); mutationTimer = null; }
         
         let savesProcessing = pendingSaves; 
-        const payload = state.grocery.filter(i => i.inCart);
+        let payload = state.grocery.filter(i => i.inCart);
+        
+        // Sanitize payload to strip 'undefined' values before Firebase push
+        payload = JSON.parse(JSON.stringify(payload));
         
         // Push exclusively to Firebase Realtime DB (Live Cart Sync)
         window.firebaseDb.ref('cart').set(payload).then(() => {
@@ -2125,7 +2128,7 @@
             window.location.href = `https://www.bigbasket.com/ps/?q=${encodedQuery}`;
         } else if (platform === 'Amazon Now') {
             // Isolates the query exclusively inside Amazon Fresh/Now grocery layers
-            window.location.href = `https://www.amazon.in/s?k=${encodedQuery}&i=nowstore`;
+            window.location.href = `https://www.amazon.in/s?k=${encodedQuery}`;
         } else if (platform === 'Flipkart Minutes') {
             // Isolates the query exclusively inside local hyperlocal dark stores
             window.location.href = `https://www.flipkart.com/search?q=${encodedQuery}&marketplace=HYPERLOCAL`;
@@ -2234,8 +2237,8 @@
                 label: 'BigBasket',
                 svg: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px; height:24px;"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>`
             },
-            'Amazon Now': { color: '#008296', textColor: '#fff', useFavicon: true, domain: 'amazon.in', label: 'Amazon Now' },
-            'Flipkart Minutes': { color: '#ff3f6c', textColor: '#fff', useFavicon: true, domain: 'flipkart.com', label: 'Flipkart Minutes' },
+            'Amazon Now': { color: '#008296', textColor: '#fff', useFavicon: true, domain: 'amazon.in', label: 'Amazon' },
+            'Flipkart Minutes': { color: '#ff3f6c', textColor: '#fff', useFavicon: true, domain: 'flipkart.com', label: 'Flipkart' },
             'Zepto': { 
                 color: '#3b0062', 
                 textColor: '#fff', 
@@ -2256,7 +2259,7 @@
                 iconHtml = conf.svg;
             }
 
-            return `<button class="primary-btn" style="background: ${conf.color}; color: ${conf.textColor}; font-size: 1.1rem; padding: 14px; border:none; display:flex; align-items:center; justify-content:center; gap:10px;" onclick="startGuidedShopping('${p}')">
+            return `<button class="primary-btn" style="background: ${conf.color}; color: ${conf.textColor}; box-shadow: 0 4px 15px color-mix(in oklab, ${conf.color} 40%, transparent); font-size: 1.1rem; padding: 14px; border:none; display:flex; align-items:center; justify-content:center; gap:10px;" onclick="startGuidedShopping('${p}')">
                 ${iconHtml}
                 ${conf.label}
             </button>`;
