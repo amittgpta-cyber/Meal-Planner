@@ -243,6 +243,8 @@
         gap: 10px;
         margin-top: 30px;
         margin-bottom: 24px;
+        position: relative;
+        z-index: 10;
     }
     .partner-grid button:last-child:nth-child(odd) {
         grid-column: span 2;
@@ -2128,7 +2130,7 @@
         } else if (platform === 'BigBasket') {
             url = `https://www.bigbasket.com/ps/?q=${encodedQuery}`;
         } else if (platform === 'Amazon') {
-            url = `https://www.amazon.in/s?k=${encodedQuery}&i=amazonfresh`;
+            url = `https://www.amazon.in/s?k=${encodedQuery}`;
         } else if (platform === 'Flipkart') {
             url = `https://www.flipkart.com/search?q=${encodedQuery}&marketplace=HYPERLOCAL`;
         } else if (platform === 'Zepto') {
@@ -2136,7 +2138,14 @@
         }
         
         if (url) {
-            window.open(url, '_blank');
+            // Surgical Intent Launch via Temporary Native Anchor
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
     }
     
@@ -2292,6 +2301,17 @@
       if (appSettings.showInfo === undefined) appSettings.showInfo = false;
       if (!appSettings.partners || !Array.isArray(appSettings.partners) || appSettings.partners.length === 0) {
           appSettings.partners = ['Swiggy', 'Blinkit'];
+      }
+      
+      // Automatic configuration state cleanup to erase legacy array structures
+      if (appSettings.partners.includes('Amazon Now') || appSettings.partners.includes('Flipkart Minutes')) {
+          appSettings.partners = appSettings.partners.map(p => {
+              if (p === 'Amazon Now') return 'Amazon';
+              if (p === 'Flipkart Minutes') return 'Flipkart';
+              return p;
+          });
+          appSettings.partners = [...new Set(appSettings.partners)];
+          queueLocalSave();
       }
       
       renderDietStripUI();
