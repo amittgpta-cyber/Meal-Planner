@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -2120,23 +2121,21 @@
     
     function launchShoppingApp(query, platform) {
         const encodedQuery = encodeURIComponent(query);
-        let url = '';
         if (platform === 'Swiggy') {
-            url = `swiggy://instamart/search?query=${encodedQuery}`;
+            window.location.href = `swiggy://instamart/search?query=${encodedQuery}`;
         } else if (platform === 'Blinkit') {
-            url = `https://blinkit.com/s/?q=${encodedQuery}`;
+            window.location.href = `https://blinkit.com/s/?q=${encodedQuery}`;
         } else if (platform === 'BigBasket') {
-            url = `https://www.bigbasket.com/ps/?q=${encodedQuery}`;
-        } else if (platform === 'Amazon') {
-            url = `https://www.amazon.in/s?k=${encodedQuery}&i=amazonfresh`;
-        } else if (platform === 'Flipkart') {
-            url = `https://www.flipkart.com/search?q=${encodedQuery}&marketplace=HYPERLOCAL`;
+            window.location.href = `https://www.bigbasket.com/ps/?q=${encodedQuery}`;
+        } else if (platform === 'Amazon Now') {
+            // Isolates the query exclusively inside Amazon Fresh/Now grocery layers
+            window.location.href = `https://www.amazon.in/s?k=${encodedQuery}`;
+        } else if (platform === 'Flipkart Minutes') {
+            // Isolates the query exclusively inside local hyperlocal dark stores
+            window.location.href = `https://www.flipkart.com/search?q=${encodedQuery}&marketplace=HYPERLOCAL`;
         } else if (platform === 'Zepto') {
-            url = `https://www.zeptonow.com/search?query=${encodedQuery}`;
-        }
-        
-        if (url) {
-            window.open(url, '_blank');
+            // Uses the correct native tracking keyword hook parameter
+            window.location.href = `https://www.zeptonow.com/search?query=${encodedQuery}`;
         }
     }
     
@@ -2197,7 +2196,7 @@
     }
 
     function renderPartnerTogglesInline() {
-        const partnersList = ['Swiggy', 'Blinkit', 'BigBasket', 'Amazon', 'Flipkart', 'Zepto'];
+        const partnersList = ['Swiggy', 'Blinkit', 'BigBasket', 'Amazon Now', 'Flipkart Minutes', 'Zepto'];
         let html = '<div style="display:flex; flex-direction:column; gap:12px; padding-bottom: 20px;">';
         
         partnersList.forEach(p => {
@@ -2239,8 +2238,8 @@
                 label: 'BigBasket',
                 svg: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px; height:24px;"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>`
             },
-            'Amazon': { color: '#008296', textColor: '#fff', useFavicon: true, domain: 'amazon.in', label: 'Amazon' },
-            'Flipkart': { color: '#ff3f6c', textColor: '#fff', useFavicon: true, domain: 'flipkart.com', label: 'Flipkart' },
+            'Amazon Now': { color: '#008296', textColor: '#fff', useFavicon: true, domain: 'amazon.in', label: 'Amazon' },
+            'Flipkart Minutes': { color: '#ff3f6c', textColor: '#fff', useFavicon: true, domain: 'flipkart.com', label: 'Flipkart' },
             'Zepto': { 
                 color: '#3b0062', 
                 textColor: '#fff', 
