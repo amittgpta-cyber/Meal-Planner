@@ -194,7 +194,7 @@
     
     .filter-ribbon { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; margin-bottom: 8px; -ms-overflow-style: none; scrollbar-width: none; }
     .filter-ribbon::-webkit-scrollbar { display: none; }
-    .filter-chip { padding: 10px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-weight: 600; font-size: 0.9rem; color: var(--text); cursor: pointer; white-space: nowrap; transition: 0.2s var(--ease-fluid); }
+    .filter-chip { padding: 10px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-weight: 600; font-size: 0.9rem; color: var(--color-text); cursor: pointer; white-space: nowrap; transition: 0.2s var(--ease-fluid); }
     .filter-chip.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-bg); }
     .filter-chip.top-picks { border-color: #ffd700; color: #ffd700; }
     .filter-chip.top-picks.active { background: #ffd700; color: #000; }
@@ -2124,11 +2124,14 @@
         } else if (platform === 'BigBasket') {
             window.location.href = `https://www.bigbasket.com/ps/?q=${encodedQuery}`;
         } else if (platform === 'Amazon Now') {
-            window.location.href = `https://www.amazon.in/s?k=${encodedQuery}`;
+            // Isolates the query exclusively inside Amazon Fresh/Now grocery layers
+            window.location.href = `https://www.amazon.in/s?k=${encodedQuery}&i=nowstore`;
         } else if (platform === 'Flipkart Minutes') {
-            window.location.href = `https://www.flipkart.com/search?q=${encodedQuery}`;
+            // Isolates the query exclusively inside local hyperlocal dark stores
+            window.location.href = `https://www.flipkart.com/search?q=${encodedQuery}&marketplace=HYPERLOCAL`;
         } else if (platform === 'Zepto') {
-            window.location.href = `https://www.zeptonow.com/search?q=${encodedQuery}`;
+            // Uses the correct native tracking keyword hook parameter
+            window.location.href = `https://www.zeptonow.com/search?query=${encodedQuery}`;
         }
     }
     
@@ -2222,19 +2225,39 @@
         const partners = appSettings.partners || ['Swiggy', 'Blinkit'];
         
         const configs = {
-            'Swiggy': { color: '#fc8019', textColor: '#fff', domain: 'swiggy.com', label: 'Swiggy' },
-            'Blinkit': { color: '#f8cb46', textColor: '#000', domain: 'blinkit.com', label: 'Blinkit' },
-            'BigBasket': { color: '#689f38', textColor: '#fff', domain: 'bigbasket.com', label: 'BigBasket' },
-            'Amazon Now': { color: '#008296', textColor: '#fff', domain: 'amazon.in', label: 'Amazon' },
-            'Flipkart Minutes': { color: '#ff3f6c', textColor: '#fff', domain: 'flipkart.com', label: 'Flipkart' },
-            'Zepto': { color: '#3b0062', textColor: '#fff', domain: 'zeptonow.com', label: 'Zepto' }
+            'Swiggy': { color: '#fc8019', textColor: '#fff', useFavicon: true, domain: 'swiggy.com', label: 'Swiggy' },
+            'Blinkit': { color: '#f8cb46', textColor: '#000', useFavicon: true, domain: 'blinkit.com', label: 'Blinkit' },
+            'BigBasket': { 
+                color: '#689f38', 
+                textColor: '#fff', 
+                useFavicon: false, 
+                label: 'BigBasket',
+                svg: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:24px; height:24px;"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>`
+            },
+            'Amazon Now': { color: '#008296', textColor: '#fff', useFavicon: true, domain: 'amazon.in', label: 'Amazon Now' },
+            'Flipkart Minutes': { color: '#ff3f6c', textColor: '#fff', useFavicon: true, domain: 'flipkart.com', label: 'Flipkart Minutes' },
+            'Zepto': { 
+                color: '#3b0062', 
+                textColor: '#fff', 
+                useFavicon: false, 
+                label: 'Zepto',
+                svg: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:24px; height:24px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`
+            }
         };
         
         container.innerHTML = partners.map(p => {
-            const conf = configs[p] || { color: 'var(--color-primary)', textColor: 'var(--color-bg)', domain: 'google.com', label: p };
-            const faviconUrl = `https://www.google.com/s2/favicons?domain=${conf.domain}&sz=64`;
+            const conf = configs[p] || { color: 'var(--color-primary)', textColor: 'var(--color-bg)', useFavicon: true, domain: 'google.com', label: p };
+            
+            let iconHtml = '';
+            if (conf.useFavicon) {
+                const faviconUrl = `https://www.google.com/s2/favicons?domain=${conf.domain}&sz=64`;
+                iconHtml = `<img src="${faviconUrl}" alt="${p}" style="width:24px; height:24px; border-radius:4px; background:transparent; object-fit:contain; flex-shrink:0;">`;
+            } else {
+                iconHtml = conf.svg;
+            }
+
             return `<button class="primary-btn" style="background: ${conf.color}; color: ${conf.textColor}; font-size: 1.1rem; padding: 14px; border:none; display:flex; align-items:center; justify-content:center; gap:10px;" onclick="startGuidedShopping('${p}')">
-                <img src="${faviconUrl}" alt="${p}" style="width:24px; height:24px; border-radius:4px; background:transparent; object-fit:contain;">
+                ${iconHtml}
                 ${conf.label}
             </button>`;
         }).join('');
