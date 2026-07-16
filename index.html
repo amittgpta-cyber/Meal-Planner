@@ -163,7 +163,7 @@
     .list-item-row.dimmed { opacity: 0.45; background: transparent; }
     .list-item-left { display: flex; align-items: center; gap: 16px; flex: 1; cursor: pointer; padding-right: 12px; }
     .checkbox { width: 24px; height: 24px; border: 2px solid var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: transparent; transition: 0.2s var(--ease-fluid); flex-shrink: 0; font-weight: bold; }
-    .list-item-row.checked .checkbox { background: var(--color-primary); color: var(--color-bg); }
+    .list-item-row.checked .checkbox { background: var(--color-primary); color: var(--color-bg); border-color: var(--color-primary); }
     .item-name { font-size: 1.125rem; font-weight: 600; text-transform: capitalize; color: var(--color-text); }
     .trash-btn { background: none; border: none; font-size: 1.25rem; color: var(--color-error); padding: 8px; border-radius: 50%; cursor: pointer; transition: transform 0.2s var(--ease-fluid); }
     .trash-btn:active, .list-item-left:active { transform: scale(0.97); }
@@ -194,7 +194,7 @@
     
     .filter-ribbon { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 8px; margin-bottom: 8px; -ms-overflow-style: none; scrollbar-width: none; }
     .filter-ribbon::-webkit-scrollbar { display: none; }
-    .filter-chip { padding: 10px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-weight: 600; font-size: 0.9rem; color: var(--color-text); cursor: pointer; white-space: nowrap; transition: 0.2s var(--ease-fluid); }
+    .filter-chip { padding: 10px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface-2); font-weight: 600; font-size: 0.9rem; color: var(--text); cursor: pointer; white-space: nowrap; transition: 0.2s var(--ease-fluid); }
     .filter-chip.active { background: var(--color-primary); border-color: var(--color-primary); color: var(--color-bg); }
     .filter-chip.top-picks { border-color: #ffd700; color: #ffd700; }
     .filter-chip.top-picks.active { background: #ffd700; color: #000; }
@@ -246,14 +246,6 @@
     }
     .partner-grid button:last-child:nth-child(odd) {
         grid-column: span 2;
-    }
-    
-    .partner-cb-label {
-        display: flex; align-items: center; gap: 12px; font-size: 1.1rem;
-        padding: 12px; background: var(--color-surface-2); border-radius: 1rem; border: 1px solid var(--color-border); cursor: pointer;
-    }
-    .partner-cb-label input {
-        width: 20px; height: 20px; accent-color: var(--color-primary); cursor: pointer;
     }
   </style>
 </head>
@@ -355,24 +347,6 @@
         <button class="primary-btn" style="background:var(--color-success); border-radius: 1.5rem; padding: 18px;" onclick="markFoundAndNext()">✓ Found (Next)</button>
         <button class="ghost-btn" style="border-radius: 1.5rem; padding: 18px; border-color: var(--color-error); color: var(--color-error);" onclick="markNotFoundAndNext()">✕ Not Found (Keep in list)</button>
     </div>
-  </div>
-
-  <!-- SHOPPING PARTNERS MODAL -->
-  <div class="modal" id="partnerModal">
-    <section class="dialog" style="max-width: 350px;">
-      <div class="dialog-head">
-        <h4 style="font-family: var(--font-display); font-size: 1.25rem;">Shopping Partners</h4>
-        <button class="icon-btn" style="border-radius: 50%; width:32px; height:32px;" onclick="closeModal('partnerModal')">✕</button>
-      </div>
-      <div class="dialog-body" style="padding: 20px; display:flex; flex-direction:column; gap:12px;">
-        <label class="partner-cb-label"><input type="checkbox" value="Swiggy" class="partner-cb"> Swiggy Instamart</label>
-        <label class="partner-cb-label"><input type="checkbox" value="Blinkit" class="partner-cb"> Blinkit</label>
-        <label class="partner-cb-label"><input type="checkbox" value="BigBasket" class="partner-cb"> BigBasket</label>
-        <label class="partner-cb-label"><input type="checkbox" value="Amazon Now" class="partner-cb"> Amazon Now</label>
-        <label class="partner-cb-label"><input type="checkbox" value="Flipkart Minutes" class="partner-cb"> Flipkart Minutes</label>
-        <label class="partner-cb-label"><input type="checkbox" value="Zepto" class="partner-cb"> Zepto</label>
-      </div>
-    </section>
   </div>
 
   <div class="modal" id="ghostPromoteModal">
@@ -1716,7 +1690,7 @@
         }).join('');
         
         // Append the Partner Button to the end of the ribbon
-        html += `<div class="filter-chip" onclick="openModal('partnerModal')">🛍️ Partners</div>`;
+        html += `<div class="filter-chip ${activeMasterCategory === 'Partners' ? 'active' : ''}" onclick="setMasterCategory('Partners')">🛍️ Partners</div>`;
         document.getElementById('masterCategoryRibbon').innerHTML = html;
     }
 
@@ -1731,6 +1705,11 @@
     }
 
     function filterMasterList() {
+        if (activeMasterCategory === 'Partners') {
+            renderPartnerTogglesInline();
+            return;
+        }
+
         const term = document.getElementById('masterSearchInput').value.trim();
         let filtered = state.grocery.filter(item => {
             if (item.category === 'Ghost') return false; 
@@ -2209,19 +2188,32 @@
         }
     }
 
-    function bindPartnerCheckboxes() {
-        document.querySelectorAll('.partner-cb').forEach(cb => {
-            cb.checked = (appSettings.partners || []).includes(cb.value);
-            cb.addEventListener('change', (e) => {
-                if(e.target.checked) {
-                    if(!appSettings.partners.includes(e.target.value)) appSettings.partners.push(e.target.value);
-                } else {
-                    appSettings.partners = appSettings.partners.filter(p => p !== e.target.value);
-                }
-                queueLocalSave();
-                renderShoppingPartners();
-            });
+    function renderPartnerTogglesInline() {
+        const partnersList = ['Swiggy', 'Blinkit', 'BigBasket', 'Amazon Now', 'Flipkart Minutes', 'Zepto'];
+        let html = '<div style="display:flex; flex-direction:column; gap:12px; padding-bottom: 20px;">';
+        
+        partnersList.forEach(p => {
+            const isChecked = (appSettings.partners || []).includes(p);
+            html += `
+            <label class="list-item-row ${isChecked ? 'checked' : ''}" style="cursor: pointer; margin-bottom: 0; display: flex; align-items: center; justify-content: flex-start; padding: 16px;">
+                <input type="checkbox" value="${p}" style="display:none;" ${isChecked ? 'checked' : ''} onchange="handlePartnerToggle(this)">
+                <div class="checkbox" style="margin-right: 16px; transition: 0.2s; ${isChecked ? 'background: var(--color-primary); color: var(--color-bg); border-color: var(--color-primary);' : ''}">${isChecked ? '✓' : ''}</div>
+                <div class="item-name">${p}</div>
+            </label>`;
         });
+        html += '</div>';
+        document.getElementById('ml-content').innerHTML = html;
+    }
+
+    function handlePartnerToggle(checkbox) {
+        if(checkbox.checked) {
+            if(!appSettings.partners.includes(checkbox.value)) appSettings.partners.push(checkbox.value);
+        } else {
+            appSettings.partners = appSettings.partners.filter(p => p !== checkbox.value);
+        }
+        queueLocalSave();
+        renderShoppingPartners();
+        renderPartnerTogglesInline(); 
     }
 
     function renderShoppingPartners() {
@@ -2230,17 +2222,21 @@
         const partners = appSettings.partners || ['Swiggy', 'Blinkit'];
         
         const configs = {
-            'Swiggy': { color: '#fc8019', textColor: '#fff', label: '🛒 Swiggy' },
-            'Blinkit': { color: '#f8cb46', textColor: '#000', label: '🛒 Blinkit' },
-            'BigBasket': { color: '#689f38', textColor: '#fff', label: '🛒 BigBasket' },
-            'Amazon Now': { color: '#008296', textColor: '#fff', label: '🛒 Amazon Now' },
-            'Flipkart Minutes': { color: '#ff3f6c', textColor: '#fff', label: '🛒 Flipkart' },
-            'Zepto': { color: '#3b0062', textColor: '#fff', label: '🛒 Zepto' }
+            'Swiggy': { color: '#fc8019', textColor: '#fff', domain: 'swiggy.com', label: 'Swiggy' },
+            'Blinkit': { color: '#f8cb46', textColor: '#000', domain: 'blinkit.com', label: 'Blinkit' },
+            'BigBasket': { color: '#689f38', textColor: '#fff', domain: 'bigbasket.com', label: 'BigBasket' },
+            'Amazon Now': { color: '#008296', textColor: '#fff', domain: 'amazon.in', label: 'Amazon' },
+            'Flipkart Minutes': { color: '#ff3f6c', textColor: '#fff', domain: 'flipkart.com', label: 'Flipkart' },
+            'Zepto': { color: '#3b0062', textColor: '#fff', domain: 'zeptonow.com', label: 'Zepto' }
         };
         
         container.innerHTML = partners.map(p => {
-            const conf = configs[p] || { color: 'var(--color-primary)', textColor: 'var(--color-bg)', label: '🛒 ' + p };
-            return `<button class="primary-btn" style="background: ${conf.color}; color: ${conf.textColor}; font-size: 1.1rem; padding: 14px; border:none;" onclick="startGuidedShopping('${p}')">${conf.label}</button>`;
+            const conf = configs[p] || { color: 'var(--color-primary)', textColor: 'var(--color-bg)', domain: 'google.com', label: p };
+            const faviconUrl = `https://www.google.com/s2/favicons?domain=${conf.domain}&sz=64`;
+            return `<button class="primary-btn" style="background: ${conf.color}; color: ${conf.textColor}; font-size: 1.1rem; padding: 14px; border:none; display:flex; align-items:center; justify-content:center; gap:10px;" onclick="startGuidedShopping('${p}')">
+                <img src="${faviconUrl}" alt="${p}" style="width:24px; height:24px; border-radius:4px; background:transparent; object-fit:contain;">
+                ${conf.label}
+            </button>`;
         }).join('');
     }
 
@@ -2273,7 +2269,6 @@
       renderDietStripUI();
       if (appSettings.showInfo) document.getElementById('infoToggleBtn').classList.add('active');
       
-      bindPartnerCheckboxes();
       renderShoppingPartners();
       
       try {
