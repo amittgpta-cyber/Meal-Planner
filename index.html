@@ -212,7 +212,7 @@
     .guided-overlay.active { display: flex; }
     .shopping-progress { color: var(--color-text-muted); font-size: 16px; margin-bottom: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
     
-    .shopping-item-name-container { min-height: 100px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 30px; }
+    .shopping-item-name-container { min-height: 100px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 30px; transition: opacity 0.2s var(--ease-fluid); }
     .shopping-item-name { font-size: 36px; font-weight: bold; color: var(--color-text); text-transform: capitalize; font-family: var(--font-display); line-height: 1.2; margin: 0; }
     
     .close-shopping { position: absolute; top: 40px; right: 24px; font-size: 24px; color: var(--color-text-muted); background: none; border: none; cursor: pointer; transition: transform 0.2s var(--ease-fluid); }
@@ -347,7 +347,7 @@
     <button class="close-shopping" onclick="closeGuidedShopping()">✕</button>
     <div class="shopping-progress" id="shopping-progress">Item 1 of X</div>
     
-    <div class="shopping-item-name-container">
+    <div class="shopping-item-name-container" id="shopping-item-name-container">
         <div class="shopping-item-name" id="shopping-item-name">Item Name</div>
     </div>
     
@@ -589,6 +589,9 @@
     // FIREBASE REAL-TIME CART LISTENER
     let isFirstFirebaseLoad = true;
     window.firebaseDb.ref('cart').on('value', snap => {
+        // Safe-guard to prevent remote data from destructively resurrecting active cart states mid-sync
+        if (pendingSaves > 0 || isShoppingActive) return; 
+
         const remoteCart = snap.val() || [];
         
         // Remove cart status from existing state
@@ -2144,7 +2147,17 @@
         }
         
         if (url) {
-            window.location.href = url;
+            if (platform === 'Zepto') {
+                window.location.href = url;
+            } else {
+                const a = document.createElement('a');
+                a.href = url;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
         }
     }
     
@@ -2173,14 +2186,24 @@
       document.getElementById('shopping-item-name').innerText = escapeHtml(shoppingQueue[shoppingIndex].name);
     }
 
-    function stealthUpdateGuidedUI() {
-        const onHidden = () => {
-            if (document.hidden) {
-                updateGuidedUI();
-                document.removeEventListener('visibilitychange', onHidden);
+    // The Jitter/Ghost-Text Kill Switch: Instant Hide -> Launch App -> Update Text Invisibly -> Fade in on Return
+    function nextItemTransition(launchFn) {
+        const container = document.getElementById('shopping-item-name-container');
+        if (container) container.style.opacity = '0';
+        
+        launchFn();
+        
+        setTimeout(() => {
+            updateGuidedUI();
+        }, 150);
+
+        const onReturn = () => {
+            if (!document.hidden) {
+                if (container) container.style.opacity = '1';
+                document.removeEventListener('visibilitychange', onReturn);
             }
         };
-        document.addEventListener('visibilitychange', onHidden);
+        document.addEventListener('visibilitychange', onReturn);
     }
     
     function markFoundAndNext() {
@@ -2198,8 +2221,9 @@
       if(shoppingIndex >= shoppingQueue.length) { 
           closeGuidedShopping(); 
       } else { 
-          launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
-          stealthUpdateGuidedUI();
+          nextItemTransition(() => {
+              launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
+          });
       }
     }
     
@@ -2207,8 +2231,9 @@
       shoppingIndex++;
       if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); } 
       else { 
-          launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
-          stealthUpdateGuidedUI();
+          nextItemTransition(() => {
+              launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
+          });
       }
     }
     
