@@ -340,8 +340,7 @@
   <div class="guided-overlay" id="guided-overlay">
     <button class="close-shopping" onclick="closeGuidedShopping()">✕</button>
     
-    <div id="shopping-countdown" style="font-family: var(--font-display); font-size: 6rem; font-weight: 700; line-height: 1; color: var(--color-text); margin-bottom: 0;"></div>
-    <div id="shopping-partner-name" style="font-size: 1.2rem; font-weight: bold; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 40px;"></div>
+    <div id="shopping-countdown" style="font-family: var(--font-display); font-size: 8rem; font-weight: 700; line-height: 1; color: var(--color-text); margin-bottom: 40px;"></div>
     
     <div style="display:flex; flex-direction:column; gap:10px; width: 100%; max-width: 350px;">
         <button class="primary-btn" style="background:var(--color-success); border-radius: 1.5rem; padding: 18px;" onclick="markFoundAndNext()">✓ Found</button>
@@ -2100,7 +2099,7 @@
         const encodedQuery = encodeURIComponent(query);
         let url = '';
         if (platform === 'Swiggy') {
-            url = `swiggy://instamart/search?query=${encodedQuery}`;
+            url = `https://www.swiggy.com/instamart/search?query=${encodedQuery}`;
         } else if (platform === 'Blinkit') {
             url = `https://blinkit.com/s/?q=${encodedQuery}`;
         } else if (platform === 'BigBasket') {
@@ -2128,7 +2127,7 @@
       shoppingIndex = 0; 
       actuallyBought = [];
       
-      // Scroll locking instead of display:none to prevent layout bounds reflow
+      // Scroll locking to prevent layout bounds reflow without erasing DOM
       document.body.style.overflow = 'hidden';
       
       updateGuidedUI(); 
@@ -2139,7 +2138,6 @@
     function updateGuidedUI() {
       const itemsLeft = shoppingQueue.length - shoppingIndex;
       document.getElementById('shopping-countdown').innerText = itemsLeft;
-      document.getElementById('shopping-partner-name').innerText = activePlatform.toUpperCase();
     }
     
     function markFoundAndNext() {
