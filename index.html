@@ -208,10 +208,13 @@
     .review-queue-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--color-surface-2); border-radius: 1rem; justify-content: space-between; }
     .review-queue-item select { padding: 6px; border-radius: 8px; background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border); font-family: var(--font-body); font-weight: bold; height: 36px; }
     
-    .guided-overlay { position: fixed; inset: 0; background: var(--color-bg); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s var(--ease-fluid); padding: 24px; text-align: center; }
-    .guided-overlay.active { opacity: 1; pointer-events: auto; }
+    .guided-overlay { position: fixed; inset: 0; background: var(--color-bg); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+    .guided-overlay.active { display: flex; }
     .shopping-progress { color: var(--color-text-muted); font-size: 16px; margin-bottom: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
-    .shopping-item-name { font-size: 36px; font-weight: bold; margin-bottom: 48px; color: var(--color-text); text-transform: capitalize; font-family: var(--font-display); }
+    
+    .shopping-item-name-container { min-height: 100px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 30px; }
+    .shopping-item-name { font-size: 36px; font-weight: bold; color: var(--color-text); text-transform: capitalize; font-family: var(--font-display); line-height: 1.2; margin: 0; }
+    
     .close-shopping { position: absolute; top: 40px; right: 24px; font-size: 24px; color: var(--color-text-muted); background: none; border: none; cursor: pointer; transition: transform 0.2s var(--ease-fluid); }
     .close-shopping:active { transform: scale(0.8); }
     
@@ -344,7 +347,11 @@
   <div class="guided-overlay" id="guided-overlay">
     <button class="close-shopping" onclick="closeGuidedShopping()">✕</button>
     <div class="shopping-progress" id="shopping-progress">Item 1 of X</div>
-    <div class="shopping-item-name" id="shopping-item-name">Item Name</div>
+    
+    <div class="shopping-item-name-container">
+        <div class="shopping-item-name" id="shopping-item-name">Item Name</div>
+    </div>
+    
     <div style="display:flex; flex-direction:column; gap:10px; width: 100%; max-width: 350px;">
         <button class="primary-btn" style="background:var(--color-success); border-radius: 1.5rem; padding: 18px;" onclick="markFoundAndNext()">✓ Found (Next)</button>
         <button class="ghost-btn" style="border-radius: 1.5rem; padding: 18px; border-color: var(--color-error); color: var(--color-error);" onclick="markNotFoundAndNext()">✕ Not Found (Keep in list)</button>
@@ -2127,19 +2134,15 @@
         let url = '';
         if (platform === 'Swiggy') {
             url = `swiggy://instamart/search?query=${encodedQuery}`;
+            window.location.href = url;
         } else if (platform === 'Blinkit') {
             url = `https://blinkit.com/s/?q=${encodedQuery}`;
+            window.location.href = url;
         } else if (platform === 'BigBasket') {
             url = `https://www.bigbasket.com/ps/?q=${encodedQuery}`;
+            window.location.href = url;
         } else if (platform === 'Amazon') {
             url = `https://www.amazon.in/s?k=${encodedQuery}`;
-        } else if (platform === 'Flipkart') {
-            url = `https://www.flipkart.com/search?q=${encodedQuery}&marketplace=HYPERLOCAL`;
-        } else if (platform === 'Zepto') {
-            url = `intent://www.zeptonow.com/search?query=${encodedQuery}#Intent;scheme=https;package=com.zeptolab.zepto;end;`;
-        }
-        
-        if (url) {
             // Surgical Intent Launch via Temporary Native Anchor
             const a = document.createElement('a');
             a.href = url;
@@ -2148,6 +2151,12 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+        } else if (platform === 'Flipkart') {
+            url = `https://www.flipkart.com/search?q=${encodedQuery}&marketplace=HYPERLOCAL`;
+            window.location.href = url;
+        } else if (platform === 'Zepto') {
+            url = `https://www.zeptonow.com/search?query=${encodedQuery}`;
+            window.location.href = url;
         }
     }
     
@@ -2186,14 +2195,22 @@
           closeGuidedShopping(); 
       } else { 
           updateGuidedUI(); 
-          launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
+          // 300ms delay to allow UI to visually paint the text update before hijacking the window location
+          setTimeout(() => {
+              launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
+          }, 300);
       }
     }
     
     function markNotFoundAndNext() {
       shoppingIndex++;
       if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); } 
-      else { updateGuidedUI(); launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform); }
+      else { 
+          updateGuidedUI(); 
+          setTimeout(() => {
+              launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
+          }, 300);
+      }
     }
     
     function closeGuidedShopping() { 
