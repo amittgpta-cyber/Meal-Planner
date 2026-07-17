@@ -159,9 +159,9 @@
     .cart-tools input { flex: 1; padding: 14px 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); font-size: 1rem; color: var(--color-text); transition: 0.2s; min-width: 0; height: 56px; }
     .cart-tools select { flex: 0 0 100px; width: 100px; padding: 0 8px; height: 56px; border-radius: 1.5rem; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-family: var(--font-body); font-size: 0.85rem; -webkit-appearance: none; appearance: none; outline: none; text-overflow: ellipsis; }
     
-    .list-item-row { display: flex; align-items: center; justify-content: space-between; background: var(--color-surface); padding: 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); margin-bottom: 12px; transition: transform 0.2s var(--ease-fluid), opacity 0.3s; width: 100%; }
+    .list-item-row { display: flex; align-items: center; justify-content: space-between; background: var(--color-surface); padding: 16px; border-radius: 1.5rem; border: 1px solid var(--color-border); margin-bottom: 12px; transition: transform 0.2s var(--ease-fluid), opacity 0.3s; width: 100%; cursor: pointer; }
     .list-item-row.dimmed { opacity: 0.45; background: transparent; }
-    .list-item-left { display: flex; align-items: center; gap: 16px; flex: 1; cursor: pointer; padding-right: 12px; }
+    .list-item-left { display: flex; align-items: center; gap: 16px; flex: 1; padding-right: 12px; }
     .checkbox { width: 24px; height: 24px; border: 2px solid var(--color-primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: transparent; transition: 0.2s var(--ease-fluid); flex-shrink: 0; font-weight: bold; }
     .list-item-row.checked .checkbox { background: var(--color-primary); color: var(--color-bg); border-color: var(--color-primary); }
     .item-name { font-size: 1.125rem; font-weight: 600; text-transform: capitalize; color: var(--color-text); }
@@ -607,7 +607,7 @@
         state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart));
         
         saveStateLocally();
-        if (activeTab === 'cart') renderCart();
+        if (activeTab === 'cart' && !isShoppingActive) renderCart();
         
         if (isFirstFirebaseLoad) isFirstFirebaseLoad = false;
     });
@@ -655,7 +655,7 @@
                 saveStateLocally();
                 
                 populateCategoryDropdowns();
-                if (activeTab === 'cart') renderCart();
+                if (activeTab === 'cart' && !isShoppingActive) renderCart();
                 const activeBtn = document.querySelector('.stat-btn.active');
                 if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
                 updateCookbookStats();
@@ -680,7 +680,7 @@
                 state.globalMeals = parsed.data.globalMeals || [];
                 saveStateLocally(); 
                 populateCategoryDropdowns(); 
-                if (activeTab === 'cart') renderCart();
+                if (activeTab === 'cart' && !isShoppingActive) renderCart();
                 const activeBtn = document.querySelector('.stat-btn.active');
                 if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
                 updateCookbookStats();
@@ -942,7 +942,7 @@
                 item.mealContext = '';
                 delete item.checkTime;
                 if(item.category === 'Ghost') state.grocery.splice(idx, 1);
-                renderCart(); 
+                if (!isShoppingActive) renderCart(); 
                 queueLocalSave(); 
                 queueCartSync();
             } else if (context === 'master') {
@@ -969,7 +969,7 @@
             } else { 
                 state.grocery.push(last.item); 
             }
-            renderCart(); 
+            if (!isShoppingActive) renderCart(); 
             queueLocalSave(); 
             queueCartSync();
         } else if (last.context === 'master') {
@@ -1360,7 +1360,7 @@
             showToast(`${name} permanently saved.`);
         }
         
-        renderCart(); 
+        if (!isShoppingActive) renderCart(); 
         queueLocalSave(); 
         queueCartSync();
         closeModal('ghostPromoteModal');
@@ -1445,7 +1445,7 @@
             }
         });
         
-        renderCart(); 
+        if (!isShoppingActive) renderCart(); 
         queueLocalSave(); 
         queueCartSync();
         if (activeTab !== 'cart') toggleMainView();
@@ -1488,7 +1488,7 @@
             }
         }
         
-        renderCart(); 
+        if (!isShoppingActive) renderCart(); 
         queueLocalSave(); 
         queueCartSync();
     }
@@ -1511,7 +1511,7 @@
         });
         state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart));
         if (hasChanges) {
-            renderCart();
+            if (!isShoppingActive) renderCart();
             queueLocalSave();
             queueCartSync();
         }
@@ -1580,12 +1580,12 @@
               let swapHtml = hasSwap ? `<button class="ghost-btn" style="border:none; padding:8px; font-size: 1.1rem;" onclick="executeSwap('${jsSafeName}')">🔀</button>` : '';
 
               html += `
-              <div class="list-item-row ${item.checked ? 'checked' : 'dimmed'}" id="cart-row-${btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '')}">
-                <div class="list-item-left" onclick="toggleCartItem('${jsSafeName}')">
+              <div class="list-item-row ${item.checked ? 'checked' : 'dimmed'}" id="cart-row-${btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '')}" onclick="toggleCartItem('${jsSafeName}')">
+                <div class="list-item-left" style="pointer-events: none;">
                     <div class="checkbox">${item.checked ? '✓' : ''}</div>
                     <div><div class="item-name">${safeName}</div></div>
                 </div>
-                <div style="display:flex; align-items:center; gap: 8px;">
+                <div style="display:flex; align-items:center; gap: 8px;" onclick="event.stopPropagation();">
                     ${swapHtml}
                     ${isGhost ? `<button class="ghost-btn" style="border:none; padding:8px;" onclick="promoteGhostItem('${jsSafeName}')">💾</button>` : ''}
                     <button class="trash-btn" onclick="executeSoftDelete('cart', '${jsSafeName}')">
@@ -1610,7 +1610,7 @@
             } else {
                 delete item.checkTime;
             }
-            renderCart();
+            if (!isShoppingActive) renderCart();
             queueLocalSave(); 
             queueCartSync();
         }
@@ -1625,7 +1625,9 @@
         });
         state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart)); 
         if(hasChanges) { 
-            renderCart(); queueLocalSave(); queueCartSync(); 
+            if (!isShoppingActive) renderCart(); 
+            queueLocalSave(); 
+            queueCartSync(); 
         }
     }
     
@@ -1644,7 +1646,7 @@
             state.grocery.unshift({name: name, count: 0, lastOrdered:'', category: category, inCart: true, checked: true, checkTime: Date.now(), mealContext: ''}); 
         }
         document.getElementById('manualCartAdd').value = ''; 
-        renderCart(); 
+        if (!isShoppingActive) renderCart(); 
         queueLocalSave(); 
         queueCartSync();
         if(!existing || existing.category === 'Ghost') {
@@ -1739,14 +1741,14 @@
             const jsSafeName = escapeJsArg(item.name);
 
             return `
-            <div class="list-item-row ${item.inCart ? 'checked' : ''}">
-                <div class="list-item-left" onclick="toggleMasterItem('${jsSafeName}', this.parentElement)">
+            <div class="list-item-row ${item.inCart ? 'checked' : ''}" onclick="toggleMasterItem('${jsSafeName}', this)">
+                <div class="list-item-left" style="pointer-events: none;">
                     <div>
                         <div class="item-name">${safeName}</div>
                         ${subTextHtml}
                     </div>
                 </div>
-                <div style="display:flex; align-items:center; gap: 8px;">
+                <div style="display:flex; align-items:center; gap: 8px;" onclick="event.stopPropagation();">
                     <select onchange="editMasterItem('${jsSafeName}', this.value)" style="background:transparent; color:inherit; border:none; padding:4px; font-size:1.1rem; width:32px; -webkit-appearance:none; appearance:none; outline:none; direction:rtl; cursor:pointer;">
                         <option value="" disabled selected>✏️</option>${catOptions}
                     </select>
@@ -1774,7 +1776,7 @@
               rowElement.className = `list-item-row ${item.inCart ? 'checked' : ''}`;
           }
       }
-      renderCart(); 
+      if (!isShoppingActive) renderCart(); 
       queueLocalSave(); 
       queueCartSync();
     }
@@ -2134,7 +2136,7 @@
         } else if (platform === 'Flipkart') {
             url = `https://www.flipkart.com/search?q=${encodedQuery}&marketplace=HYPERLOCAL`;
         } else if (platform === 'Zepto') {
-            url = `https://www.zeptonow.com/search?query=${encodedQuery}`;
+            url = `intent://www.zeptonow.com/search?query=${encodedQuery}#Intent;scheme=https;package=com.zeptolab.zepto;end;`;
         }
         
         if (url) {
@@ -2380,7 +2382,10 @@
                 state.globalMeals = parsed.data.globalMeals || [];
                 saveStateLocally(); 
                 populateCategoryDropdowns(); 
-                renderCart();
+                if (activeTab === 'cart' && !isShoppingActive) renderCart();
+                const activeBtn = document.querySelector('.stat-btn.active');
+                if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
+                updateCookbookStats();
             }
         }).catch(e => {  });
     }
