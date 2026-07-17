@@ -624,6 +624,55 @@
     // ------------------------------------------------
     // SYNC ISOLATION (Safe Background Updates for Google Sheets)
     // ------------------------------------------------
+    //
+    // Single source of truth for applying data pulled from the Sheets master list.
+    // The master list from Sheets is NOT the live cart (the live cart lives in Firebase and
+    // in local state) - it's the pantry/recipe catalogue. Any code path that pulls this data
+    // must merge it on top of local cart state rather than overwrite state.grocery wholesale,
+    // or any item currently checked into the cart (but not yet reflected upstream) gets silently
+    // dropped. This used to only happen in silentSync(); manualSync() (the refresh button) and
+    // init() skipped it and overwrote the cart outright - that was the "refresh flushes my cart" bug.
+    function applyCloudData(parsed) {
+        if (!(parsed && parsed.success && parsed.data)) return false;
+
+        const newGrocery = parsed.data.grocery || [];
+        const newSaved = parsed.data.savedMeals || [];
+        const newGlobal = parsed.data.globalMeals || [];
+
+        // Keep local active cart states intact when refreshing the Master Pantry from Sheets
+        newGrocery.forEach(cloudItem => {
+            const localItem = state.grocery.find(i => i.name.toLowerCase() === cloudItem.name.toLowerCase());
+            if (localItem && localItem.inCart) {
+                cloudItem.inCart = localItem.inCart;
+                cloudItem.checked = localItem.checked;
+                cloudItem.mealContext = localItem.mealContext;
+                cloudItem.fuzzyOriginal = localItem.fuzzyOriginal;
+                cloudItem.swappedFromPantry = localItem.swappedFromPantry;
+                cloudItem.checkTime = localItem.checkTime;
+            }
+        });
+
+        // Never drop "Ghost" items (ad-hoc items added mid-shop that aren't in the master list yet)
+        const localGhosts = state.grocery.filter(i => i.category === 'Ghost');
+        localGhosts.forEach(g => {
+            if (!newGrocery.find(i => i.name.toLowerCase() === g.name.toLowerCase())) {
+                newGrocery.push(g);
+            }
+        });
+
+        state.grocery = newGrocery;
+        state.savedMeals = newSaved;
+        state.globalMeals = newGlobal;
+        saveStateLocally();
+
+        populateCategoryDropdowns();
+        if (activeTab === 'cart' && !isShoppingActive) renderCart();
+        const activeBtn = document.querySelector('.stat-btn.active');
+        if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
+        updateCookbookStats();
+        return true;
+    }
+
     function silentSync() {
         if (isShoppingActive) return; 
         if (pendingSaves > 0) return; 
@@ -633,46 +682,12 @@
         .then(res => res.json())
         .then(parsed => {
             if (pendingSaves > 0) return; 
-            if (parsed.success && parsed.data) {
-                const newGrocery = parsed.data.grocery || [];
-                const newSaved = parsed.data.savedMeals || [];
-                const newGlobal = parsed.data.globalMeals || [];
-                
-                // Keep local active cart states intact when refreshing Master Pantry from Sheets
-                newGrocery.forEach(cloudItem => {
-                    const localItem = state.grocery.find(i => i.name.toLowerCase() === cloudItem.name.toLowerCase());
-                    if (localItem && localItem.inCart) {
-                        cloudItem.inCart = localItem.inCart;
-                        cloudItem.checked = localItem.checked;
-                        cloudItem.mealContext = localItem.mealContext;
-                        cloudItem.fuzzyOriginal = localItem.fuzzyOriginal;
-                        cloudItem.swappedFromPantry = localItem.swappedFromPantry;
-                        cloudItem.checkTime = localItem.checkTime;
-                    }
-                });
-                
-                const localGhosts = state.grocery.filter(i => i.category === 'Ghost');
-                localGhosts.forEach(g => {
-                    if (!newGrocery.find(i => i.name.toLowerCase() === g.name.toLowerCase())) {
-                        newGrocery.push(g);
-                    }
-                });
-                
-                state.grocery = newGrocery;
-                state.savedMeals = newSaved;
-                state.globalMeals = newGlobal;
-                saveStateLocally();
-                
-                populateCategoryDropdowns();
-                if (activeTab === 'cart' && !isShoppingActive) renderCart();
-                const activeBtn = document.querySelector('.stat-btn.active');
-                if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
-                updateCookbookStats();
-            }
+            applyCloudData(parsed);
         }).catch(e => { });
     }
 
     function manualSync() {
+        if (isShoppingActive) return;
         if (pendingSaves > 0) flushCartSync(); 
         const btn = document.getElementById('syncBtn');
         if(btn) {
@@ -683,18 +698,8 @@
         fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAllData' }) })
         .then(res => res.json())
         .then(parsed => {
-            if (parsed.success && parsed.data) {
-                state.grocery = parsed.data.grocery || []; 
-                state.savedMeals = parsed.data.savedMeals || []; 
-                state.globalMeals = parsed.data.globalMeals || [];
-                saveStateLocally(); 
-                populateCategoryDropdowns(); 
-                if (activeTab === 'cart' && !isShoppingActive) renderCart();
-                const activeBtn = document.querySelector('.stat-btn.active');
-                if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
-                updateCookbookStats();
-                showToast("Data Synced!");
-            }
+            const applied = applyCloudData(parsed);
+            showToast(applied ? "Data Synced!" : "Sync failed. Check connection.");
             if(btn) {
                 btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>`;
             }
@@ -2132,8 +2137,10 @@
     function launchShoppingApp(query, platform) {
         const encodedQuery = encodeURIComponent(query);
         let url = '';
+        let webFallback = '';
         if (platform === 'Swiggy') {
             url = `swiggy://instamart/search?query=${encodedQuery}`;
+            webFallback = `https://www.swiggy.com/instamart/search?custom_back=true&query=${encodedQuery}`;
         } else if (platform === 'Blinkit') {
             url = `https://blinkit.com/s/?q=${encodedQuery}`;
         } else if (platform === 'BigBasket') {
@@ -2146,19 +2153,40 @@
             url = `https://www.zeptonow.com/search?query=${encodedQuery}`;
         }
         
-        if (url) {
-            if (platform === 'Zepto') {
-                window.location.href = url;
-            } else {
-                const a = document.createElement('a');
-                a.href = url;
-                a.target = '_blank';
-                a.rel = 'noopener noreferrer';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            }
+        if (!url) return;
+
+        if (platform === 'Zepto') {
+            window.location.href = url;
+            return;
         }
+
+        if (platform === 'Swiggy') {
+            // swiggy:// is a bare custom URI scheme with no built-in fallback. If the app isn't
+            // installed, navigating to it silently does nothing and the ping-pong looks "stuck".
+            // Detect that by checking whether we actually backgrounded shortly after attempting
+            // the deep link; if we never left the page, fall back to the web search instead.
+            let settled = false;
+            const toWeb = () => {
+                if (settled) return;
+                settled = true;
+                window.location.href = webFallback;
+            };
+            const onHide = () => {
+                if (document.hidden) { settled = true; document.removeEventListener('visibilitychange', onHide); }
+            };
+            document.addEventListener('visibilitychange', onHide);
+            setTimeout(toWeb, 1200);
+            window.location.href = url;
+            return;
+        }
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
     }
     
     function startGuidedShopping(platform) {
@@ -2186,24 +2214,51 @@
       document.getElementById('shopping-item-name').innerText = escapeHtml(shoppingQueue[shoppingIndex].name);
     }
 
-    // The Jitter/Ghost-Text Kill Switch: Instant Hide -> Launch App -> Update Text Invisibly -> Fade in on Return
+    // The Jitter/Ghost-Text Kill Switch: Instant Hide -> Update Text Invisibly -> Launch App -> Fade in on Return
+    //
+    // Root cause of the old flash: the label text was updated on a setTimeout(150ms) fired AFTER
+    // launching the partner app. Background tabs/webviews throttle timers, so that update often only
+    // landed once the user had already swiped back - racing against the (synchronous) visibilitychange
+    // listener that faded the label back in. That listener almost always won the race, so the user saw
+    // the OLD item name reappear first and then visibly change to the new one.
+    //
+    // Fix: update the text FIRST while still fully hidden (opacity 0, no transition), force the browser
+    // to commit that paint, THEN launch the app. By the time anything is visible again, the label is
+    // already correct - there is nothing left to visibly transition.
     function nextItemTransition(launchFn) {
         const container = document.getElementById('shopping-item-name-container');
-        if (container) container.style.opacity = '0';
-        
-        launchFn();
-        
-        setTimeout(() => {
-            updateGuidedUI();
-        }, 150);
 
-        const onReturn = () => {
-            if (!document.hidden) {
-                if (container) container.style.opacity = '1';
-                document.removeEventListener('visibilitychange', onReturn);
-            }
+        if (container) {
+            container.style.transition = 'none'; // instant hide, no fade-out
+            container.style.opacity = '0';
+            void container.offsetHeight; // force reflow so the hide is committed before we mutate text
+        }
+
+        // Update the underlying UI while fully invisible - guaranteed to happen before the user
+        // can ever see it, regardless of how timers behave once the app backgrounds.
+        updateGuidedUI();
+
+        launchFn();
+
+        let revealed = false;
+        const reveal = () => {
+            if (revealed) return;
+            revealed = true;
+            document.removeEventListener('visibilitychange', onReturn);
+            clearTimeout(fallbackTimer);
+            requestAnimationFrame(() => {
+                if (container) {
+                    container.style.transition = 'opacity 0.2s var(--ease-fluid)'; // restore fade-in
+                    container.style.opacity = '1';
+                }
+            });
         };
+        const onReturn = () => { if (!document.hidden) reveal(); };
         document.addEventListener('visibilitychange', onReturn);
+
+        // Safety net: if the partner app never actually backgrounds us (e.g. a deep link silently
+        // fails to open), don't leave the label stuck invisible forever.
+        const fallbackTimer = setTimeout(reveal, 1500);
     }
     
     function markFoundAndNext() {
@@ -2403,40 +2458,8 @@
       // Fallback for Master List Pull - Note that active cart logic is now entirely driven by Firebase DB
       fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAllData' }) })
         .then(res => res.json())
-        .then(parsed => {
-            if (parsed.success && parsed.data) {
-                // Keep local cart states intact before merging
-                const fetchedGrocery = parsed.data.grocery || [];
-                fetchedGrocery.forEach(cloudItem => {
-                    const localItem = state.grocery.find(i => i.name.toLowerCase() === cloudItem.name.toLowerCase());
-                    if (localItem && localItem.inCart) {
-                        cloudItem.inCart = localItem.inCart;
-                        cloudItem.checked = localItem.checked;
-                        cloudItem.mealContext = localItem.mealContext;
-                        cloudItem.fuzzyOriginal = localItem.fuzzyOriginal;
-                        cloudItem.swappedFromPantry = localItem.swappedFromPantry;
-                        cloudItem.checkTime = localItem.checkTime;
-                    }
-                });
-                
-                const localGhosts = state.grocery.filter(i => i.category === 'Ghost');
-                localGhosts.forEach(g => {
-                    if (!fetchedGrocery.find(i => i.name.toLowerCase() === g.name.toLowerCase())) {
-                        fetchedGrocery.push(g);
-                    }
-                });
-
-                state.grocery = fetchedGrocery;
-                state.savedMeals = parsed.data.savedMeals || []; 
-                state.globalMeals = parsed.data.globalMeals || [];
-                saveStateLocally(); 
-                populateCategoryDropdowns(); 
-                if (activeTab === 'cart' && !isShoppingActive) renderCart();
-                const activeBtn = document.querySelector('.stat-btn.active');
-                if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
-                updateCookbookStats();
-            }
-        }).catch(e => {  });
+        .then(parsed => { applyCloudData(parsed); })
+        .catch(e => {  });
     }
 
     init();
