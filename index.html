@@ -212,7 +212,7 @@
     .guided-overlay.active { display: flex; }
     .shopping-progress { color: var(--color-text-muted); font-size: 16px; margin-bottom: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
     
-    .shopping-item-name-container { min-height: 100px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 30px; transition: opacity 0.2s var(--ease-fluid); }
+    .shopping-item-name-container { min-height: 100px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 30px; }
     .shopping-item-name { font-size: 36px; font-weight: bold; color: var(--color-text); text-transform: capitalize; font-family: var(--font-display); line-height: 1.2; margin: 0; }
     
     .close-shopping { position: absolute; top: 40px; right: 24px; font-size: 24px; color: var(--color-text-muted); background: none; border: none; cursor: pointer; transition: transform 0.2s var(--ease-fluid); }
@@ -640,15 +640,22 @@
         const newGlobal = parsed.data.globalMeals || [];
 
         // Keep local active cart states intact when refreshing the Master Pantry from Sheets
+        // Completely strip Google Sheets from dictating active cart flags
         newGrocery.forEach(cloudItem => {
             const localItem = state.grocery.find(i => i.name.toLowerCase() === cloudItem.name.toLowerCase());
-            if (localItem && localItem.inCart) {
-                cloudItem.inCart = localItem.inCart;
-                cloudItem.checked = localItem.checked;
-                cloudItem.mealContext = localItem.mealContext;
+            if (localItem) {
+                cloudItem.inCart = localItem.inCart || false;
+                cloudItem.checked = localItem.checked || false;
+                cloudItem.mealContext = localItem.mealContext || '';
+                cloudItem.checkTime = localItem.checkTime;
                 cloudItem.fuzzyOriginal = localItem.fuzzyOriginal;
                 cloudItem.swappedFromPantry = localItem.swappedFromPantry;
-                cloudItem.checkTime = localItem.checkTime;
+                cloudItem.count = localItem.count || 0; 
+            } else {
+                cloudItem.inCart = false;
+                cloudItem.checked = false;
+                cloudItem.mealContext = '';
+                delete cloudItem.checkTime;
             }
         });
 
@@ -2137,10 +2144,8 @@
     function launchShoppingApp(query, platform) {
         const encodedQuery = encodeURIComponent(query);
         let url = '';
-        let webFallback = '';
         if (platform === 'Swiggy') {
             url = `swiggy://instamart/search?query=${encodedQuery}`;
-            webFallback = `https://www.swiggy.com/instamart/search?custom_back=true&query=${encodedQuery}`;
         } else if (platform === 'Blinkit') {
             url = `https://blinkit.com/s/?q=${encodedQuery}`;
         } else if (platform === 'BigBasket') {
@@ -2155,27 +2160,7 @@
         
         if (!url) return;
 
-        if (platform === 'Zepto') {
-            window.location.href = url;
-            return;
-        }
-
-        if (platform === 'Swiggy') {
-            // swiggy:// is a bare custom URI scheme with no built-in fallback. If the app isn't
-            // installed, navigating to it silently does nothing and the ping-pong looks "stuck".
-            // Detect that by checking whether we actually backgrounded shortly after attempting
-            // the deep link; if we never left the page, fall back to the web search instead.
-            let settled = false;
-            const toWeb = () => {
-                if (settled) return;
-                settled = true;
-                window.location.href = webFallback;
-            };
-            const onHide = () => {
-                if (document.hidden) { settled = true; document.removeEventListener('visibilitychange', onHide); }
-            };
-            document.addEventListener('visibilitychange', onHide);
-            setTimeout(toWeb, 1200);
+        if (platform === 'Zepto' || platform === 'Swiggy') {
             window.location.href = url;
             return;
         }
@@ -2213,53 +2198,6 @@
       document.getElementById('shopping-progress').innerText = `Item ${shoppingIndex + 1} of ${shoppingQueue.length} (${activePlatform.toUpperCase()})`;
       document.getElementById('shopping-item-name').innerText = escapeHtml(shoppingQueue[shoppingIndex].name);
     }
-
-    // The Jitter/Ghost-Text Kill Switch: Instant Hide -> Update Text Invisibly -> Launch App -> Fade in on Return
-    //
-    // Root cause of the old flash: the label text was updated on a setTimeout(150ms) fired AFTER
-    // launching the partner app. Background tabs/webviews throttle timers, so that update often only
-    // landed once the user had already swiped back - racing against the (synchronous) visibilitychange
-    // listener that faded the label back in. That listener almost always won the race, so the user saw
-    // the OLD item name reappear first and then visibly change to the new one.
-    //
-    // Fix: update the text FIRST while still fully hidden (opacity 0, no transition), force the browser
-    // to commit that paint, THEN launch the app. By the time anything is visible again, the label is
-    // already correct - there is nothing left to visibly transition.
-    function nextItemTransition(launchFn) {
-        const container = document.getElementById('shopping-item-name-container');
-
-        if (container) {
-            container.style.transition = 'none'; // instant hide, no fade-out
-            container.style.opacity = '0';
-            void container.offsetHeight; // force reflow so the hide is committed before we mutate text
-        }
-
-        // Update the underlying UI while fully invisible - guaranteed to happen before the user
-        // can ever see it, regardless of how timers behave once the app backgrounds.
-        updateGuidedUI();
-
-        launchFn();
-
-        let revealed = false;
-        const reveal = () => {
-            if (revealed) return;
-            revealed = true;
-            document.removeEventListener('visibilitychange', onReturn);
-            clearTimeout(fallbackTimer);
-            requestAnimationFrame(() => {
-                if (container) {
-                    container.style.transition = 'opacity 0.2s var(--ease-fluid)'; // restore fade-in
-                    container.style.opacity = '1';
-                }
-            });
-        };
-        const onReturn = () => { if (!document.hidden) reveal(); };
-        document.addEventListener('visibilitychange', onReturn);
-
-        // Safety net: if the partner app never actually backgrounds us (e.g. a deep link silently
-        // fails to open), don't leave the label stuck invisible forever.
-        const fallbackTimer = setTimeout(reveal, 1500);
-    }
     
     function markFoundAndNext() {
       const current = shoppingQueue[shoppingIndex];
@@ -2276,9 +2214,8 @@
       if(shoppingIndex >= shoppingQueue.length) { 
           closeGuidedShopping(); 
       } else { 
-          nextItemTransition(() => {
-              launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
-          });
+          updateGuidedUI();
+          launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
       }
     }
     
@@ -2286,9 +2223,8 @@
       shoppingIndex++;
       if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); } 
       else { 
-          nextItemTransition(() => {
-              launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
-          });
+          updateGuidedUI();
+          launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
       }
     }
     
