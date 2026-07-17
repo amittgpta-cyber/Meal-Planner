@@ -1527,10 +1527,11 @@
     function renderCart() {
       const container = document.getElementById('unified-cart-items');
       const activeCart = state.grocery.filter(item => item.inCart);
+      const checkedCartItems = activeCart.filter(item => item.checked);
       
       const navBtn = document.getElementById('navToggleBtn');
       if (navBtn) {
-          if (activeCart.length > 0) {
+          if (checkedCartItems.length > 0) {
               navBtn.style.background = 'color-mix(in oklab, var(--color-surface) 90%, transparent)';
               navBtn.style.color = 'var(--color-primary)';
               navBtn.style.border = '2px solid var(--color-primary)';
@@ -1760,8 +1761,7 @@
                         <option value="" disabled selected>✏️</option>${catOptions}
                     </select>
                     <button class="trash-btn" onclick="executeSoftDelete('master', '${jsSafeName}')">
-                        <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                    </button>
+                        <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></button>
                 </div>
             </div>`;
         }).join('') || '<p class="subtle" style="text-align:center; margin-top:20px;">No items match.</p>';
@@ -1935,8 +1935,7 @@
                                 <div style="flex:1;"><span>${safeName}</span></div>
                                 ${rightTag}
                                 <button class="trash-btn" style="padding:4px;" onclick="event.stopPropagation(); confirmMealDeletionPrompt('${jsSafeName}', '${i.src}')">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                </button>
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></button>
                              </div>`;
                 });
             }
@@ -2059,7 +2058,7 @@
         <div style="display:flex; align-items:center; gap:0.75rem; flex-grow:1;">
             <span style="font-weight:600; font-family:var(--font-display);">${escapeHtml(item.meal)}</span> ${catSelect}
         </div>
-        <button class="trash-btn" data-remove-queue="${idx}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
+        <button class="trash-btn" data-remove-queue="${idx}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></button>`;
         ql.appendChild(li);
       });
     }
@@ -2194,11 +2193,10 @@
       if(shoppingIndex >= shoppingQueue.length) { 
           closeGuidedShopping(); 
       } else { 
-          updateGuidedUI(); 
-          // 300ms delay to allow UI to visually paint the text update before hijacking the window location
-          setTimeout(() => {
-              launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
-          }, 300);
+          launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
+          Promise.resolve().then(() => {
+              updateGuidedUI();
+          });
       }
     }
     
@@ -2206,10 +2204,10 @@
       shoppingIndex++;
       if(shoppingIndex >= shoppingQueue.length) { closeGuidedShopping(); } 
       else { 
-          updateGuidedUI(); 
-          setTimeout(() => {
-              launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
-          }, 300);
+          launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
+          Promise.resolve().then(() => {
+              updateGuidedUI();
+          });
       }
     }
     
