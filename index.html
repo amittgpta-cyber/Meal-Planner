@@ -2099,7 +2099,7 @@
         const encodedQuery = encodeURIComponent(query);
         let url = '';
         if (platform === 'Swiggy') {
-            url = `https://www.instamart.in/search?query=${encodedQuery}`;
+            url = `swiggy://instamart/search?query=${encodedQuery}`;
         } else if (platform === 'Blinkit') {
             url = `https://blinkit.com/s/?q=${encodedQuery}`;
         } else if (platform === 'BigBasket') {
