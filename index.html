@@ -2140,19 +2140,21 @@
         } else if (platform === 'Flipkart') {
             url = `https://www.flipkart.com/search?q=${encodedQuery}&marketplace=HYPERLOCAL`;
         } else if (platform === 'Zepto') {
-            url = `https://www.zeptonow.com`;
-            try { navigator.clipboard.writeText(query); } catch(e){}
-            showToast("Copied for Zepto!");
+            url = `https://www.zeptonow.com/search?query=${encodedQuery}`;
         }
         
         if (url) {
-            const a = document.createElement('a');
-            a.href = url;
-            a.target = '_blank';
-            a.rel = 'noopener noreferrer';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            if (platform === 'Zepto') {
+                window.location.href = url;
+            } else {
+                const a = document.createElement('a');
+                a.href = url;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
         }
     }
     
@@ -2165,6 +2167,12 @@
       activePlatform = platform; 
       shoppingIndex = 0; 
       actuallyBought = [];
+      
+      // Nuclear layer wipe to prevent artifacts and layout jitter while overlay is active
+      document.querySelector('.shell').style.display = 'none';
+      document.getElementById('bottomNav').style.display = 'none';
+      document.getElementById('mainTopbar').style.display = 'none';
+      
       updateGuidedUI(); 
       document.getElementById('guided-overlay').classList.add('active'); 
       launchShoppingApp(shoppingQueue[shoppingIndex].name, activePlatform);
@@ -2222,6 +2230,14 @@
     function closeGuidedShopping() { 
         isShoppingActive = false;
         document.getElementById('guided-overlay').classList.remove('active'); 
+        
+        // Restore application layers
+        document.querySelector('.shell').style.display = 'block';
+        document.getElementById('bottomNav').style.display = 'flex';
+        if (activeTab === 'plan') {
+            document.getElementById('mainTopbar').style.display = 'flex';
+        }
+        
         renderCart(); 
         
         if (actuallyBought.length > 0) {
