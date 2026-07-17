@@ -210,10 +210,6 @@
     
     .guided-overlay { position: fixed; inset: 0; background: var(--color-bg); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
     .guided-overlay.active { display: flex; }
-    .shopping-progress { color: var(--color-text-muted); font-size: 16px; margin-bottom: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
-    
-    .shopping-item-name-container { min-height: 100px; display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 30px; }
-    .shopping-item-name { font-size: 36px; font-weight: bold; color: var(--color-text); text-transform: capitalize; font-family: var(--font-display); line-height: 1.2; margin: 0; }
     
     .close-shopping { position: absolute; top: 40px; right: 24px; font-size: 24px; color: var(--color-text-muted); background: none; border: none; cursor: pointer; transition: transform 0.2s var(--ease-fluid); }
     .close-shopping:active { transform: scale(0.8); }
@@ -315,9 +311,7 @@
                 <button class="ghost-btn" id="undoBtn" style="opacity: 0.3; pointer-events: none; padding: 0; width: 44px; height: 44px; border:none; background:transparent; color:var(--color-primary); display:flex; justify-content:center; align-items:center; font-weight: 700;" onclick="undoDelete()">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
                 </button>
-                <button class="ghost-btn" style="padding: 0; width: 44px; height: 44px; border:none; background:transparent; color:var(--color-text-muted); display:flex; justify-content:center; align-items:center;" onclick="manualSync()" id="syncBtn">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-                </button>
+                <div style="flex: 1;"></div>
                 <button class="icon-btn" style="border:none; background:transparent; color:var(--color-error); padding:8px; width:auto; height:auto;" onclick="clearActiveCart()">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></button>
             </div>
@@ -345,15 +339,13 @@
 
   <div class="guided-overlay" id="guided-overlay">
     <button class="close-shopping" onclick="closeGuidedShopping()">✕</button>
-    <div class="shopping-progress" id="shopping-progress">Item 1 of X</div>
     
-    <div class="shopping-item-name-container" id="shopping-item-name-container">
-        <div class="shopping-item-name" id="shopping-item-name">Item Name</div>
-    </div>
+    <div id="shopping-countdown" style="font-family: var(--font-display); font-size: 6rem; font-weight: 700; line-height: 1; color: var(--color-text); margin-bottom: 0;"></div>
+    <div id="shopping-partner-name" style="font-size: 1.2rem; font-weight: bold; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 40px;"></div>
     
     <div style="display:flex; flex-direction:column; gap:10px; width: 100%; max-width: 350px;">
-        <button class="primary-btn" style="background:var(--color-success); border-radius: 1.5rem; padding: 18px;" onclick="markFoundAndNext()">✓ Found (Next)</button>
-        <button class="ghost-btn" style="border-radius: 1.5rem; padding: 18px; border-color: var(--color-error); color: var(--color-error);" onclick="markNotFoundAndNext()">✕ Not Found (Keep in list)</button>
+        <button class="primary-btn" style="background:var(--color-success); border-radius: 1.5rem; padding: 18px;" onclick="markFoundAndNext()">✓ Found</button>
+        <button class="ghost-btn" style="border-radius: 1.5rem; padding: 18px; border-color: var(--color-error); color: var(--color-error);" onclick="markNotFoundAndNext()">✕ Not Found</button>
     </div>
   </div>
 
@@ -552,7 +544,6 @@
     let pendingSaves = 0;
     let mutationTimer = null;
     const MUTATION_DELAY = 1500;
-    const DEADMAN_TIMEOUT = 5000;
     
     function queueLocalSave() {
         if (window.localSaveTimer) clearTimeout(window.localSaveTimer);
@@ -624,14 +615,6 @@
     // ------------------------------------------------
     // SYNC ISOLATION (Safe Background Updates for Google Sheets)
     // ------------------------------------------------
-    //
-    // Single source of truth for applying data pulled from the Sheets master list.
-    // The master list from Sheets is NOT the live cart (the live cart lives in Firebase and
-    // in local state) - it's the pantry/recipe catalogue. Any code path that pulls this data
-    // must merge it on top of local cart state rather than overwrite state.grocery wholesale,
-    // or any item currently checked into the cart (but not yet reflected upstream) gets silently
-    // dropped. This used to only happen in silentSync(); manualSync() (the refresh button) and
-    // init() skipped it and overwrote the cart outright - that was the "refresh flushes my cart" bug.
     function applyCloudData(parsed) {
         if (!(parsed && parsed.success && parsed.data)) return false;
 
@@ -639,7 +622,6 @@
         const newSaved = parsed.data.savedMeals || [];
         const newGlobal = parsed.data.globalMeals || [];
 
-        // Keep local active cart states intact when refreshing the Master Pantry from Sheets
         // Completely strip Google Sheets from dictating active cart flags
         newGrocery.forEach(cloudItem => {
             const localItem = state.grocery.find(i => i.name.toLowerCase() === cloudItem.name.toLowerCase());
@@ -691,33 +673,6 @@
             if (pendingSaves > 0) return; 
             applyCloudData(parsed);
         }).catch(e => { });
-    }
-
-    function manualSync() {
-        if (isShoppingActive) return;
-        if (pendingSaves > 0) flushCartSync(); 
-        const btn = document.getElementById('syncBtn');
-        if(btn) {
-            btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="sync-spinner"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>`;
-        }
-        
-        document.getElementById('syncIndicator').classList.add('active');
-        fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'getAllData' }) })
-        .then(res => res.json())
-        .then(parsed => {
-            const applied = applyCloudData(parsed);
-            showToast(applied ? "Data Synced!" : "Sync failed. Check connection.");
-            if(btn) {
-                btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>`;
-            }
-            document.getElementById('syncIndicator').classList.remove('active');
-        }).catch(e => { 
-            if(btn) {
-                btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>`;
-            }
-            document.getElementById('syncIndicator').classList.remove('active'); 
-            showToast("Sync failed. Check connection.");
-        });
     }
 
     window.addEventListener('visibilitychange', () => { 
@@ -2158,20 +2113,9 @@
             url = `https://www.zeptonow.com/search?query=${encodedQuery}`;
         }
         
-        if (!url) return;
-
-        if (platform === 'Zepto' || platform === 'Swiggy') {
+        if (url) {
             window.location.href = url;
-            return;
         }
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
     }
     
     function startGuidedShopping(platform) {
@@ -2184,10 +2128,8 @@
       shoppingIndex = 0; 
       actuallyBought = [];
       
-      // Nuclear layer wipe to prevent artifacts and layout jitter while overlay is active
-      document.querySelector('.shell').style.display = 'none';
-      document.getElementById('bottomNav').style.display = 'none';
-      document.getElementById('mainTopbar').style.display = 'none';
+      // Scroll locking instead of display:none to prevent layout bounds reflow
+      document.body.style.overflow = 'hidden';
       
       updateGuidedUI(); 
       document.getElementById('guided-overlay').classList.add('active'); 
@@ -2195,8 +2137,9 @@
     }
     
     function updateGuidedUI() {
-      document.getElementById('shopping-progress').innerText = `Item ${shoppingIndex + 1} of ${shoppingQueue.length} (${activePlatform.toUpperCase()})`;
-      document.getElementById('shopping-item-name').innerText = escapeHtml(shoppingQueue[shoppingIndex].name);
+      const itemsLeft = shoppingQueue.length - shoppingIndex;
+      document.getElementById('shopping-countdown').innerText = itemsLeft;
+      document.getElementById('shopping-partner-name').innerText = activePlatform.toUpperCase();
     }
     
     function markFoundAndNext() {
@@ -2232,12 +2175,8 @@
         isShoppingActive = false;
         document.getElementById('guided-overlay').classList.remove('active'); 
         
-        // Restore application layers
-        document.querySelector('.shell').style.display = 'block';
-        document.getElementById('bottomNav').style.display = 'flex';
-        if (activeTab === 'plan') {
-            document.getElementById('mainTopbar').style.display = 'flex';
-        }
+        // Unlock scroll to restore normal page function
+        document.body.style.overflow = '';
         
         renderCart(); 
         
