@@ -201,7 +201,7 @@
     
     .sync-indicator { position: fixed; top: 10px; right: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: bold; color: var(--color-text-muted); background: var(--color-surface-2); padding: 6px 12px; border-radius: 2rem; opacity: 0; transition: 0.3s; z-index: 9999; }
     .sync-indicator.active { opacity: 1; }
-    .sync-spinner { width: 12px; height: 12px; border: 2px solid var(--color-text-muted); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; }
+    .sync-spinner { width: 12px; height: 12px; border: 2px solid var(--text-muted); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
     
     .review-queue-list { list-style: none; display: grid; gap: 10px; margin: 0; padding: 0; }
@@ -618,6 +618,8 @@
                 item.checkTime = Date.now();
             }
             item.mealContext = '';
+            delete item.fuzzyOriginal;
+            delete item.swappedFromPantry;
             expandCartIfNeeded();
             if (!isShoppingActive) renderCart();
             queueLocalSave();
@@ -1269,7 +1271,7 @@
       }
       schema.forEach((item, index) => {
         const article = document.createElement('article');
-        article.className = 'meal-card' + (item.isLocked ? ' locked' : '');
+        article.className = 'meal-card' + (item.isLocked ? 'locked' : '');
         article.id = `card-${index}`;
         article.innerHTML = getCardInnerHTML(item, index, false);
         s.appendChild(article);
@@ -1496,7 +1498,10 @@
         const depluralize = (str) => str.endsWith('s') ? (str.endsWith('es') ? str.slice(0, -2) : str.slice(0, -1)) : str;
         const cleanStr = (s) => s.toLowerCase().trim().replace(/[^a-z0-9\s]/gi, '').replace(/\s+/g, ' ');
         
+        let baseTime = Date.now();
+        
         ingredientsList.reverse().forEach(ing => {
+            baseTime++;
             const rawIng = cleanStr(ing);
             const deplurIng = depluralize(rawIng);
             
@@ -1518,7 +1523,7 @@
                 existing.inCart = true; 
                 existing.checked = true; 
                 if (!existing.checkTime) {
-                    existing.checkTime = Date.now();
+                    existing.checkTime = baseTime;
                 }
                 existing.mealContext = mealContext;
                 
@@ -1532,7 +1537,7 @@
                     delete existing.fuzzyOriginal;
                 }
             } else {
-                state.grocery.unshift({ name: ing, count: 0, lastOrdered: '', category: 'Ghost', inCart: true, checked: true, checkTime: Date.now(), mealContext: mealContext });
+                state.grocery.unshift({ name: ing, count: 0, lastOrdered: '', category: 'Ghost', inCart: true, checked: true, checkTime: baseTime, mealContext: mealContext });
             }
         });
         
@@ -1727,6 +1732,8 @@
                 existing.checkTime = Date.now();
             }
             existing.mealContext = '';
+            delete existing.fuzzyOriginal;
+            delete existing.swappedFromPantry;
             showToast("Item already in list.");
         } else {
             state.grocery.unshift({name: name, count: 0, lastOrdered:'', category: category, inCart: true, checked: true, checkTime: Date.now(), mealContext: ''}); 
@@ -1855,9 +1862,13 @@
           if(item.inCart) {
               item.checked = true; 
               item.checkTime = Date.now();
+              delete item.fuzzyOriginal;
+              delete item.swappedFromPantry;
               expandCartIfNeeded();
           } else {
               delete item.checkTime;
+              delete item.fuzzyOriginal;
+              delete item.swappedFromPantry;
           }
           
           if(rowElement) {
