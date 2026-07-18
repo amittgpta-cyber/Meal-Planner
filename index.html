@@ -1413,7 +1413,6 @@
                     existing.fuzzyOriginal = ing; 
                 } else {
                     delete existing.fuzzyOriginal;
-                    delete existing.swappedFromPantry;
                 }
             } else {
                 state.grocery.unshift({ name: ing, count: 0, lastOrdered: '', category: 'Ghost', inCart: true, checked: true, checkTime: Date.now(), mealContext: mealContext });
@@ -1445,10 +1444,15 @@
                 state.grocery[idx] = state.grocery[gIdx];
                 state.grocery[gIdx] = temp;
             } else {
-                state.grocery.splice(idx, 1, { 
+                state.grocery.push({ 
                     name: item.fuzzyOriginal, count: 0, lastOrdered: '', category: 'Ghost', 
                     inCart: true, checked: true, checkTime: item.checkTime || Date.now(), mealContext: item.mealContext, swappedFromPantry: item.name 
                 });
+                
+                let gIdxNew = state.grocery.length - 1;
+                let temp = state.grocery[idx];
+                state.grocery[idx] = state.grocery[gIdxNew];
+                state.grocery[gIdxNew] = temp;
             }
         } else if (item.swappedFromPantry) {
             item.inCart = false;
@@ -2099,7 +2103,7 @@
         const encodedQuery = encodeURIComponent(query);
         let url = '';
         if (platform === 'Swiggy') {
-            url = `swiggy://instamart/search?query=${encodedQuery}`;
+            url = `https://www.instamart.in/search?query=${encodedQuery}`;
         } else if (platform === 'Blinkit') {
             url = `https://blinkit.com/s/?q=${encodedQuery}`;
         } else if (platform === 'BigBasket') {
