@@ -1540,13 +1540,11 @@
           
           html += `<div class="cart-group-list">`;
           
-          // Stable Sorting Algorithm: Active items together grouped by strict chronological checkTime index weights
+          // Stable Sorting: group checked items together and unchecked items together,
+          // without re-ordering within each group (relative order is preserved).
           groups[group].sort((a, b) => {
               if (a.checked !== b.checked) {
                   return a.checked ? -1 : 1; 
-              }
-              if (a.checked) {
-                  return (a.checkTime || 0) - (b.checkTime || 0);
               }
               return 0;
           });
