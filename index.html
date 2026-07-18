@@ -2228,7 +2228,7 @@
         } else if (platform === 'Blinkit') {
             url = `https://blinkit.com/s/?q=${encodedQuery}`;
         } else if (platform === 'BigBasket') {
-            url = `https://www.bigbasket.com/ps/?q=${encodedQuery}`;
+            url = `https://www.bigbasket.com/product-search/?q=${encodedQuery}`;
         } else if (platform === 'Amazon') {
             url = `https://www.amazon.in/s?k=${encodedQuery}`;
         } else if (platform === 'Flipkart') {
@@ -2238,13 +2238,24 @@
         }
         
         if (url) {
-            window.location.href = url;
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = '_self';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     }
     
     function startGuidedShopping(platform) {
       flushCartSync(); 
-      shoppingQueue = state.grocery.filter(i => i.inCart && i.checked); 
+      
+      shoppingQueue = [];
+      document.querySelectorAll('#unified-cart-items .list-item-row.checked .item-name').forEach(node => {
+          const matchedItem = state.grocery.find(i => i.name === node.textContent && i.inCart && i.checked);
+          if (matchedItem) shoppingQueue.push(matchedItem);
+      });
+      
       if(!shoppingQueue.length) { showToast("Please check at least one item to shop."); return; }
       
       isShoppingActive = true;
