@@ -321,7 +321,8 @@
                 </button>
                 <div style="flex: 1;"></div>
                 <button class="icon-btn" style="border:none; background:transparent; color:var(--color-error); padding:8px; width:auto; height:auto;" onclick="clearActiveCart()">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></button>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
             </div>
             <div id="unified-cart-items"></div>
         </div>
@@ -613,7 +614,9 @@
         if (item) {
             item.inCart = true;
             item.checked = true;
-            item.checkTime = Date.now();
+            if (!item.checkTime) {
+                item.checkTime = Date.now();
+            }
             item.mealContext = '';
             expandCartIfNeeded();
             if (!isShoppingActive) renderCart();
@@ -1432,6 +1435,9 @@
         if(existing) {
             existing.inCart = true; 
             existing.checked = true;
+            if (!existing.checkTime) {
+                existing.checkTime = Date.now();
+            }
             existing.mealContext = '';
             state.grocery = state.grocery.filter(i => !(i.name.toLowerCase() === nameLower && i.category === 'Ghost'));
             showToast(`${name} already in database. Added to cart.`);
@@ -1488,16 +1494,17 @@
     // ------------------------------------------------
     function pushToCartLocally(ingredientsList, mealContext) {
         const depluralize = (str) => str.endsWith('s') ? (str.endsWith('es') ? str.slice(0, -2) : str.slice(0, -1)) : str;
+        const cleanStr = (s) => s.toLowerCase().trim().replace(/[^a-z0-9\s]/gi, '').replace(/\s+/g, ' ');
         
         ingredientsList.reverse().forEach(ing => {
-            const rawIng = ing.toLowerCase().trim();
+            const rawIng = cleanStr(ing);
             const deplurIng = depluralize(rawIng);
             
             // Intelligent Matching Engine
             let existing = state.grocery.find(i => {
                 if (i.category === 'Ghost' && i.mealContext !== mealContext) return false;
                 
-                const dbName = i.name.toLowerCase().trim();
+                const dbName = cleanStr(i.name);
                 const deplurDb = depluralize(dbName);
                 
                 if (dbName === rawIng || deplurDb === deplurIng || dbName === deplurIng || deplurDb === rawIng) return true;
@@ -1509,13 +1516,13 @@
 
             if (existing) {
                 existing.inCart = true; 
-                if (!existing.checked) {
-                    existing.checked = true; 
-                    existing.checkTime = Date.now(); // Maintain stable sorting chronology
+                existing.checked = true; 
+                if (!existing.checkTime) {
+                    existing.checkTime = Date.now();
                 }
                 existing.mealContext = mealContext;
                 
-                const dbName = existing.name.toLowerCase().trim();
+                const dbName = cleanStr(existing.name);
                 const deplurDb = depluralize(dbName);
                 const isExactMatch = (dbName === rawIng || deplurDb === deplurIng || dbName === deplurIng || deplurDb === rawIng);
                 
@@ -1648,19 +1655,23 @@
               const jsSafeName = escapeJsArg(item.name);
               const hasSwap = !!(item.fuzzyOriginal || item.swappedFromPantry);
               
-              let swapHtml = hasSwap ? `<button class="ghost-btn" style="border:none; padding:8px; font-size: 1.1rem;" onclick="executeSwap('${jsSafeName}')">🔀</button>` : '';
+              let swapHtml = `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${hasSwap ? `<button class="ghost-btn" style="border:none; padding:0; width: 100%; height: 100%; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="executeSwap('${jsSafeName}')">🔀</button>` : ''}</div>`;
+              let saveHtml = `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${isGhost ? `<button class="ghost-btn" style="border:none; padding:0; width: 100%; height: 100%; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="promoteGhostItem('${jsSafeName}')">💾</button>` : ''}</div>`;
 
               html += `
               <div class="list-item-row ${item.checked ? 'checked' : 'dimmed'}" id="cart-row-${btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '')}" onclick="toggleCartItem('${jsSafeName}')">
-                <div class="list-item-left" style="pointer-events: none;">
+                <div class="list-item-left" style="pointer-events: none; flex: 1; min-width: 0;">
                     <div class="checkbox">${item.checked ? '✓' : ''}</div>
-                    <div><div class="item-name">${safeName}</div></div>
+                    <div style="min-width: 0; word-break: break-word;"><div class="item-name">${safeName}</div></div>
                 </div>
-                <div style="display:flex; align-items:center; justify-content:flex-end; gap: 8px; min-width: 96px;" onclick="event.stopPropagation();">
+                <div style="display:flex; align-items:center; justify-content:flex-end; gap: 4px; flex-shrink: 0;" onclick="event.stopPropagation();">
                     ${swapHtml}
-                    ${isGhost ? `<button class="ghost-btn" style="border:none; padding:8px;" onclick="promoteGhostItem('${jsSafeName}')">💾</button>` : ''}
-                    <button class="trash-btn" onclick="executeSoftDelete('cart', '${jsSafeName}')">
-                        <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></button>
+                    ${saveHtml}
+                    <div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <button class="trash-btn" style="padding:0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;" onclick="executeSoftDelete('cart', '${jsSafeName}')">
+                            <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
                 </div>
               </div>`;
           });
@@ -1675,10 +1686,8 @@
         
         if(item) {
             item.checked = !item.checked;
-            if (item.checked) {
+            if (!item.checkTime) {
                 item.checkTime = Date.now(); 
-            } else {
-                delete item.checkTime;
             }
             if (!isShoppingActive) renderCart();
             queueLocalSave(); 
@@ -1713,7 +1722,11 @@
         let existing = state.grocery.find(i => i.name.toLowerCase() === nameLower);
         if(existing) {
             if(category && category !== '📦 Uncategorized' && existing.category === 'Ghost') existing.category = category;
-            existing.inCart = true; existing.checked = true; existing.checkTime = Date.now(); existing.mealContext = '';
+            existing.inCart = true; existing.checked = true; 
+            if (!existing.checkTime) {
+                existing.checkTime = Date.now();
+            }
+            existing.mealContext = '';
             showToast("Item already in list.");
         } else {
             state.grocery.unshift({name: name, count: 0, lastOrdered:'', category: category, inCart: true, checked: true, checkTime: Date.now(), mealContext: ''}); 
