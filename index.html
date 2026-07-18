@@ -352,8 +352,8 @@
     <div id="shopping-countdown" style="font-family: var(--font-display); font-size: 8rem; font-weight: 700; line-height: 1; color: var(--color-text); margin-bottom: 40px;"></div>
     
     <div style="display:flex; flex-direction:column; gap:10px; width: 100%; max-width: 350px;">
-        <button class="primary-btn" style="background:var(--color-success); border-radius: 1.5rem; padding: 18px;" onclick="markFoundAndNext()">✓ Found</button>
-        <button class="ghost-btn" style="border-radius: 1.5rem; padding: 18px; border-color: var(--color-error); color: var(--color-error);" onclick="markNotFoundAndNext()">✕ Not Found</button>
+        <button class="primary-btn" style="background:var(--color-success); border-radius: 1.5rem; padding: 18px; height: 64px;" onclick="markFoundAndNext()">✓ Found</button>
+        <button class="ghost-btn" style="border-radius: 1.5rem; padding: 18px; border-color: var(--color-error); color: var(--color-error); height: 64px;" onclick="markNotFoundAndNext()">✕ Not Found</button>
     </div>
   </div>
 
@@ -2228,7 +2228,7 @@
         } else if (platform === 'Blinkit') {
             url = `https://blinkit.com/s/?q=${encodedQuery}`;
         } else if (platform === 'BigBasket') {
-            url = `https://www.bigbasket.com/product-search/?q=${encodedQuery}`;
+            url = `https://www.bigbasket.com/ps/?q=${encodedQuery}`;
         } else if (platform === 'Amazon') {
             url = `https://www.amazon.in/s?k=${encodedQuery}`;
         } else if (platform === 'Flipkart') {
