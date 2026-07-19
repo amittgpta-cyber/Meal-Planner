@@ -211,7 +211,6 @@
     .guided-overlay { position: fixed; inset: 0; background: var(--color-bg); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
     .guided-overlay.active { display: flex; }
     .guided-overlay .primary-btn:active, .guided-overlay .ghost-btn:active { transform: none !important; }
-    .guided-overlay .primary-btn, .guided-overlay .ghost-btn { transition: none !important; animation: none !important; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; }
     
     .close-shopping { position: absolute; top: 40px; right: 24px; font-size: 24px; color: var(--color-text-muted); background: none; border: none; cursor: pointer; transition: transform 0.2s var(--ease-fluid); }
     .close-shopping:active { transform: scale(0.8); }
@@ -353,8 +352,8 @@
     <div id="shopping-countdown" style="font-family: var(--font-display); font-size: 8rem; font-weight: 700; line-height: 1; color: var(--color-text); margin-bottom: 40px;"></div>
     
     <div style="display:flex; flex-direction:column; gap:10px; width: 100%; max-width: 350px;">
-        <button class="primary-btn" id="guidedFoundBtn" style="background:var(--color-success); border-radius: 1.5rem; padding: 18px; height: 64px;">✓ Found</button>
-        <button class="ghost-btn" id="guidedNotFoundBtn" style="border-radius: 1.5rem; padding: 18px; border-color: var(--color-error); color: var(--color-error); height: 64px;">✕ Not Found</button>
+        <button class="primary-btn" style="background:var(--color-success); border-radius: 1.5rem; padding: 18px; height: 64px;" onclick="markFoundAndNext()">✓ Found</button>
+        <button class="ghost-btn" style="border-radius: 1.5rem; padding: 18px; border-color: var(--color-error); color: var(--color-error); height: 64px;" onclick="markNotFoundAndNext()">✕ Not Found</button>
     </div>
   </div>
 
@@ -2228,16 +2227,13 @@
         flushCartSync();
 
         const encodedQuery = encodeURIComponent(query);
-        // BigBasket's own in-app search router chokes on %20-encoded spaces for some
-        // multi-word/brand queries (e.g. "Akshayakalpa A2 Milk") - '+' is the safer encoding.
-        const plusQuery = encodedQuery.replace(/%20/g, '+');
         let url = '';
         if (platform === 'Swiggy') {
             url = `https://www.instamart.in/search?query=${encodedQuery}`;
         } else if (platform === 'Blinkit') {
             url = `https://blinkit.com/s/?q=${encodedQuery}`;
         } else if (platform === 'BigBasket') {
-            url = `https://www.bigbasket.com/ps/?q=${plusQuery}`;
+            url = `https://www.bigbasket.com/ps/?q=${encodedQuery}`;
         } else if (platform === 'Amazon') {
             url = `https://www.amazon.in/s?k=${encodedQuery}`;
         } else if (platform === 'Flipkart') {
@@ -2251,26 +2247,11 @@
             const ua = navigator.userAgent || navigator.vendor || window.opera;
             const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
             
-            // Platforms that must force-open in the browser (new Chrome tab) on Android instead
-            // of letting Android's App Link verification silently hijack the navigation into the
-            // native app. Zepto: by design, we want a Chrome window on Android. BigBasket: its
-            // Android app opens via App Links but its internal router 404s on the /ps/?q= search
-            // route for some queries, so we bypass the app entirely to guarantee the search works.
-            const forceBrowserOnAndroid = (platform === 'Zepto' || platform === 'BigBasket');
-            
-            if (forceBrowserOnAndroid && !isIOS) {
-                // Force Chrome specifically via an explicit intent, bypassing any Android App
-                // Link that would otherwise intercept this navigation and hand it to the app.
-                const bareUrl = url.replace(/^https?:\/\//, '');
-                const chromeIntent = `intent://${bareUrl}#Intent;scheme=https;package=com.android.chrome;end`;
-                window.location.href = chromeIntent;
+            if (platform === 'Zepto' && !isIOS) {
+                // Android Platform Flow: open via isolated Chrome tab to preserve application memory focus
+                window.open(url, '_blank');
             } else {
-                // iOS Flow / Standard Redirect Pattern: execute sequential anchor link click path.
-                // This lets iOS Universal Links hand off to the native app when the app is
-                // registered for the path (e.g. Zepto). For BigBasket, whether this opens the app
-                // on iOS depends entirely on BigBasket's own apple-app-site-association config for
-                // the /ps/ search path - if their app isn't registered for search URLs, iOS will
-                // fall back to Safari regardless of anything we do here.
+                // iOS Flow / Standard Redirect Pattern: execute sequential anchor link click path
                 const link = document.createElement('a');
                 link.href = url;
                 link.target = '_self';
@@ -2344,28 +2325,6 @@
       }
     }
     
-    // Fast-tap binding: mobile browsers/webviews sometimes swallow or delay the very first
-    // 'click' event after the app regains foreground focus (e.g. right after switching back
-    // from Zepto/BigBasket during the guided shopping ping-pong flow), because a click needs a
-    // full press+release cycle to be dispatched. 'pointerdown' fires immediately on first touch,
-    // so we act on that instead and just guard against the follow-up 'click' double-firing.
-    function bindFastTap(el, handler) {
-        if (!el) return;
-        let locked = false;
-        const fire = (e) => {
-            if (locked) return;
-            locked = true;
-            if (e.cancelable) e.preventDefault();
-            handler();
-            setTimeout(() => { locked = false; }, 350);
-        };
-        el.addEventListener('pointerdown', fire, { passive: false });
-        el.addEventListener('click', (e) => { if (locked) e.preventDefault(); });
-    }
-
-    bindFastTap(document.getElementById('guidedFoundBtn'), markFoundAndNext);
-    bindFastTap(document.getElementById('guidedNotFoundBtn'), markNotFoundAndNext);
-
     function closeGuidedShopping() { 
         isShoppingActive = false;
         document.getElementById('guided-overlay').classList.remove('active'); 
