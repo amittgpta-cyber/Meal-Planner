@@ -1848,7 +1848,8 @@
                         <option value="" disabled selected>✏️</option>${catOptions}
                     </select>
                     <button class="trash-btn" onclick="executeSoftDelete('master', '${jsSafeName}')">
-                        <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></button>
+                        <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
                 </div>
             </div>`;
         }).join('') || '<p class="subtle" style="text-align:center; margin-top:20px;">No items match.</p>';
@@ -2027,7 +2028,7 @@
                                 <div style="flex:1;"><span>${safeName}</span></div>
                                 ${rightTag}
                                 <button class="trash-btn" style="padding:4px;" onclick="event.stopPropagation(); confirmMealDeletionPrompt('${jsSafeName}', '${i.src}')">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></button>
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
                              </div>`;
                 });
             }
@@ -2150,7 +2151,7 @@
         <div style="display:flex; align-items:center; gap:0.75rem; flex-grow:1;">
             <span style="font-weight:600; font-family:var(--font-display);">${escapeHtml(item.meal)}</span> ${catSelect}
         </div>
-        <button class="trash-btn" data-remove-queue="${idx}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></button>`;
+        <button class="trash-btn" data-remove-queue="${idx}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
         ql.appendChild(li);
       });
     }
@@ -2221,6 +2222,10 @@
     let actuallyBought = []; 
     
     function launchShoppingApp(query, platform) {
+        // Pre-flight State Persistence Safeguard
+        saveStateLocally();
+        flushCartSync();
+
         const encodedQuery = encodeURIComponent(query);
         let url = '';
         if (platform === 'Swiggy') {
@@ -2238,12 +2243,22 @@
         }
         
         if (url) {
-            const link = document.createElement('a');
-            link.href = url;
-            link.target = '_self';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Environment Platform Split Detection Check
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+            
+            if (platform === 'Zepto' && !isIOS) {
+                // Android Platform Flow: open via isolated Chrome tab to preserve application memory focus
+                window.open(url, '_blank');
+            } else {
+                // iOS Flow / Standard Redirect Pattern: execute sequential anchor link click path
+                const link = document.createElement('a');
+                link.href = url;
+                link.target = '_self';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
         }
     }
     
@@ -2251,6 +2266,7 @@
       flushCartSync(); 
       
       shoppingQueue = [];
+      // Clean DOM-Scraping Strategy to maintain perfect contextual visual display queue ordering
       document.querySelectorAll('#unified-cart-items .list-item-row.checked .item-name').forEach(node => {
           const matchedItem = state.grocery.find(i => i.name === node.textContent && i.inCart && i.checked);
           if (matchedItem) shoppingQueue.push(matchedItem);
@@ -2263,7 +2279,7 @@
       shoppingIndex = 0; 
       actuallyBought = [];
       
-      // Scroll locking to prevent layout bounds reflow without erasing DOM
+      // Lock viewport limits to prevent layout bounds reflow without erasing active DOM states
       document.body.style.overflow = 'hidden';
       
       updateGuidedUI(); 
@@ -2313,7 +2329,7 @@
         isShoppingActive = false;
         document.getElementById('guided-overlay').classList.remove('active'); 
         
-        // Unlock scroll to restore normal page function
+        // Restore document scroll mechanics cleanly
         document.body.style.overflow = '';
         
         renderCart(); 
