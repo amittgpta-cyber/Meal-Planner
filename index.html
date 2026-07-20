@@ -378,7 +378,10 @@
       <div class="dialog-head">
           <div style="display:flex; align-items:center; gap:12px;">
               <h4 style="font-family: var(--font-display); font-size: 1.5rem; margin:0;">Pantry</h4>
-              <button class="ghost-btn util-btn" id="btnBoughtCountToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleBoughtCount()">#</button>
+              <div style="display:flex; gap:4px;">
+                  <button class="ghost-btn util-btn" id="btnBoughtCountToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleBoughtCount()">#</button>
+                  <button class="ghost-btn util-btn active" id="btnCategoryInfoToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleCategoryInfo()">📦</button>
+              </div>
           </div>
           <button class="icon-btn" style="border-radius: 50%;" onclick="closeModal('masterListModal')">
               <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -543,6 +546,7 @@
     let activeSource = 'cookbook'; let activeCategory = null;
     let currentRenderedCacheKey = '';
     let showBoughtCount = false;
+    let showCategoryInfo = true;
     let isShoppingActive = false;
     let standaloneMealContext = null; 
     let pendingDuplicateMeal = null;
@@ -1806,6 +1810,12 @@
         document.getElementById('btnBoughtCountToggle').classList.toggle('active', showBoughtCount);
         filterMasterList();
     }
+    
+    function toggleCategoryInfo() {
+        showCategoryInfo = !showCategoryInfo;
+        document.getElementById('btnCategoryInfoToggle').classList.toggle('active', showCategoryInfo);
+        filterMasterList();
+    }
 
     function filterMasterList() {
         if (activeMasterCategory === 'Partners') {
@@ -1829,7 +1839,7 @@
         document.getElementById('ml-content').innerHTML = filtered.map(item => {
             let subTextParts = [];
             if (showBoughtCount) subTextParts.push(`Bought ${item.count}x`);
-            if (activeMasterCategory === 'All' && item.category && item.category !== '📦 Uncategorized') {
+            if (showCategoryInfo && activeMasterCategory === 'All' && item.category && item.category !== '📦 Uncategorized') {
                 subTextParts.push(item.category);
             }
             let subTextHtml = subTextParts.length > 0 ? `<div class="item-flag" style="font-size: 0.85rem; opacity: 0.8; margin-top: 2px;">${subTextParts.join(' · ')}</div>` : '';
