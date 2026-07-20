@@ -380,7 +380,7 @@
               <h4 style="font-family: var(--font-display); font-size: 1.5rem; margin:0;">Pantry</h4>
               <div style="display:flex; gap:4px;">
                   <button class="ghost-btn util-btn" id="btnBoughtCountToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleBoughtCount()">#</button>
-                  <button class="ghost-btn util-btn active" id="btnCategoryInfoToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleCategoryInfo()">📦</button>
+                  <button class="ghost-btn util-btn" id="btnCategoryInfoToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleCategoryInfo()">📦</button>
                   <button class="ghost-btn util-btn" id="btnEditActionsToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleEditActions()">✏️</button>
               </div>
           </div>
@@ -547,7 +547,7 @@
     let activeSource = 'cookbook'; let activeCategory = null;
     let currentRenderedCacheKey = '';
     let showBoughtCount = false;
-    let showCategoryInfo = true;
+    let showCategoryInfo = false;
     let showEditActions = false;
     let isShoppingActive = false;
     let standaloneMealContext = null; 
