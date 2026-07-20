@@ -381,6 +381,7 @@
               <div style="display:flex; gap:4px;">
                   <button class="ghost-btn util-btn" id="btnBoughtCountToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleBoughtCount()">#</button>
                   <button class="ghost-btn util-btn active" id="btnCategoryInfoToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleCategoryInfo()">📦</button>
+                  <button class="ghost-btn util-btn" id="btnEditActionsToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleEditActions()">✏️</button>
               </div>
           </div>
           <button class="icon-btn" style="border-radius: 50%;" onclick="closeModal('masterListModal')">
@@ -547,6 +548,7 @@
     let currentRenderedCacheKey = '';
     let showBoughtCount = false;
     let showCategoryInfo = true;
+    let showEditActions = false;
     let isShoppingActive = false;
     let standaloneMealContext = null; 
     let pendingDuplicateMeal = null;
@@ -1817,6 +1819,12 @@
         filterMasterList();
     }
 
+    function toggleEditActions() {
+        showEditActions = !showEditActions;
+        document.getElementById('btnEditActionsToggle').classList.toggle('active', showEditActions);
+        filterMasterList();
+    }
+
     function filterMasterList() {
         if (activeMasterCategory === 'Partners') {
             renderPartnerTogglesInline();
@@ -1847,6 +1855,18 @@
             const safeName = escapeHtml(item.name);
             const jsSafeName = escapeJsArg(item.name);
 
+            let actionsHtml = '';
+            if (showEditActions) {
+                actionsHtml = `
+                <div style="display:flex; align-items:center; gap: 8px;" onclick="event.stopPropagation();">
+                    <select onchange="editMasterItem('${jsSafeName}', this.value)" style="background:transparent; color:inherit; border:none; padding:4px; font-size:1.1rem; width:32px; -webkit-appearance:none; appearance:none; outline:none; direction:rtl; cursor:pointer;">
+                        <option value="" disabled selected>✏️</option>${catOptions}
+                    </select>
+                    <button class="trash-btn" onclick="executeSoftDelete('master', '${jsSafeName}')">
+                        <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></button>
+                </div>`;
+            }
+
             return `
             <div class="list-item-row ${item.inCart ? 'checked' : ''}" onclick="toggleMasterItem('${jsSafeName}', this)">
                 <div class="list-item-left" style="pointer-events: none;">
@@ -1855,13 +1875,7 @@
                         ${subTextHtml}
                     </div>
                 </div>
-                <div style="display:flex; align-items:center; gap: 8px;" onclick="event.stopPropagation();">
-                    <select onchange="editMasterItem('${jsSafeName}', this.value)" style="background:transparent; color:inherit; border:none; padding:4px; font-size:1.1rem; width:32px; -webkit-appearance:none; appearance:none; outline:none; direction:rtl; cursor:pointer;">
-                        <option value="" disabled selected>✏️</option>${catOptions}
-                    </select>
-                    <button class="trash-btn" onclick="executeSoftDelete('master', '${jsSafeName}')">
-                        <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></button>
-                </div>
+                ${actionsHtml}
             </div>`;
         }).join('') || '<p class="subtle" style="text-align:center; margin-top:20px;">No items match.</p>';
     }
