@@ -841,7 +841,7 @@
         document.getElementById('infoToggleBtn').classList.toggle('active', appSettings.showInfo);
         queueLocalSave();
         
-        if (activeTab === 'plan' && activeCategory) document.getElementById('generateBtn').click();
+        if (activeTab === 'plan' && state.currentSuggestions.length > 0) renderOutputDeck(state.currentSuggestions);
         const activeBtn = document.querySelector('.stat-btn.active');
         if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
     }
