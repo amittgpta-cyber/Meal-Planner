@@ -257,7 +257,10 @@
 
   <div class="topbar-wrapper" id="mainTopbar">
     <div class="topbar-main">
-      <div class="brand" onclick="forceAppRefresh()" style="cursor: pointer; -webkit-tap-highlight-color: transparent;"><img class="brand-logo" src="icon-512x512.png" alt="Logo" style="object-fit: cover; padding: 0; border: none; background: transparent;" /><h1>Meal Planner</h1></div>
+      <div class="brand">
+    <img class="brand-logo" src="icon-512x512.png" alt="Logo" style="object-fit: cover; padding: 0; border: none; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent;" onclick="forceAppRefresh()" />
+    <h1>Meal Planner</h1>
+</div>
       <div class="header-actions" id="topbar-plan-actions">
         <button class="ghost-btn" id="openDataBtn" onclick="openCookbook()">
             <svg style="pointer-events:none;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
@@ -524,6 +527,16 @@
   </div>
 
   <script>
+    
+function forceAppRefresh() {
+    if(navigator.vibrate) navigator.vibrate(15);
+    saveStateLocally(); 
+    flushCartSync();    
+    setTimeout(() => {
+        window.location.reload(true);
+    }, 150);
+}
+    
     const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzNOXoxn17I3d4-inuxiEqhdPxOQokGlSGCYW8buwLTcO6YJxbvcHBH0dZ1d-fBDzwl/exec"; 
     
     // FIREBASE INITIALIZATION FOR CART SYNC
