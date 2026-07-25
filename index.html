@@ -865,21 +865,28 @@ function forceAppRefresh() {
     }
 
   function toggleGlobalInfo() {
-    appSettings.showInfo = !appSettings.showInfo;
-    document.getElementById('infoToggleBtn').classList.toggle('active', appSettings.showInfo);
-    queueLocalSave();
-
-    // Fix: Update existing cards in-place to prevent entrance animation re-triggering
-    if (activeTab === 'plan' && state.currentSuggestions.length > 0) {
-        state.currentSuggestions.forEach((item, index) => {
-            const article = document.getElementById(`card-${index}`);
-            if (article) article.innerHTML = getCardInnerHTML(item, index, false);
-        });
+        appSettings.showInfo = !appSettings.showInfo;
+        document.getElementById('infoToggleBtn').classList.toggle('active', appSettings.showInfo);
+        queueLocalSave();
+        
+        // 1. Update main deck cards in-place (Prevents CSS animation re-trigger)
+        if (activeTab === 'plan' && state.currentSuggestions.length > 0) {
+            state.currentSuggestions.forEach((item, index) => {
+                const article = document.getElementById(`card-${index}`);
+                if (article) article.innerHTML = getCardInnerHTML(item, index, false);
+            });
+        }
+        
+        // 2. Update standalone modal card in-place (if it exists)
+        const standaloneCard = document.getElementById('standalone-card');
+        if (standaloneCard && standaloneMealContext) {
+            standaloneCard.innerHTML = getCardInnerHTML(standaloneMealContext, 'standalone', true);
+        }
+        
+        // 3. Re-render Cookbook List 
+        const activeBtn = document.querySelector('.stat-btn.active');
+        if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
     }
-    
-    const activeBtn = document.querySelector('.stat-btn.active');
-    if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
-}
 
     let lastScrollY = window.scrollY; 
     const bottomNav = document.getElementById('bottomNav');
