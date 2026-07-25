@@ -864,15 +864,22 @@ function forceAppRefresh() {
         if (currentTextSize === 2) root.classList.add('text-scale-120');
     }
 
-    function toggleGlobalInfo() {
-        appSettings.showInfo = !appSettings.showInfo;
-        document.getElementById('infoToggleBtn').classList.toggle('active', appSettings.showInfo);
-        queueLocalSave();
-        
-        if (activeTab === 'plan' && state.currentSuggestions.length > 0) renderOutputDeck(state.currentSuggestions);
-        const activeBtn = document.querySelector('.stat-btn.active');
-        if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
+  function toggleGlobalInfo() {
+    appSettings.showInfo = !appSettings.showInfo;
+    document.getElementById('infoToggleBtn').classList.toggle('active', appSettings.showInfo);
+    queueLocalSave();
+
+    // Fix: Update existing cards in-place to prevent entrance animation re-triggering
+    if (activeTab === 'plan' && state.currentSuggestions.length > 0) {
+        state.currentSuggestions.forEach((item, index) => {
+            const article = document.getElementById(`card-${index}`);
+            if (article) article.innerHTML = getCardInnerHTML(item, index, false);
+        });
     }
+    
+    const activeBtn = document.querySelector('.stat-btn.active');
+    if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
+}
 
     let lastScrollY = window.scrollY; 
     const bottomNav = document.getElementById('bottomNav');
