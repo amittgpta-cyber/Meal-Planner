@@ -1277,36 +1277,20 @@ function forceAppRefresh() {
 
       const dietClassSelector = safeDiet === 'non-veg' ? 'nonveg' : (safeDiet === 'egg' ? 'egg' : 'veg');
 
-      let buttonText = item.category;
-      let buttonInlineStyle = '';
-
-      if (item.isLocked) {
-          buttonText = '✓ Serve It';
-      } else if (isRecent) {
-          const msSinceServed = Date.now() - new Date(item.lastServed).getTime();
-          const daysSinceServed = Math.floor(msSinceServed / (1000 * 3600 * 24));
-          const daysLeft = Math.max(1, 7 - daysSinceServed);
-          const fillPercent = (daysLeft / 7) * 100;
-          const dietVar = `--diet-${dietClassSelector}-color`;
-          
-          buttonText = `⏳ ${daysLeft}d · ${item.category}`;
-          buttonInlineStyle = `style="background: linear-gradient(to right, color-mix(in oklab, var(${dietVar}) 25%, transparent) ${fillPercent}%, transparent ${fillPercent}%);"`;
-      }
-
       let navRow = '';
       if (isStandalone) {
           navRow = `
           <div style="display:flex; width: 100%;">
-              <button class="card-action border-${dietClassSelector} ${item.isLocked ? 'locked' : ''}" style="width: 100%;" ${buttonInlineStyle} data-action="lock" data-index="${index}" data-standalone="true">
-                  ${buttonText}
+              <button class="card-action border-${dietClassSelector} ${item.isLocked ? 'locked' : ''}" style="width: 100%;" data-action="lock" data-index="${index}" data-standalone="true">
+                  ${item.isLocked ? '✓ Serve It' : item.category}
               </button>
           </div>`;
       } else {
           navRow = `
           <div style="display:flex; align-items:center; gap: 8px; width: 100%;">
               <button class="card-action" style="flex: 1; padding: 0;" data-action="prev-meal" data-index="${index}">&lt;&lt;</button>
-              <button class="card-action border-${dietClassSelector} ${item.isLocked ? 'locked' : ''}" style="flex: 1.5;" ${buttonInlineStyle} data-action="lock" data-index="${index}">
-                  ${buttonText}
+              <button class="card-action border-${dietClassSelector} ${item.isLocked ? 'locked' : ''}" style="flex: 1.5;" data-action="lock" data-index="${index}">
+                  ${item.isLocked ? '✓ Serve It' : item.category}
               </button>
               <button class="card-action" style="flex: 1; padding: 0;" data-action="next-meal" data-index="${index}">&gt;&gt;</button>
           </div>`;
