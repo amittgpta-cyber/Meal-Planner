@@ -445,8 +445,8 @@
             <button class="icon-btn util-btn" id="infoToggleBtn" onclick="toggleGlobalInfo()" style="padding: 0; width: 38px; height: 38px; display: flex; justify-content: center; align-items: center;">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
             </button>
+            <button class="icon-btn util-btn" id="btnCbEditToggle" onclick="toggleCbEditActions()" style="padding: 0; width: 38px; height: 38px; display: flex; justify-content: center; align-items: center; font-size:1.1rem;">✏️</button>
             <button class="icon-btn" onclick="toggleTextSize()" style="font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; padding: 0; width: 38px; height: 38px;">Aa</button>
-            <button class="icon-btn" data-theme-toggle style="width: 38px; height: 38px;"></button>
             <button class="icon-btn" style="border-radius: 50%; width: 38px; height: 38px;" onclick="closeModal('dataModal')">
                 <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 6L6 18M6 6l12 12"/></svg>
             </button>
@@ -526,6 +526,43 @@
     </section>
   </div>
 
+  <!-- PANTRY EDIT MODAL -->
+  <div class="modal" id="pantryEditModal" style="z-index: 2010;">
+    <section class="dialog" style="max-width: 350px;">
+      <div class="dialog-head">
+        <h4 style="font-family: var(--font-display); font-size: 1.25rem;">Edit Pantry Item</h4>
+        <button class="icon-btn" style="border-radius: 50%; width:32px; height:32px;" onclick="closeModal('pantryEditModal')">✕</button>
+      </div>
+      <div class="dialog-body" style="padding: 20px; display:flex; flex-direction:column; gap:12px;">
+        <input id="editPantryName" class="master-search-bar" style="margin:0;" type="text" />
+        <select id="editPantryCategory" class="master-search-bar" style="margin:0; padding:12px 16px;"></select>
+        <button class="primary-btn" style="width:100%; border-radius: 1.5rem; padding: 14px;" onclick="savePantryEdit()">Save Changes</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- MEAL EDIT MODAL -->
+  <div class="modal" id="mealEditModal" style="z-index: 2010;">
+    <section class="dialog" style="max-width: 350px;">
+      <div class="dialog-head">
+        <h4 style="font-family: var(--font-display); font-size: 1.25rem;">Edit Meal</h4>
+        <button class="icon-btn" style="border-radius: 50%; width:32px; height:32px;" onclick="closeModal('mealEditModal')">✕</button>
+      </div>
+      <div class="dialog-body" style="padding: 20px; display:flex; flex-direction:column; gap:12px;">
+        <input id="editMealName" class="master-search-bar" style="margin:0;" type="text" />
+        <select id="editMealCategory" class="master-search-bar" style="margin:0; padding:12px 16px;">
+            <option value="Breakfast">Breakfast</option>
+            <option value="Lunch">Lunch</option>
+            <option value="Dinner">Dinner</option>
+            <option value="Dessert">Dessert</option>
+            <option value="Drinks">Drinks</option>
+            <option value="Cocktails">Cocktails</option>
+        </select>
+        <button class="primary-btn" style="width:100%; border-radius: 1.5rem; padding: 14px;" onclick="saveMealEdit()">Update & Sync</button>
+      </div>
+    </section>
+  </div>
+
   <script>
     
 function forceAppRefresh() {
@@ -566,6 +603,9 @@ function forceAppRefresh() {
     let standaloneMealContext = null; 
     let pendingDuplicateMeal = null;
     let pendingDuplicateCategory = null;
+    let pantryEditTargetName = '';
+    let mealToEditName = '';
+    let showCbEditActions = false;
 
     const SYNONYM_DICTIONARY = {
         "dahi": "curd",
@@ -994,25 +1034,11 @@ function forceAppRefresh() {
     function closeModal(modalId) { document.getElementById(modalId).classList.remove('open'); }
 
     (() => {
-      const themeBtn = document.querySelector('[data-theme-toggle]');
       const root = document.documentElement;
-      let theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      root.setAttribute('data-theme', theme);
-      const renderThemeIcon = () => { 
-          if(themeBtn) {
-            themeBtn.innerHTML = theme === 'dark' 
-              ? '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>' 
-              : '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'; 
-          }
-      };
-      renderThemeIcon();
-      if(themeBtn) {
-        themeBtn.addEventListener('click', () => { 
-            theme = theme === 'dark' ? 'light' : 'dark'; 
-            root.setAttribute('data-theme', theme); 
-            renderThemeIcon(); 
-        });
-      }
+      const mql = window.matchMedia('(prefers-color-scheme: dark)');
+      const applyTheme = (e) => root.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+      applyTheme(mql);
+      mql.addEventListener('change', applyTheme);
     })();
 
     function switchTab(tabId) {
@@ -1273,7 +1299,13 @@ function forceAppRefresh() {
       const exploreContainerId = isStandalone ? `explore-standalone` : `explore-${index}`;
       
       const titleColorStyle = isRecent ? 'color: var(--color-warning);' : '';
-      const titlePrefixHtml = isRecent ? '<span style="font-size: 2rem; vertical-align: baseline; position: relative; top: -1px;">!</span>&nbsp;' : '';
+      let titlePrefixHtml = '';
+      if (isRecent) {
+          const msSinceServed = Date.now() - new Date(item.lastServed).getTime();
+          const daysSinceServed = Math.floor(msSinceServed / (1000 * 3600 * 24));
+          const daysLeft = Math.max(1, 7 - daysSinceServed);
+          titlePrefixHtml = `<span style="font-size: 1.1rem; color: var(--color-warning); vertical-align: middle; position: relative; top: -3px; margin-right: 6px;">⏳ ${daysLeft}d</span>&nbsp;`;
+      }
 
       return `
         <div class="card-header-row" style="align-items: flex-start;">
@@ -1508,11 +1540,8 @@ function forceAppRefresh() {
     }
 
     // ------------------------------------------------
-    // COOKBOOK MEAL DELETION
+    // COOKBOOK MEAL DELETION & EDITING
     // ------------------------------------------------
-    let mealToDeleteName = '';
-    let mealToDeleteSource = '';
-
     function confirmMealDeletionPrompt(name, src) {
         mealToDeleteName = unescapeHtml(name);
         mealToDeleteSource = src;
@@ -1534,6 +1563,57 @@ function forceAppRefresh() {
         filterCookbookSearch();
         
         deckCache = {}; 
+        document.getElementById('suggestions').innerHTML = '';
+        renderEmptyState();
+        currentRenderedCacheKey = '';
+    }
+
+    function toggleCbEditActions() {
+        showCbEditActions = !showCbEditActions;
+        document.getElementById('btnCbEditToggle').classList.toggle('active', showCbEditActions);
+        filterCookbookSearch();
+    }
+
+    function openMealEditModal(name, src, category) {
+        mealToEditName = unescapeHtml(name);
+        document.getElementById('editMealName').value = mealToEditName;
+        document.getElementById('editMealCategory').value = category || 'Dinner';
+        openModal('mealEditModal');
+    }
+
+    function saveMealEdit() {
+        const newName = document.getElementById('editMealName').value.trim();
+        const newCat = document.getElementById('editMealCategory').value;
+        if (!newName) return;
+        
+        let oldMeal = state.savedMeals.find(m => m.name.toLowerCase() === mealToEditName.toLowerCase());
+        if(!oldMeal) {
+            oldMeal = { diet: appSettings.diets.length > 0 ? appSettings.diets[0] : 'veg', ingredients: '[]', cuisine: '', origin: '', fact: '' };
+        }
+        
+        state.savedMeals = state.savedMeals.filter(m => m.name.toLowerCase() !== mealToEditName.toLowerCase());
+        runServer('deleteSavedMeal', {mealName: mealToEditName, sourceSheet: 'Local DB'});
+        
+        pendingApprovals.push({ 
+            category: newCat, 
+            meal: newName, 
+            diet: oldMeal.diet || 'veg', 
+            ingredients: oldMeal.ingredients || '[]', 
+            cuisine: oldMeal.cuisine || '', 
+            origin: oldMeal.origin || '', 
+            fact: oldMeal.fact || '' 
+        });
+        
+        closeModal('mealEditModal');
+        showToast("Meal updated and queued for sync.");
+        
+        queueLocalSave();
+        renderReviewQueue();
+        updateCookbookIconState();
+        filterCookbookSearch();
+        updateCookbookStats();
+        
+        deckCache = {};
         document.getElementById('suggestions').innerHTML = '';
         renderEmptyState();
         currentRenderedCacheKey = '';
@@ -1868,6 +1948,69 @@ function forceAppRefresh() {
         filterMasterList();
     }
 
+    function openPantryEditModal(name, category) {
+        pantryEditTargetName = unescapeHtml(name);
+        document.getElementById('editPantryName').value = pantryEditTargetName;
+        
+        const sortedCats = getSortedCategories();
+        document.getElementById('editPantryCategory').innerHTML = `<option value="📦 Uncategorized">📦 Category</option>` + 
+            sortedCats.filter(c => !['All', '🔥 Top Picks', '📦 Uncategorized'].includes(c.id))
+                      .map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+        
+        document.getElementById('editPantryCategory').value = category || '📦 Uncategorized';
+        openModal('pantryEditModal');
+    }
+
+    function savePantryEdit() {
+        const oldName = pantryEditTargetName;
+        const newName = document.getElementById('editPantryName').value.trim();
+        const newCat = document.getElementById('editPantryCategory').value;
+        if(!newName) return;
+
+        const oldNameLower = oldName.toLowerCase();
+        const newNameLower = newName.toLowerCase();
+
+        // Step 1: Collision Prevention
+        if (oldNameLower !== newNameLower) {
+            const exists = state.grocery.find(i => i.name.toLowerCase() === newNameLower && i.category !== 'Ghost');
+            if (exists) {
+                showToast("An item with this name already exists.");
+                return;
+            }
+        }
+
+        // Step 2: Deep Clone & Swap
+        const idx = state.grocery.findIndex(i => i.name === oldName);
+        if (idx > -1) {
+            const clonedItem = JSON.parse(JSON.stringify(state.grocery[idx]));
+            clonedItem.name = newName;
+            clonedItem.category = newCat;
+            
+            state.grocery.splice(idx, 1, clonedItem);
+            
+            // Step 3: Cart Broadcast & Local Save
+            queueLocalSave();
+            if (!isShoppingActive) renderCart();
+            queueCartSync();
+            
+            // Step 4: Master Sync (Google Sheets)
+            if (oldNameLower !== newNameLower) {
+                runServer('deleteMasterItem', {item: oldName});
+                runServer('addMasterItem', {item: newName, category: newCat});
+                
+                // Step 5: Graveyard Sweep
+                graveyard = graveyard.filter(g => !(g.item && g.item.name === oldName));
+                updateUndoButton();
+            } else {
+                runServer('editMasterItemCategory', {item: newName, category: newCat});
+            }
+            
+            showToast("Item updated successfully.");
+            filterMasterList();
+            closeModal('pantryEditModal');
+        }
+    }
+
     function filterMasterList() {
         if (activeMasterCategory === 'Partners') {
             renderPartnerTogglesInline();
@@ -1885,7 +2028,6 @@ function forceAppRefresh() {
         });
 
         filtered.sort((a, b) => (b.count - a.count) || a.name.localeCompare(b.name));
-        const catOptions = getSortedCategories().filter(c => !['All', '🔥 Top Picks'].includes(c.id)).map(c => `<option value="${c.id}">${c.label}</option>`).join('');
 
         document.getElementById('ml-content').innerHTML = filtered.map(item => {
             let subTextParts = [];
@@ -1902,9 +2044,7 @@ function forceAppRefresh() {
             if (showEditActions) {
                 actionsHtml = `
                 <div style="display:flex; align-items:center; gap: 8px;" onclick="event.stopPropagation();">
-                    <select onchange="editMasterItem('${jsSafeName}', this.value)" style="background:transparent; color:inherit; border:none; padding:4px; font-size:1.1rem; width:32px; -webkit-appearance:none; appearance:none; outline:none; direction:rtl; cursor:pointer;">
-                        <option value="" disabled selected>✏️</option>${catOptions}
-                    </select>
+                    <button class="ghost-btn" style="border:none; padding:4px; font-size:1.1rem; width:32px; height: 32px; display:flex; justify-content:center; align-items:center;" onclick="openPantryEditModal('${jsSafeName}', '${escapeJsArg(item.category || '')}')">✏️</button>
                     <button class="trash-btn" onclick="executeSoftDelete('master', '${jsSafeName}')">
                         <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></button>
                 </div>`;
@@ -1947,18 +2087,6 @@ function forceAppRefresh() {
       if (!isShoppingActive) renderCart(); 
       queueLocalSave(); 
       queueCartSync();
-    }
-
-    function editMasterItem(itemName, newCategory) {
-        const rawName = unescapeHtml(itemName);
-        const item = state.grocery.find(i => i.name.toLowerCase() === rawName.toLowerCase());
-        if (item) {
-            item.category = newCategory; 
-            queueLocalSave(); 
-            filterMasterList();
-            runServer('editMasterItemCategory', { item: rawName, category: newCategory }); 
-            showToast(`Category updated`);
-        }
     }
 
     function openMasterList() { 
@@ -2091,12 +2219,21 @@ function forceAppRefresh() {
                         rowBackground = `background: linear-gradient(to right, color-mix(in oklab, var(--color-warning) 20%, var(--color-surface)) ${fillPercent}%, var(--color-surface) ${fillPercent}%); border-color: color-mix(in oklab, var(--color-warning) 30%, var(--color-border));`;
                         rightTag = `<span style="font-size: 0.8rem; color: var(--color-warning); font-weight: 700; margin-right: 8px;">⏳ ${daysLeft}d</span>`;
                     }
+
+                    let editBtnHtml = '';
+                    if (showCbEditActions && i.src === 'Local DB') {
+                        editBtnHtml = `<button class="ghost-btn" style="border:none; padding:4px; margin-right:4px; font-size:1.1rem; width:24px; height:24px; display:flex; justify-content:center; align-items:center;" onclick="event.stopPropagation(); openMealEditModal('${jsSafeName}', '${i.src}', '${escapeJsArg(i.category || '')}')">✏️</button>`;
+                    }
                     
                     html += `<div class="data-row" style="cursor: pointer; ${rowBackground}" onclick="openStandaloneCard('${jsSafeName}', '${i.src}')">
                                 <div style="flex:1;"><span>${safeName}</span></div>
                                 ${rightTag}
-                                <button class="trash-btn" style="padding:4px;" onclick="event.stopPropagation(); confirmMealDeletionPrompt('${jsSafeName}', '${i.src}')">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                                <div style="display:flex; align-items:center;">
+                                    ${editBtnHtml}
+                                    <button class="trash-btn" style="padding:4px;" onclick="event.stopPropagation(); confirmMealDeletionPrompt('${jsSafeName}', '${i.src}')">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
+                                </div>
                              </div>`;
                 });
             }
