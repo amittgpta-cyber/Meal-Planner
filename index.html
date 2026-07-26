@@ -2220,20 +2220,22 @@ function forceAppRefresh() {
                         rightTag = `<span style="font-size: 0.8rem; color: var(--color-warning); font-weight: 700; margin-right: 8px;">⏳ ${daysLeft}d</span>`;
                     }
 
-                    let editBtnHtml = '';
-                    if (showCbEditActions && i.src === 'Local DB') {
-                        editBtnHtml = `<button class="ghost-btn" style="border:none; padding:4px; margin-right:4px; font-size:1.1rem; width:24px; height:24px; display:flex; justify-content:center; align-items:center;" onclick="event.stopPropagation(); openMealEditModal('${jsSafeName}', '${i.src}', '${escapeJsArg(i.category || '')}')">✏️</button>`;
+                    let actionBtnsHtml = '';
+                    if (showCbEditActions) {
+                        let editBtnHtml = (i.src === 'Local DB') ? `<button style="background:transparent; border:none; padding:4px; margin-right:4px; font-size:1.1rem; width:24px; height:24px; display:flex; justify-content:center; align-items:center; cursor:pointer;" onclick="event.stopPropagation(); openMealEditModal('${jsSafeName}', '${i.src}', '${escapeJsArg(i.category || '')}')">✏️</button>` : '';
+                        
+                        actionBtnsHtml = `<div style="display:flex; align-items:center;">
+                                            ${editBtnHtml}
+                                            <button class="trash-btn" style="padding:4px;" onclick="event.stopPropagation(); confirmMealDeletionPrompt('${jsSafeName}', '${i.src}')">
+                                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                            </button>
+                                          </div>`;
                     }
                     
                     html += `<div class="data-row" style="cursor: pointer; ${rowBackground}" onclick="openStandaloneCard('${jsSafeName}', '${i.src}')">
                                 <div style="flex:1;"><span>${safeName}</span></div>
                                 ${rightTag}
-                                <div style="display:flex; align-items:center;">
-                                    ${editBtnHtml}
-                                    <button class="trash-btn" style="padding:4px;" onclick="event.stopPropagation(); confirmMealDeletionPrompt('${jsSafeName}', '${i.src}')">
-                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                                    </button>
-                                </div>
+                                ${actionBtnsHtml}
                              </div>`;
                 });
             }
