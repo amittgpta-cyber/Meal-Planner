@@ -1244,6 +1244,14 @@ function forceAppRefresh() {
       const safeName = escapeHtml(item.name);
       const safeDiet = (item.diet || 'veg').toLowerCase();
       
+      let timerHtml = '';
+      if (isRecent) {
+          const msSinceServed = Date.now() - new Date(item.lastServed).getTime();
+          const daysSinceServed = Math.floor(msSinceServed / (1000 * 3600 * 24));
+          const daysLeft = Math.max(1, 7 - daysSinceServed);
+          timerHtml = `<div class="explore-icon" style="color: var(--color-warning); border-color: color-mix(in oklab, var(--color-warning) 30%, transparent);"><span style="font-size: 16px; margin-bottom: 2px;">⏳</span>${daysLeft}d</div>`;
+      }
+      
       let metaBreadcrumbHtml = '';
       let factHtml = '';
       
@@ -1320,6 +1328,7 @@ function forceAppRefresh() {
               <button class="explore-icon" data-action="youtube" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg viewBox="0 0 24 24"><path fill="#FF0000" d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>Video</button>
               <button class="explore-icon" data-action="nutrition" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>Stats</button>
               <button class="explore-icon" data-action="share-card" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}><svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>Share</button>
+              ${timerHtml}
               ${cartHtml}
               ${bookmarkHtml}
           </div>
