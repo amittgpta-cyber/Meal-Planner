@@ -249,16 +249,6 @@
     .partner-grid button:last-child:nth-child(odd) {
         grid-column: span 2;
     }
-
-    /* Restock Suggestions Styles */
-    .restock-ribbon { display: flex; overflow-x: auto; gap: 8px; padding: 0 8px 16px 8px; margin-bottom: 8px; -ms-overflow-style: none; scrollbar-width: none; border-bottom: 1px solid var(--color-divider); }
-    .restock-ribbon::-webkit-scrollbar { display: none; }
-    .restock-chip { background: color-mix(in oklab, var(--color-warning) 15%, var(--color-surface)); border: 1px solid color-mix(in oklab, var(--color-warning) 30%, transparent); border-radius: 1.5rem; padding: 8px 12px; display: flex; align-items: center; gap: 8px; white-space: nowrap; font-size: 0.9rem; flex-shrink: 0; box-shadow: var(--shadow-sm); }
-    .restock-chip .chip-name { font-weight: 600; color: var(--color-text); }
-    .restock-chip .chip-action { background: var(--color-warning); color: var(--color-bg); border: none; border-radius: 1rem; padding: 4px 10px; font-weight: bold; font-size: 0.8rem; cursor: pointer; transition: transform 0.2s; }
-    .restock-chip .chip-action:active { transform: scale(0.92); }
-    .restock-chip .chip-snooze { background: transparent; border: none; color: var(--color-text-muted); font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; padding: 0 4px; transition: transform 0.2s; }
-    .restock-chip .chip-snooze:active { transform: scale(0.92); }
   </style>
 </head>
 <body>
@@ -339,7 +329,6 @@
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 </button>
             </div>
-            <div id="restock-suggestions-container"></div>
             <div id="unified-cart-items"></div>
         </div>
         
@@ -809,16 +798,12 @@ function forceAppRefresh() {
                 cloudItem.checkTime = localItem.checkTime;
                 cloudItem.fuzzyOriginal = localItem.fuzzyOriginal;
                 cloudItem.swappedFromPantry = localItem.swappedFromPantry;
-                cloudItem.count = localItem.count || 0;
-                cloudItem.purchaseHistory = cloudItem.purchaseHistory || localItem.purchaseHistory || [];
-                cloudItem.snoozeUntil = Math.max(cloudItem.snoozeUntil || 0, localItem.snoozeUntil || 0); 
+                cloudItem.count = localItem.count || 0; 
             } else {
                 cloudItem.inCart = false;
                 cloudItem.checked = false;
                 cloudItem.mealContext = '';
                 delete cloudItem.checkTime;
-                cloudItem.purchaseHistory = cloudItem.purchaseHistory || [];
-                cloudItem.snoozeUntil = cloudItem.snoozeUntil || 0;
             }
         });
 
@@ -1754,117 +1739,7 @@ function forceAppRefresh() {
         }
     }
 
-    // ------------------------------------------------
-    // RESTOCK SUGGESTIONS ENGINE (WMA)
-    // ------------------------------------------------
-    function predictNextRestockDate(historyStrOrArr) {
-        let history = [];
-        if (Array.isArray(historyStrOrArr)) {
-            history = historyStrOrArr;
-        } else if (typeof historyStrOrArr === 'string' && historyStrOrArr) {
-            history = historyStrOrArr.split(',').map(Number);
-        }
-        
-        // Ensure valid history elements
-        history = history.filter(val => !isNaN(val) && val > 0);
-        
-        if (history.length < 2) return null; // Need at least 2 purchases to find an interval
-
-        history.sort((a, b) => a - b);
-        let intervals = [];
-        for (let i = 1; i < history.length; i++) {
-            intervals.push(history[i] - history[i-1]);
-        }
-        
-        // Weighted Moving Average (WMA) calculation
-        let weightedSum = 0;
-        let weightTotal = 0;
-        for (let i = 0; i < intervals.length; i++) {
-            let weight = i + 1; // More recent intervals have higher weight
-            weightedSum += intervals[i] * weight;
-            weightTotal += weight;
-        }
-        
-        let avgInterval = weightedSum / weightTotal;
-        let lastPurchase = history[history.length - 1];
-        return lastPurchase + avgInterval;
-    }
-
-    function renderRestockSuggestions() {
-        const container = document.getElementById('restock-suggestions-container');
-        if (!container) return;
-
-        const now = Date.now();
-        let suggestions = state.grocery.filter(item => {
-            if (item.inCart || item.category === 'Ghost') return false; // Already in cart or ghost
-            if (item.snoozeUntil && now < item.snoozeUntil) return false; // Snoozed
-            
-            const nextDate = predictNextRestockDate(item.purchaseHistory);
-            if (!nextDate) return false;
-
-            // Threshold: If we are within 2 days of the predicted restock, or past it
-            const threshold = 2 * 24 * 60 * 60 * 1000;
-            return (now + threshold) >= nextDate;
-        });
-
-        if (suggestions.length === 0) {
-            container.innerHTML = '';
-            return;
-        }
-
-        // Sort by most urgent
-        suggestions.sort((a, b) => {
-            return predictNextRestockDate(a.purchaseHistory) - predictNextRestockDate(b.purchaseHistory);
-        });
-
-        // Limit to top 5
-        suggestions = suggestions.slice(0, 5);
-
-        let html = `<div style="padding: 0 8px; font-size: 0.8rem; font-weight: bold; color: var(--color-warning); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">✨ Time to Restock?</div>`;
-        html += `<div class="restock-ribbon">`;
-        suggestions.forEach(item => {
-            const jsSafeName = escapeJsArg(item.name);
-            html += `
-            <div class="restock-chip">
-                <span class="chip-name">${escapeHtml(item.name)}</span>
-                <button class="chip-action" onclick="addRestockItem('${jsSafeName}')">+ Add</button>
-                <button class="chip-snooze" onclick="snoozeRestockItem('${jsSafeName}')">✕</button>
-            </div>`;
-        });
-        html += `</div>`;
-        container.innerHTML = html;
-    }
-
-    function addRestockItem(name) {
-        const rawName = unescapeHtml(name);
-        let item = state.grocery.find(i => i.name === rawName);
-        if (item) {
-            item.inCart = true;
-            item.checked = true;
-            item.checkTime = Date.now();
-            item.mealContext = '';
-            
-            renderCart();
-            queueLocalSave();
-            queueCartSync();
-            showToast(`Added ${item.name} to cart`);
-        }
-    }
-
-    function snoozeRestockItem(name) {
-        const rawName = unescapeHtml(name);
-        let item = state.grocery.find(i => i.name === rawName);
-        if (item) {
-            item.snoozeUntil = Date.now() + (7 * 24 * 60 * 60 * 1000); // Snooze for 7 days
-            renderCart(); 
-            queueLocalSave();
-            runServer('snoozeItem', { item: item.name, snoozeUntil: item.snoozeUntil }, true);
-        }
-    }
-
     function renderCart() {
-      renderRestockSuggestions();
-        
       const container = document.getElementById('unified-cart-items');
       const activeCart = state.grocery.filter(item => item.inCart);
       activeCart.sort((a, b) => (a.checkTime || 0) - (b.checkTime || 0));
@@ -2020,8 +1895,7 @@ function forceAppRefresh() {
         { id: '💪 Healthy Snacks', label: '💪 Healthy Snacks' }, { id: '🍜 Fast Food', label: '🍜 Fast Food' },
         { id: '🧃🧋 Drinks', label: '🧃🧋 Drinks' }, { id: '🍦🍨 Ice Cream', label: '🍦🍨 Ice Cream' },
         { id: '🧴🚿 Bath & Grooming', label: '🧴🚿 Bath/Groom' }, { id: '🧼 Hygiene', label: '🧼 Hygiene' },
-        { id: '🧻🚽 Bathroom', label: '🧻🚽 Bathroom' }, { id: '🧻🚽 Bathroom', label: '🧻🚽 Bathroom' },
-        { id: '🧽🧹 Cleaning', label: '🧽🧹 Cleaning' },
+        { id: '🧻🚽 Bathroom', label: '🧻🚽 Bathroom' }, { id: '🧽🧹 Cleaning', label: '🧽🧹 Cleaning' },
         { id: '🍽️🗑️ Kitchen', label: '🍽️🗑️ Kitchen' }, { id: '🪔 Pooja', label: '🪔 Pooja' },
         { id: '👶 Baby', label: '👶 Baby' }, { id: '💊 Meds', label: '💊 Meds' },
         { id: '📝 Stationery', label: '📝 Stationery' }, { id: '📦 Uncategorized', label: '📦 Uncat' }
