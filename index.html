@@ -385,6 +385,7 @@
                   <button class="ghost-btn util-btn" id="btnBoughtCountToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleBoughtCount()">#</button>
                   <button class="ghost-btn util-btn" id="btnCategoryInfoToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleCategoryInfo()">📦</button>
                   <button class="ghost-btn util-btn" id="btnEditActionsToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleEditActions()">✏️</button>
+                  <button class="ghost-btn util-btn" id="btnAutoRestockToggle" style="width:32px; height:32px; padding:0; border-radius:8px; font-weight:bold; font-size:1rem;" onclick="toggleAutoRestock()">🤖</button>
               </div>
           </div>
           <button class="icon-btn" style="border-radius: 50%;" onclick="closeModal('masterListModal')">
@@ -925,6 +926,19 @@ function forceAppRefresh() {
         // 3. Re-render Cookbook List 
         const activeBtn = document.querySelector('.stat-btn.active');
         if (activeBtn) renderCookbookList(activeBtn.dataset.cbcat, true);
+    }
+
+    function toggleAutoRestock() {
+        appSettings.showAutoRestock = !appSettings.showAutoRestock;
+        document.getElementById('btnAutoRestockToggle').classList.toggle('active', appSettings.showAutoRestock);
+        queueLocalSave();
+        renderCart();
+    }
+
+    function toggleEditActions() {
+        showEditActions = !showEditActions;
+        document.getElementById('btnEditActionsToggle').classList.toggle('active', showEditActions);
+        filterMasterList();
     }
 
     let lastScrollY = window.scrollY; 
@@ -1773,9 +1787,11 @@ function forceAppRefresh() {
       });
 
       // Virtual Cart Injection: High-Frequency Restock Predictions
-      const inactiveRestock = state.grocery.filter(item => !item.inCart && item.recentPurchaseCount >= 4 && item.category !== 'Ghost');
-      if (inactiveRestock.length > 0) {
-        groups['For 🤖 Auto Restock'] = inactiveRestock;
+      if (appSettings.showAutoRestock !== false) {
+          const inactiveRestock = state.grocery.filter(item => !item.inCart && item.recentPurchaseCount >= 4 && item.category !== 'Ghost');
+          if (inactiveRestock.length > 0) {
+            groups['For 🤖 Auto Restock'] = inactiveRestock;
+          }
       }
 
       if (Object.keys(groups).length === 0) { 
@@ -2485,6 +2501,8 @@ function forceAppRefresh() {
             url = `https://www.flipkart.com/search?q=${encodedQuery}&marketplace=HYPERLOCAL`;
         } else if (platform === 'Zepto') {
             url = `https://www.zeptonow.com/search?query=${encodedQuery}`;
+        } else if (platform === 'Apollo') {
+            url = `https://www.apollo247.com/search?searchQuery=${encodedQuery}`;
         }
         
         if (url) {
@@ -2586,7 +2604,7 @@ function forceAppRefresh() {
     }
 
     function renderPartnerTogglesInline() {
-        const partnersList = ['Swiggy', 'Blinkit', 'BigBasket', 'Amazon', 'Flipkart', 'Zepto'];
+        const partnersList = ['Swiggy', 'Blinkit', 'BigBasket', 'Amazon', 'Flipkart', 'Zepto', 'Apollo'];
         let html = '<div style="display:flex; flex-direction:column; gap:12px; padding-bottom: 20px;">';
         
         partnersList.forEach(p => {
@@ -2636,7 +2654,8 @@ function forceAppRefresh() {
                 useFavicon: false, 
                 label: 'Zepto',
                 svg: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:24px; height:24px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`
-            }
+            },
+            'Apollo': { color: '#00B38E', textColor: '#fff', useFavicon: true, domain: 'apollo247.com', label: 'Apollo' }
         };
         
         container.innerHTML = partners.map(p => {
@@ -2679,6 +2698,7 @@ function forceAppRefresh() {
           appSettings.diets = ['veg'];
       }
       if (appSettings.showInfo === undefined) appSettings.showInfo = false;
+      if (appSettings.showAutoRestock === undefined) appSettings.showAutoRestock = true;
       if (!appSettings.partners || !Array.isArray(appSettings.partners) || appSettings.partners.length === 0) {
           appSettings.partners = ['Swiggy', 'Blinkit'];
       }
@@ -2696,6 +2716,7 @@ function forceAppRefresh() {
       
       renderDietStripUI();
       if (appSettings.showInfo) document.getElementById('infoToggleBtn').classList.add('active');
+      if (appSettings.showAutoRestock) document.getElementById('btnAutoRestockToggle').classList.add('active');
       
       renderShoppingPartners();
       
