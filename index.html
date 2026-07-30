@@ -573,6 +573,14 @@ function forceAppRefresh() {
         window.location.reload(true);
     }, 150);
 }
+
+    // UTILITY: Calculate Purchases in Last 90 Days
+    function calculateRecentPurchases(historyStr) {
+        if (!historyStr) return 0;
+        const dates = historyStr.split(',').map(d => d.trim()).filter(Boolean);
+        const ninetyDaysAgo = Date.now() - (90 * 24 * 60 * 60 * 1000);
+        return dates.filter(d => new Date(d).getTime() >= ninetyDaysAgo).length;
+    }
     
     const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzNOXoxn17I3d4-inuxiEqhdPxOQokGlSGCYW8buwLTcO6YJxbvcHBH0dZ1d-fBDzwl/exec"; 
     
@@ -591,6 +599,7 @@ function forceAppRefresh() {
 
     let state = { grocery: [], savedMeals: [], globalMeals: [], currentSuggestions: [] };
     let appSettings = { diets: ['veg'], showInfo: false, partners: ['Swiggy', 'Blinkit'] }; 
+    let collapsedCartGroups = {};
     
     let pendingApprovals = []; let graveyard = []; let deckCache = {}; 
     let activeTab = 'plan'; let activeMasterCategory = 'All'; let isCartExpanded = false;
@@ -791,6 +800,10 @@ function forceAppRefresh() {
         // Completely strip Google Sheets from dictating active cart flags
         newGrocery.forEach(cloudItem => {
             const localItem = state.grocery.find(i => i.name.toLowerCase() === cloudItem.name.toLowerCase());
+            
+            // Generate 90-Day rolling purchase integer on ingest
+            cloudItem.recentPurchaseCount = calculateRecentPurchases(cloudItem.purchaseHistory);
+
             if (localItem) {
                 cloudItem.inCart = localItem.inCart || false;
                 cloudItem.checked = localItem.checked || false;
@@ -811,6 +824,7 @@ function forceAppRefresh() {
         const localGhosts = state.grocery.filter(i => i.category === 'Ghost');
         localGhosts.forEach(g => {
             if (!newGrocery.find(i => i.name.toLowerCase() === g.name.toLowerCase())) {
+                g.recentPurchaseCount = 0;
                 newGrocery.push(g);
             }
         });
@@ -839,21 +853,6 @@ function forceAppRefresh() {
             if (pendingSaves > 0) return; 
             applyCloudData(parsed);
         }).catch(e => { });
-    }
-
-    function forceAppRefresh() {
-        if(navigator.vibrate) navigator.vibrate(15);
-        
-        // 1. Force immediately save any pending local changes bypassing the 500ms timer
-        saveStateLocally(); 
-        
-        // 2. Force push any pending cart changes to Firebase bypassing the 1.5s timer
-        flushCartSync();    
-        
-        // 3. Give the network thread 150ms to dispatch the payload before destroying the app memory
-        setTimeout(() => {
-            window.location.reload(true);
-        }, 150);
     }
 
     window.addEventListener('visibilitychange', () => { 
@@ -952,6 +951,11 @@ function forceAppRefresh() {
         document.getElementById('cart-dropdown-content').style.display = isCartExpanded ? 'block' : 'none';
         document.getElementById('cartChevron').style.transform = isCartExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
     }
+
+    window.toggleCartGroup = function(groupName) {
+        collapsedCartGroups[groupName] = !collapsedCartGroups[groupName];
+        renderCart();
+    };
 
     function showToast(message) {
         let container = document.getElementById('toastContainer');
@@ -1761,11 +1765,6 @@ function forceAppRefresh() {
       const clearBtn = document.getElementById('clearCartBtn');
       if (clearBtn) clearBtn.style.display = activeCart.length > 0 ? 'flex' : 'none';
 
-      if (activeCart.length === 0) { 
-          container.innerHTML = ''; 
-          return; 
-      }
-
       const groups = {};
       activeCart.forEach(item => {
         let groupName = item.mealContext ? `For ${item.mealContext}` : 'Groceries';
@@ -1773,19 +1772,46 @@ function forceAppRefresh() {
         groups[groupName].push(item);
       });
 
+      // Virtual Cart Injection: High-Frequency Restock Predictions
+      const inactiveRestock = state.grocery.filter(item => !item.inCart && item.recentPurchaseCount >= 4 && item.category !== 'Ghost');
+      if (inactiveRestock.length > 0) {
+        groups['For 🤖 Auto Restock'] = inactiveRestock;
+      }
+
+      if (Object.keys(groups).length === 0) { 
+          container.innerHTML = ''; 
+          return; 
+      }
+
       let html = '';
-      for (let group in groups) {
-          if (group !== 'Groceries') {
-              const mealContext = group.replace('For ', '');
-              html += `<div style="display:flex; justify-content:space-between; align-items:center; margin: 15px 0 5px 8px;">
-                          <div class="cart-group-title" style="margin:0;">${escapeHtml(group)}</div>
-                          <button class="ghost-btn" style="color:var(--color-error); border:none; height:32px; width:32px; padding:0; font-weight:bold; font-size:1.5rem; display:flex; justify-content:center; align-items:center;" onclick="removeMealGroup('${escapeJsArg(mealContext)}')">-</button>
-                       </div>`;
-          } else {
-              html += `<div class="cart-group-title">${escapeHtml(group)}</div>`;
-          }
+      
+      const sortedGroups = Object.keys(groups).sort((a, b) => {
+          if (a === 'Groceries') return -1;
+          if (b === 'Groceries') return 1;
+          if (a === 'For 🤖 Auto Restock') return 1;
+          if (b === 'For 🤖 Auto Restock') return -1;
+          return a.localeCompare(b);
+      });
+
+      for (let group of sortedGroups) {
+          const isCollapsed = collapsedCartGroups[group];
+          const groupDisplayName = escapeHtml(group);
+          const mealContext = group.replace('For ', '');
+
+          html += `<div style="display:flex; justify-content:space-between; align-items:center; margin: 15px 0 5px 8px; cursor:pointer; -webkit-tap-highlight-color: transparent;" onclick="toggleCartGroup('${escapeJsArg(group)}')">
+                      <div class="cart-group-title" style="margin:0; display:flex; align-items:center; gap:8px;">
+                          ${groupDisplayName}
+                          <span style="font-size: 0.75rem; color: var(--color-text-muted); transition: transform 0.3s var(--ease-fluid); display: inline-block; ${isCollapsed ? 'transform: rotate(-90deg);' : 'transform: rotate(0deg);'}">▼</span>
+                      </div>`;
           
-          html += `<div class="cart-group-list">`;
+          if (group !== 'Groceries' && group !== 'For 🤖 Auto Restock') {
+              html += `<button class="ghost-btn" style="color:var(--color-error); border:none; height:32px; width:32px; padding:0; font-weight:bold; font-size:1.5rem; display:flex; justify-content:center; align-items:center;" onclick="event.stopPropagation(); removeMealGroup('${escapeJsArg(mealContext)}')">-</button>`;
+          } else {
+              html += `<div style="width: 32px;"></div>`; 
+          }
+          html += `</div>`;
+          
+          html += `<div class="cart-group-list" style="display: ${isCollapsed ? 'none' : 'flex'};">`;
           
           groups[group].forEach(item => {
               const isGhost = item.category === 'Ghost';
@@ -1793,13 +1819,15 @@ function forceAppRefresh() {
               const jsSafeName = escapeJsArg(item.name);
               const hasSwap = !!(item.fuzzyOriginal || item.swappedFromPantry);
               
-              let swapHtml = `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${hasSwap ? `<button class="ghost-btn" style="border:none; padding:0; width: 100%; height: 100%; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="executeSwap('${jsSafeName}')">🔀</button>` : ''}</div>`;
-              let saveHtml = `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${isGhost ? `<button class="ghost-btn" style="border:none; padding:0; width: 100%; height: 100%; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="promoteGhostItem('${jsSafeName}')">💾</button>` : ''}</div>`;
+              const isItemChecked = item.inCart ? item.checked : false;
+              
+              let swapHtml = `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${hasSwap ? `<button class="ghost-btn" style="border:none; padding:0; width: 100%; height: 100%; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="event.stopPropagation(); executeSwap('${jsSafeName}')">🔀</button>` : ''}</div>`;
+              let saveHtml = `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${isGhost ? `<button class="ghost-btn" style="border:none; padding:0; width: 100%; height: 100%; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="event.stopPropagation(); promoteGhostItem('${jsSafeName}')">💾</button>` : ''}</div>`;
 
               html += `
-              <div class="list-item-row ${item.checked ? 'checked' : 'dimmed'}" id="cart-row-${btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '')}" onclick="toggleCartItem('${jsSafeName}')">
+              <div class="list-item-row ${isItemChecked ? 'checked' : 'dimmed'}" id="cart-row-${btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '')}" onclick="toggleCartItem('${jsSafeName}')">
                 <div class="list-item-left" style="pointer-events: none; flex: 1; min-width: 0;">
-                    <div class="checkbox">${item.checked ? '✓' : ''}</div>
+                    <div class="checkbox">${isItemChecked ? '✓' : ''}</div>
                     <div style="min-width: 0; word-break: break-word;"><div class="item-name">${safeName}</div></div>
                 </div>
                 <div style="display:flex; align-items:center; justify-content:flex-end; gap: 4px; flex-shrink: 0;" onclick="event.stopPropagation();">
@@ -1823,9 +1851,17 @@ function forceAppRefresh() {
         const item = state.grocery.find(i => i.name.toLowerCase() === rawName.toLowerCase());
         
         if(item) {
-            item.checked = !item.checked;
-            if (!item.checkTime) {
-                item.checkTime = Date.now(); 
+            if (!item.inCart) {
+                // Promotion from Virtual Auto Restock to active Cart
+                item.inCart = true;
+                item.checked = true;
+                item.mealContext = '';
+                item.checkTime = Date.now();
+            } else {
+                item.checked = !item.checked;
+                if (!item.checkTime) {
+                    item.checkTime = Date.now(); 
+                }
             }
             if (!isShoppingActive) renderCart();
             queueLocalSave(); 
@@ -2025,7 +2061,7 @@ function forceAppRefresh() {
             if (term && !fuzzyMatch(term, item.name)) return false;
             if (term) return true;
             if (activeMasterCategory === 'All') return true;
-            if (activeMasterCategory === '🔥 Top Picks') return item.count >= 5;
+            if (activeMasterCategory === '🔥 Top Picks') return item.recentPurchaseCount >= 5;
             return (item.category || '📦 Uncategorized') === activeMasterCategory;
         });
 
@@ -2671,6 +2707,13 @@ function forceAppRefresh() {
               if(!state.savedMeals) state.savedMeals = [];
               if(!state.globalMeals) state.globalMeals = [];
               if(!state.currentSuggestions) state.currentSuggestions = [];
+              
+              // Process recent purchases calculation locally on application cold boot
+              if(state.grocery) {
+                  state.grocery.forEach(item => {
+                      item.recentPurchaseCount = calculateRecentPurchases(item.purchaseHistory);
+                  });
+              }
           } else {
               state = { grocery: [], savedMeals: [], globalMeals: [], currentSuggestions: [] };
           }
