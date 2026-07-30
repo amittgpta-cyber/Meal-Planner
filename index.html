@@ -2100,7 +2100,8 @@ function forceAppRefresh() {
                 <div style="display:flex; align-items:center; gap: 8px;" onclick="event.stopPropagation();">
                     <button class="ghost-btn" style="border:none; padding:4px; font-size:1.1rem; width:32px; height: 32px; display:flex; justify-content:center; align-items:center;" onclick="openPantryEditModal('${jsSafeName}', '${escapeJsArg(item.category || '')}')">✏️</button>
                     <button class="trash-btn" onclick="executeSoftDelete('master', '${jsSafeName}')">
-                        <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></button>
+                        <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
                 </div>`;
             }
 
@@ -2412,7 +2413,7 @@ function forceAppRefresh() {
         <div style="display:flex; align-items:center; gap:0.75rem; flex-grow:1;">
             <span style="font-weight:600; font-family:var(--font-display);">${escapeHtml(item.meal)}</span> ${catSelect}
         </div>
-        <button class="trash-btn" data-remove-queue="${idx}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></button>`;
+        <button class="trash-btn" data-remove-queue="${idx}"><svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
         ql.appendChild(li);
       });
     }
@@ -2489,6 +2490,9 @@ function forceAppRefresh() {
 
         const encodedQuery = encodeURIComponent(query);
         let url = '';
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+
         if (platform === 'Swiggy') {
             url = `https://www.instamart.in/search?query=${encodedQuery}`;
         } else if (platform === 'Blinkit') {
@@ -2502,15 +2506,15 @@ function forceAppRefresh() {
         } else if (platform === 'Zepto') {
             url = `https://www.zeptonow.com/search?query=${encodedQuery}`;
         } else if (platform === 'Apollo') {
-            url = `https://www.apollo247.com/search?searchQuery=${encodedQuery}`;
+            if (!isIOS) {
+                url = `intent://www.apollo247.com/search?searchQuery=${encodedQuery}#Intent;scheme=https;package=com.apollo.patientapp;end;`;
+            } else {
+                url = `https://www.apollo247.com/search?searchQuery=${encodedQuery}`;
+            }
         }
         
         if (url) {
-            // Environment Platform Split Detection Check
-            const ua = navigator.userAgent || navigator.vendor || window.opera;
-            const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-            
-            if (platform === 'Zepto' && !isIOS) {
+            if ((platform === 'Zepto' || platform === 'Apollo') && !isIOS) {
                 // Android Platform Flow: open via isolated Chrome tab to preserve application memory focus
                 window.open(url, '_blank');
             } else {
