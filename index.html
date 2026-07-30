@@ -1797,7 +1797,7 @@ function forceAppRefresh() {
       if (appSettings.showAutoRestock !== false) {
           const inactiveRestock = state.grocery.filter(item => !item.inCart && item.recentPurchaseCount >= 4 && item.category !== 'Ghost');
           if (inactiveRestock.length > 0) {
-            groups['For 🤖 Auto Restock'] = inactiveRestock;
+            groups['🤖 Auto Restock'] = inactiveRestock;
           }
       }
 
@@ -1811,8 +1811,8 @@ function forceAppRefresh() {
       const sortedGroups = Object.keys(groups).sort((a, b) => {
           if (a === 'Groceries') return -1;
           if (b === 'Groceries') return 1;
-          if (a === 'For 🤖 Auto Restock') return 1;
-          if (b === 'For 🤖 Auto Restock') return -1;
+          if (a === '🤖 Auto Restock') return 1;
+          if (b === '🤖 Auto Restock') return -1;
           return a.localeCompare(b);
       });
 
@@ -1827,7 +1827,7 @@ function forceAppRefresh() {
                           <span style="font-size: 0.75rem; color: var(--color-text-muted); transition: transform 0.3s var(--ease-fluid); display: inline-block; ${isCollapsed ? 'transform: rotate(-90deg);' : 'transform: rotate(0deg);'}">▼</span>
                       </div>`;
           
-          if (group !== 'Groceries' && group !== 'For 🤖 Auto Restock') {
+          if (group !== 'Groceries' && group !== '🤖 Auto Restock') {
               html += `<button class="ghost-btn" style="color:var(--color-error); border:none; height:32px; width:32px; padding:0; font-weight:bold; font-size:1.5rem; display:flex; justify-content:center; align-items:center;" onclick="event.stopPropagation(); removeMealGroup('${escapeJsArg(mealContext)}')">-</button>`;
           } else {
               html += `<div style="width: 32px;"></div>`; 
