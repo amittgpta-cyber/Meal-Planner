@@ -583,6 +583,28 @@ function forceAppRefresh() {
         return dates.filter(d => new Date(d).getTime() >= ninetyDaysAgo).length;
     }
     
+    // NEW: Calculate both 90-day count and predictive restock target date
+    function calculateItemMetrics(item) {
+        if (!item.purchaseHistory) {
+            item.recentPurchaseCount = 0;
+            item.targetDate = 0;
+            return;
+        }
+        const dates = item.purchaseHistory.split(',').map(d => d.trim()).filter(Boolean);
+        const ninetyDaysAgo = Date.now() - (90 * 24 * 60 * 60 * 1000);
+        item.recentPurchaseCount = dates.filter(d => new Date(d).getTime() >= ninetyDaysAgo).length;
+        
+        if (dates.length >= 2) {
+            const sortedDates = dates.map(d => new Date(d).getTime()).sort((a,b) => a - b);
+            const latest = sortedDates[sortedDates.length - 1];
+            const oldest = sortedDates[0];
+            const avgGap = (latest - oldest) / (sortedDates.length - 1);
+            item.targetDate = latest + avgGap;
+        } else {
+            item.targetDate = 0;
+        }
+    }
+    
     const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzNOXoxn17I3d4-inuxiEqhdPxOQokGlSGCYW8buwLTcO6YJxbvcHBH0dZ1d-fBDzwl/exec"; 
     
     // FIREBASE INITIALIZATION FOR CART SYNC
@@ -721,6 +743,23 @@ function forceAppRefresh() {
     let mutationTimer = null;
     const MUTATION_DELAY = 1500;
     
+    let isCartScrolling = false;
+    let scrollDebounceTimer = null;
+
+    window.addEventListener('scroll', () => {
+        isCartScrolling = true;
+        clearTimeout(scrollDebounceTimer);
+        scrollDebounceTimer = setTimeout(() => { isCartScrolling = false; }, 400);
+    }, { passive: true });
+    
+    document.addEventListener('pointerdown', (e) => {
+        if (e.target.closest('#page-cart')) isCartScrolling = true;
+    });
+    document.addEventListener('pointerup', () => {
+        clearTimeout(scrollDebounceTimer);
+        scrollDebounceTimer = setTimeout(() => { isCartScrolling = false; }, 400);
+    });
+    
     function queueLocalSave() {
         if (window.localSaveTimer) clearTimeout(window.localSaveTimer);
         window.localSaveTimer = setTimeout(() => { saveStateLocally(); }, 500);
@@ -757,7 +796,7 @@ function forceAppRefresh() {
     let isFirstFirebaseLoad = true;
     window.firebaseDb.ref('cart').on('value', snap => {
         // Safe-guard to prevent remote data from destructively resurrecting active cart states mid-sync
-        if (pendingSaves > 0 || isShoppingActive) return; 
+        if (pendingSaves > 0 || isShoppingActive || isCartScrolling) return; 
 
         const remoteCart = snap.val() || [];
         
@@ -802,8 +841,8 @@ function forceAppRefresh() {
         newGrocery.forEach(cloudItem => {
             const localItem = state.grocery.find(i => i.name.toLowerCase() === cloudItem.name.toLowerCase());
             
-            // Generate 90-Day rolling purchase integer on ingest
-            cloudItem.recentPurchaseCount = calculateRecentPurchases(cloudItem.purchaseHistory);
+            // Generate 90-Day rolling purchase integer and predictive metrics on ingest
+            calculateItemMetrics(cloudItem);
 
             if (localItem) {
                 cloudItem.inCart = localItem.inCart || false;
@@ -1122,7 +1161,16 @@ function forceAppRefresh() {
                 delete item.fuzzyOriginal;
                 delete item.swappedFromPantry;
                 if(item.category === 'Ghost') state.grocery.splice(idx, 1);
-                if (!isShoppingActive) renderCart(); 
+                
+                if (!isShoppingActive) {
+                    const encodedName = btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '');
+                    const rowElement = document.getElementById(`cart-row-${encodedName}`);
+                    if (rowElement) {
+                        rowElement.style.display = 'none';
+                    } else {
+                        renderCart();
+                    }
+                }
                 queueLocalSave(); 
                 queueCartSync();
             } else if (context === 'master') {
@@ -1150,7 +1198,27 @@ function forceAppRefresh() {
                 state.grocery.push(last.item); 
             }
             expandCartIfNeeded();
-            if (!isShoppingActive) renderCart(); 
+            
+            if (!isShoppingActive) {
+                const encodedName = btoa(encodeURIComponent(last.item.name)).replace(/[^a-zA-Z0-9]/g, '');
+                const rowElement = document.getElementById(`cart-row-${encodedName}`);
+                if (rowElement) {
+                    rowElement.style.display = 'flex';
+                    if (last.item.checked) {
+                        rowElement.classList.add('checked');
+                        rowElement.classList.remove('dimmed');
+                        const cb = rowElement.querySelector('.checkbox');
+                        if (cb) cb.innerText = '✓';
+                    } else {
+                        rowElement.classList.remove('checked');
+                        rowElement.classList.add('dimmed');
+                        const cb = rowElement.querySelector('.checkbox');
+                        if (cb) cb.innerText = '';
+                    }
+                } else {
+                    renderCart();
+                }
+            }
             queueLocalSave(); 
             queueCartSync();
         } else if (last.context === 'master') {
@@ -1759,17 +1827,11 @@ function forceAppRefresh() {
 
     function renderCart() {
       const container = document.getElementById('unified-cart-items');
+      const groups = {};
+      
       const activeCart = state.grocery.filter(item => item.inCart);
       
-      // LAZY SORT: Active (checked) to Top, Passive (unchecked) to Bottom, then by time
-      activeCart.sort((a, b) => {
-          if (a.checked && !b.checked) return -1;
-          if (!a.checked && b.checked) return 1;
-          return (a.checkTime || 0) - (b.checkTime || 0);
-      });
-      
       const checkedCartItems = activeCart.filter(item => item.checked);
-      
       const navBtn = document.getElementById('navToggleBtn');
       if (navBtn) {
           if (checkedCartItems.length > 0) {
@@ -1786,18 +1848,29 @@ function forceAppRefresh() {
       const clearBtn = document.getElementById('clearCartBtn');
       if (clearBtn) clearBtn.style.display = activeCart.length > 0 ? 'flex' : 'none';
 
-      const groups = {};
       activeCart.forEach(item => {
+        item.isRestockSuggestion = false;
         let groupName = item.mealContext ? `For ${item.mealContext}` : 'Groceries';
         if (!groups[groupName]) groups[groupName] = [];
         groups[groupName].push(item);
       });
 
-      // Virtual Cart Injection: High-Frequency Restock Predictions
+      // Virtual Cart Injection: High-Frequency Restock Predictions (FLATTENED)
       if (appSettings.showAutoRestock !== false) {
-          const inactiveRestock = state.grocery.filter(item => !item.inCart && item.recentPurchaseCount >= 4 && item.category !== 'Ghost');
-          if (inactiveRestock.length > 0) {
-            groups['🤖 Auto Restock'] = inactiveRestock;
+          const restockSuggestions = state.grocery.filter(item => 
+              !item.inCart && 
+              item.recentPurchaseCount >= 4 && 
+              item.category !== 'Ghost' && 
+              item.targetDate > 0 && 
+              Date.now() >= (item.targetDate - 2 * 86400000)
+          );
+          
+          if (restockSuggestions.length > 0) {
+              if (!groups['Groceries']) groups['Groceries'] = [];
+              restockSuggestions.forEach(item => {
+                  item.isRestockSuggestion = true;
+                  groups['Groceries'].push(item);
+              });
           }
       }
 
@@ -1806,13 +1879,26 @@ function forceAppRefresh() {
           return; 
       }
 
+      // LAZY SORT: Active Checked -> Restock Suggestions -> Active Unchecked
+      Object.keys(groups).forEach(groupName => {
+          groups[groupName].sort((a, b) => {
+              const aActiveChecked = a.inCart && a.checked;
+              const bActiveChecked = b.inCart && b.checked;
+              if (aActiveChecked && !bActiveChecked) return -1;
+              if (!aActiveChecked && bActiveChecked) return 1;
+              
+              if (a.isRestockSuggestion && !b.isRestockSuggestion) return -1;
+              if (!a.isRestockSuggestion && b.isRestockSuggestion) return 1;
+              
+              return (a.checkTime || 0) - (b.checkTime || 0);
+          });
+      });
+
       let html = '';
       
       const sortedGroups = Object.keys(groups).sort((a, b) => {
           if (a === 'Groceries') return -1;
           if (b === 'Groceries') return 1;
-          if (a === '🤖 Auto Restock') return 1;
-          if (b === '🤖 Auto Restock') return -1;
           return a.localeCompare(b);
       });
 
@@ -1827,7 +1913,7 @@ function forceAppRefresh() {
                           <span style="font-size: 0.75rem; color: var(--color-text-muted); transition: transform 0.3s var(--ease-fluid); display: inline-block; ${isCollapsed ? 'transform: rotate(-90deg);' : 'transform: rotate(0deg);'}">▼</span>
                       </div>`;
           
-          if (group !== 'Groceries' && group !== '🤖 Auto Restock') {
+          if (group !== 'Groceries') {
               html += `<button class="ghost-btn" style="color:var(--color-error); border:none; height:32px; width:32px; padding:0; font-weight:bold; font-size:1.5rem; display:flex; justify-content:center; align-items:center;" onclick="event.stopPropagation(); removeMealGroup('${escapeJsArg(mealContext)}')">-</button>`;
           } else {
               html += `<div style="width: 32px;"></div>`; 
@@ -1843,6 +1929,8 @@ function forceAppRefresh() {
               const hasSwap = !!(item.fuzzyOriginal || item.swappedFromPantry);
               
               const isItemChecked = item.inCart ? item.checked : false;
+              const isSuggestion = item.isRestockSuggestion;
+              const checkboxContent = isItemChecked ? '✓' : (isSuggestion ? '🤖' : '');
               
               let swapHtml = `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${hasSwap ? `<button class="ghost-btn" style="border:none; padding:0; width: 100%; height: 100%; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="event.stopPropagation(); executeSwap('${jsSafeName}')">🔀</button>` : ''}</div>`;
               let saveHtml = `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${isGhost ? `<button class="ghost-btn" style="border:none; padding:0; width: 100%; height: 100%; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="event.stopPropagation(); promoteGhostItem('${jsSafeName}')">💾</button>` : ''}</div>`;
@@ -1850,7 +1938,7 @@ function forceAppRefresh() {
               html += `
               <div class="list-item-row ${isItemChecked ? 'checked' : 'dimmed'}" id="cart-row-${btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '')}" onclick="toggleCartItem('${jsSafeName}')">
                 <div class="list-item-left" style="pointer-events: none; flex: 1; min-width: 0;">
-                    <div class="checkbox">${isItemChecked ? '✓' : ''}</div>
+                    <div class="checkbox">${checkboxContent}</div>
                     <div style="min-width: 0; word-break: break-word;"><div class="item-name">${safeName}</div></div>
                 </div>
                 <div style="display:flex; align-items:center; justify-content:flex-end; gap: 4px; flex-shrink: 0;" onclick="event.stopPropagation();">
@@ -1880,14 +1968,35 @@ function forceAppRefresh() {
                 item.checked = true;
                 item.mealContext = '';
                 item.checkTime = Date.now();
-                if (!isShoppingActive) renderCart(); // Needs full render to move sections
+                delete item.isRestockSuggestion;
+                
+                // IN-PLACE DOM UPDATE (Zero-Jump)
+                if (!isShoppingActive) {
+                    const encodedName = btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '');
+                    const rowElement = document.getElementById(`cart-row-${encodedName}`);
+                    
+                    if (rowElement) {
+                        rowElement.classList.add('checked');
+                        rowElement.classList.remove('dimmed');
+                        const cb = rowElement.querySelector('.checkbox');
+                        if (cb) cb.innerText = '✓';
+                        
+                        const navBtn = document.getElementById('navToggleBtn');
+                        if (navBtn) {
+                            navBtn.style.color = 'var(--color-primary)';
+                            navBtn.style.border = '2px solid var(--color-primary)';
+                        }
+                    } else {
+                        renderCart(); // Fallback
+                    }
+                }
             } else {
                 item.checked = !item.checked;
                 if (!item.checkTime) {
                     item.checkTime = Date.now(); 
                 }
                 
-                // IN-PLACE DOM UPDATE (Prevents UX Jumping)
+                // IN-PLACE DOM UPDATE (Zero-Jump)
                 if (!isShoppingActive) {
                     const encodedName = btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '');
                     const rowElement = document.getElementById(`cart-row-${encodedName}`);
@@ -2119,7 +2228,7 @@ function forceAppRefresh() {
             if (term && !fuzzyMatch(term, item.name)) return false;
             if (term) return true;
             if (activeMasterCategory === 'All') return true;
-            if (activeMasterCategory === '🔥 Top Picks') return item.recentPurchaseCount >= 5;
+            if (activeMasterCategory === '🔥 Top Picks') return item.recentPurchaseCount >= 9;
             return (item.category || '📦 Uncategorized') === activeMasterCategory;
         });
 
@@ -2774,7 +2883,7 @@ function forceAppRefresh() {
               // Process recent purchases calculation locally on application cold boot
               if(state.grocery) {
                   state.grocery.forEach(item => {
-                      item.recentPurchaseCount = calculateRecentPurchases(item.purchaseHistory);
+                      calculateItemMetrics(item);
                   });
               }
           } else {
