@@ -1760,7 +1760,14 @@ function forceAppRefresh() {
     function renderCart() {
       const container = document.getElementById('unified-cart-items');
       const activeCart = state.grocery.filter(item => item.inCart);
-      activeCart.sort((a, b) => (a.checkTime || 0) - (b.checkTime || 0));
+      
+      // LAZY SORT: Active (checked) to Top, Passive (unchecked) to Bottom, then by time
+      activeCart.sort((a, b) => {
+          if (a.checked && !b.checked) return -1;
+          if (!a.checked && b.checked) return 1;
+          return (a.checkTime || 0) - (b.checkTime || 0);
+      });
+      
       const checkedCartItems = activeCart.filter(item => item.checked);
       
       const navBtn = document.getElementById('navToggleBtn');
@@ -1873,13 +1880,48 @@ function forceAppRefresh() {
                 item.checked = true;
                 item.mealContext = '';
                 item.checkTime = Date.now();
+                if (!isShoppingActive) renderCart(); // Needs full render to move sections
             } else {
                 item.checked = !item.checked;
                 if (!item.checkTime) {
                     item.checkTime = Date.now(); 
                 }
+                
+                // IN-PLACE DOM UPDATE (Prevents UX Jumping)
+                if (!isShoppingActive) {
+                    const encodedName = btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '');
+                    const rowElement = document.getElementById(`cart-row-${encodedName}`);
+                    
+                    if (rowElement) {
+                        if (item.checked) {
+                            rowElement.classList.add('checked');
+                            rowElement.classList.remove('dimmed');
+                            const cb = rowElement.querySelector('.checkbox');
+                            if (cb) cb.innerText = '✓';
+                        } else {
+                            rowElement.classList.remove('checked');
+                            rowElement.classList.add('dimmed');
+                            const cb = rowElement.querySelector('.checkbox');
+                            if (cb) cb.innerText = '';
+                        }
+                        
+                        // Update cart icon dynamically inline
+                        const navBtn = document.getElementById('navToggleBtn');
+                        if (navBtn) {
+                            const checkedItems = state.grocery.filter(i => i.inCart && i.checked);
+                            if (checkedItems.length > 0) {
+                                navBtn.style.color = 'var(--color-primary)';
+                                navBtn.style.border = '2px solid var(--color-primary)';
+                            } else {
+                                navBtn.style.color = 'var(--color-text)';
+                                navBtn.style.border = '1px solid var(--color-border)';
+                            }
+                        }
+                    } else {
+                        renderCart(); // Fallback
+                    }
+                }
             }
-            if (!isShoppingActive) renderCart();
             queueLocalSave(); 
             queueCartSync();
         }
@@ -2506,15 +2548,11 @@ function forceAppRefresh() {
         } else if (platform === 'Zepto') {
             url = `https://www.zeptonow.com/search?query=${encodedQuery}`;
         } else if (platform === 'Apollo') {
-            if (!isIOS) {
-                url = `intent://www.apollo247.com/search?searchQuery=${encodedQuery}#Intent;scheme=https;package=com.apollo.patientapp;end;`;
-            } else {
-                url = `https://www.apollo247.com/search?searchQuery=${encodedQuery}`;
-            }
+            url = `https://www.apollopharmacy.in/search-medicines/${encodedQuery}`;
         }
         
         if (url) {
-            if ((platform === 'Zepto' || platform === 'Apollo') && !isIOS) {
+            if (platform === 'Zepto' && !isIOS) {
                 // Android Platform Flow: open via isolated Chrome tab to preserve application memory focus
                 window.open(url, '_blank');
             } else {
