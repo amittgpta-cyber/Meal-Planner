@@ -712,6 +712,7 @@ function forceAppRefresh() {
             item.mealContext = '';
             delete item.fuzzyOriginal;
             delete item.swappedFromPantry;
+            delete item.rollbackCache;
             expandCartIfNeeded();
             if (!isShoppingActive) renderCart();
             queueLocalSave();
@@ -849,6 +850,11 @@ function forceAppRefresh() {
                     localItem.isDeleted = remoteItem.isDeleted || false;
                     localItem.fuzzyOriginal = remoteItem.fuzzyOriginal;
                     localItem.swappedFromPantry = remoteItem.swappedFromPantry;
+                    if (remoteItem.rollbackCache) {
+                        localItem.rollbackCache = remoteItem.rollbackCache;
+                    } else {
+                        delete localItem.rollbackCache;
+                    }
                     needsRender = true;
                 }
             } else {
@@ -894,6 +900,7 @@ function forceAppRefresh() {
                 cloudItem.isDeleted = localItem.isDeleted || false;
                 cloudItem.fuzzyOriginal = localItem.fuzzyOriginal;
                 cloudItem.swappedFromPantry = localItem.swappedFromPantry;
+                cloudItem.rollbackCache = localItem.rollbackCache;
                 cloudItem.count = localItem.count || 0; 
             } else {
                 cloudItem.inCart = false;
@@ -1190,6 +1197,7 @@ function forceAppRefresh() {
                 delete item.checkTime;
                 delete item.fuzzyOriginal;
                 delete item.swappedFromPantry;
+                delete item.rollbackCache;
                 if(item.category === 'Ghost') state.grocery.splice(idx, 1);
                 
                 if (!isShoppingActive) {
@@ -1775,6 +1783,14 @@ function forceAppRefresh() {
             });
 
             if (existing) {
+                if (!existing.rollbackCache) {
+                    existing.rollbackCache = {
+                        inCart: existing.inCart || false,
+                        checked: existing.checked || false,
+                        mealContext: existing.mealContext || ''
+                    };
+                }
+                
                 existing.inCart = true; 
                 existing.checked = true; 
                 existing.checkTime = existing.checkTime || baseTime;
@@ -1854,7 +1870,16 @@ function forceAppRefresh() {
         const nowMs = getNow();
         state.grocery.forEach(i => {
             if (i.inCart && i.mealContext === rawContext) {
-                i.mealContext = '';
+                if (i.rollbackCache) {
+                    i.inCart = i.rollbackCache.inCart;
+                    i.checked = i.rollbackCache.checked;
+                    i.mealContext = i.rollbackCache.mealContext;
+                    delete i.rollbackCache;
+                } else {
+                    i.inCart = false;
+                    i.checked = false;
+                    i.mealContext = '';
+                }
                 i.updatedAt = nowMs;
                 hasChanges = true;
             }
@@ -2084,6 +2109,7 @@ function forceAppRefresh() {
                 i.updatedAt = getNow();
                 delete i.fuzzyOriginal;
                 delete i.swappedFromPantry;
+                delete i.rollbackCache;
                 hasChanges = true;
             }
         });
@@ -2110,6 +2136,7 @@ function forceAppRefresh() {
             existing.mealContext = '';
             delete existing.fuzzyOriginal;
             delete existing.swappedFromPantry;
+            delete existing.rollbackCache;
             showToast("Item already in list.");
         } else {
             state.grocery.unshift({name: name, count: 0, lastOrdered:'', category: category, inCart: true, checked: true, checkTime: getNow(), updatedAt: getNow(), mealContext: ''}); 
@@ -2321,11 +2348,13 @@ function forceAppRefresh() {
               item.checkTime = getNow();
               delete item.fuzzyOriginal;
               delete item.swappedFromPantry;
+              delete item.rollbackCache;
               expandCartIfNeeded();
           } else {
               delete item.checkTime;
               delete item.fuzzyOriginal;
               delete item.swappedFromPantry;
+              delete item.rollbackCache;
           }
           
           if(rowElement) {
@@ -2758,6 +2787,7 @@ function forceAppRefresh() {
           item.updatedAt = getNow();
           delete item.fuzzyOriginal;
           delete item.swappedFromPantry;
+          delete item.rollbackCache;
       }
       state.grocery = state.grocery.filter(i => !(i.category === 'Ghost' && !i.inCart)); 
       
