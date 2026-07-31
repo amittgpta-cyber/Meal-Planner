@@ -1900,25 +1900,34 @@ function forceAppRefresh() {
         
         const isItemChecked = item.inCart ? item.checked : false;
         const isSuggestion = item.isRestockSuggestion;
-        const checkboxContent = isItemChecked ? '✓' : (isSuggestion ? '🤖' : '');
         
-        let swapHtml = `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${hasSwap ? `<button class="ghost-btn" style="border:none; padding:0; width: 100%; height: 100%; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="event.stopPropagation(); executeSwap('${jsSafeName}')">🔀</button>` : ''}</div>`;
-        let saveHtml = `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">${isGhost ? `<button class="ghost-btn" style="border:none; padding:0; width: 100%; height: 100%; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="event.stopPropagation(); promoteGhostItem('${jsSafeName}')">💾</button>` : ''}</div>`;
+        const checkboxContent = isItemChecked ? '✓' : '';
+        const checkboxStyle = isSuggestion ? 'border-color: transparent;' : '';
+        
+        let swapHtml = hasSwap ? `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><button class="ghost-btn" style="border:none; padding:0; width: 100%; height: 100%; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="event.stopPropagation(); executeSwap('${jsSafeName}')">🔀</button></div>` : '';
+        let saveHtml = isGhost ? `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><button class="ghost-btn" style="border:none; padding:0; width: 100%; height: 100%; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="event.stopPropagation(); promoteGhostItem('${jsSafeName}')">💾</button></div>` : '';
+
+        let rightActionHtml = '';
+        if (isSuggestion) {
+            rightActionHtml = `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.25rem; pointer-events: none;">🤖</div>`;
+        } else {
+            rightActionHtml = `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <button class="trash-btn" style="padding:0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;" onclick="executeSoftDelete('cart', '${jsSafeName}')">
+                      <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  </button>
+              </div>`;
+        }
 
         return `
         <div class="list-item-row ${isItemChecked ? 'checked' : 'dimmed'}" id="cart-row-${btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '')}" onclick="toggleCartItem('${jsSafeName}')">
           <div class="list-item-left" style="pointer-events: none; flex: 1; min-width: 0;">
-              <div class="checkbox">${checkboxContent}</div>
+              <div class="checkbox" style="${checkboxStyle}">${checkboxContent}</div>
               <div style="min-width: 0; word-break: break-word;"><div class="item-name">${safeName}</div></div>
           </div>
           <div style="display:flex; align-items:center; justify-content:flex-end; gap: 4px; flex-shrink: 0;" onclick="event.stopPropagation();">
               ${swapHtml}
               ${saveHtml}
-              <div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                  <button class="trash-btn" style="padding:0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;" onclick="executeSoftDelete('cart', '${jsSafeName}')">
-                      <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                  </button>
-              </div>
+              ${rightActionHtml}
           </div>
         </div>`;
     }
@@ -2060,39 +2069,53 @@ function forceAppRefresh() {
                     }
                 }
             } else {
-                item.checked = !item.checked;
-                item.checkTime = item.checkTime || getNow(); 
-                
-                if (!isShoppingActive) {
-                    const encodedName = btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '');
-                    const rowElement = document.getElementById(`cart-row-${encodedName}`);
+                const isUnchecking = item.checked;
+                const qualifiesForRestock = item.recentPurchaseCount >= 4 && item.category !== 'Ghost' && item.targetDate > 0 && getNow() >= (item.targetDate - 2 * 86400000);
+
+                if (isUnchecking && qualifiesForRestock && appSettings.showAutoRestock !== false) {
+                    item.inCart = false;
+                    item.checked = false;
+                    item.mealContext = '';
+                    delete item.checkTime;
                     
-                    if (rowElement) {
-                        if (item.checked) {
-                            rowElement.classList.add('checked');
-                            rowElement.classList.remove('dimmed');
-                            const cb = rowElement.querySelector('.checkbox');
-                            if (cb) cb.innerText = '✓';
-                        } else {
-                            rowElement.classList.remove('checked');
-                            rowElement.classList.add('dimmed');
-                            const cb = rowElement.querySelector('.checkbox');
-                            if (cb) cb.innerText = '';
-                        }
-                        
-                        const navBtn = document.getElementById('navToggleBtn');
-                        if (navBtn) {
-                            const checkedItems = state.grocery.filter(i => i.inCart && i.checked);
-                            if (checkedItems.length > 0) {
-                                navBtn.style.color = 'var(--color-primary)';
-                                navBtn.style.border = '2px solid var(--color-primary)';
-                            } else {
-                                navBtn.style.color = 'var(--color-text)';
-                                navBtn.style.border = '1px solid var(--color-border)';
-                            }
-                        }
-                    } else {
+                    if (!isShoppingActive) {
                         renderCart();
+                    }
+                } else {
+                    item.checked = !item.checked;
+                    item.checkTime = item.checkTime || getNow(); 
+                    
+                    if (!isShoppingActive) {
+                        const encodedName = btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '');
+                        const rowElement = document.getElementById(`cart-row-${encodedName}`);
+                        
+                        if (rowElement) {
+                            if (item.checked) {
+                                rowElement.classList.add('checked');
+                                rowElement.classList.remove('dimmed');
+                                const cb = rowElement.querySelector('.checkbox');
+                                if (cb) cb.innerText = '✓';
+                            } else {
+                                rowElement.classList.remove('checked');
+                                rowElement.classList.add('dimmed');
+                                const cb = rowElement.querySelector('.checkbox');
+                                if (cb) cb.innerText = '';
+                            }
+                            
+                            const navBtn = document.getElementById('navToggleBtn');
+                            if (navBtn) {
+                                const checkedItems = state.grocery.filter(i => i.inCart && i.checked);
+                                if (checkedItems.length > 0) {
+                                    navBtn.style.color = 'var(--color-primary)';
+                                    navBtn.style.border = '2px solid var(--color-primary)';
+                                } else {
+                                    navBtn.style.color = 'var(--color-text)';
+                                    navBtn.style.border = '1px solid var(--color-border)';
+                                }
+                            }
+                        } else {
+                            renderCart();
+                        }
                     }
                 }
             }
