@@ -752,7 +752,7 @@ function forceAppRefresh() {
     }, { passive: true });
     
     document.addEventListener('touchend', () => {
-        setTimeout(() => { if (!isCartScrolling) isInteracting = false; }, 150);
+        setTimeout(() => { if (!isCartScrolling) isInteracting = false; }, 2000);
     });
 
     window.addEventListener('scroll', () => {
@@ -909,7 +909,7 @@ function forceAppRefresh() {
             }
         });
 
-        // Never drop "Ghost" items (ad-hoc items added mid-shop that aren't in the master list yet)
+        // Never drop "Ghost" items (ad-hoc items added mid-shop that arent in the master list yet)
         const localGhosts = state.grocery.filter(i => i.category === 'Ghost');
         localGhosts.forEach(g => {
             if (!newGrocery.find(i => i.name.toLowerCase() === g.name.toLowerCase())) {
@@ -2048,26 +2048,6 @@ function forceAppRefresh() {
                 item.mealContext = '';
                 item.checkTime = getNow();
                 delete item.isRestockSuggestion;
-                
-                if (!isShoppingActive) {
-                    const encodedName = btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '');
-                    const rowElement = document.getElementById(`cart-row-${encodedName}`);
-                    
-                    if (rowElement) {
-                        rowElement.classList.add('checked');
-                        rowElement.classList.remove('dimmed');
-                        const cb = rowElement.querySelector('.checkbox');
-                        if (cb) cb.innerText = '✓';
-                        
-                        const navBtn = document.getElementById('navToggleBtn');
-                        if (navBtn) {
-                            navBtn.style.color = 'var(--color-primary)';
-                            navBtn.style.border = '2px solid var(--color-primary)';
-                        }
-                    } else {
-                        renderCart();
-                    }
-                }
             } else {
                 const isUnchecking = item.checked;
                 const qualifiesForRestock = item.recentPurchaseCount >= 4 && item.category !== 'Ghost' && item.targetDate > 0 && getNow() >= (item.targetDate - 2 * 86400000);
@@ -2077,48 +2057,41 @@ function forceAppRefresh() {
                     item.checked = false;
                     item.mealContext = '';
                     delete item.checkTime;
-                    
-                    if (!isShoppingActive) {
-                        renderCart();
-                    }
+                    item.isRestockSuggestion = true;
                 } else {
                     item.checked = !item.checked;
                     item.checkTime = item.checkTime || getNow(); 
-                    
-                    if (!isShoppingActive) {
-                        const encodedName = btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '');
-                        const rowElement = document.getElementById(`cart-row-${encodedName}`);
-                        
-                        if (rowElement) {
-                            if (item.checked) {
-                                rowElement.classList.add('checked');
-                                rowElement.classList.remove('dimmed');
-                                const cb = rowElement.querySelector('.checkbox');
-                                if (cb) cb.innerText = '✓';
-                            } else {
-                                rowElement.classList.remove('checked');
-                                rowElement.classList.add('dimmed');
-                                const cb = rowElement.querySelector('.checkbox');
-                                if (cb) cb.innerText = '';
-                            }
-                            
-                            const navBtn = document.getElementById('navToggleBtn');
-                            if (navBtn) {
-                                const checkedItems = state.grocery.filter(i => i.inCart && i.checked);
-                                if (checkedItems.length > 0) {
-                                    navBtn.style.color = 'var(--color-primary)';
-                                    navBtn.style.border = '2px solid var(--color-primary)';
-                                } else {
-                                    navBtn.style.color = 'var(--color-text)';
-                                    navBtn.style.border = '1px solid var(--color-border)';
-                                }
-                            }
-                        } else {
-                            renderCart();
-                        }
-                    }
                 }
             }
+
+            if (!isShoppingActive) {
+                const encodedName = btoa(encodeURIComponent(item.name)).replace(/[^a-zA-Z0-9]/g, '');
+                const rowElement = document.getElementById(`cart-row-${encodedName}`);
+                
+                if (rowElement) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = generateCartRowHtml(item);
+                    const newRow = tempDiv.firstElementChild;
+                    
+                    rowElement.className = newRow.className;
+                    rowElement.innerHTML = newRow.innerHTML;
+                    
+                    const navBtn = document.getElementById('navToggleBtn');
+                    if (navBtn) {
+                        const checkedItems = state.grocery.filter(i => i.inCart && i.checked);
+                        if (checkedItems.length > 0) {
+                            navBtn.style.color = 'var(--color-primary)';
+                            navBtn.style.border = '2px solid var(--color-primary)';
+                        } else {
+                            navBtn.style.color = 'var(--color-text)';
+                            navBtn.style.border = '1px solid var(--color-border)';
+                        }
+                    }
+                } else {
+                    renderCart();
+                }
+            }
+            
             queueLocalSave(); 
             queueCartSync();
         }
