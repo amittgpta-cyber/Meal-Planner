@@ -1905,7 +1905,12 @@ function forceAppRefresh() {
         const checkboxStyle = isSuggestion ? 'border-color: transparent;' : '';
         
         let swapHtml = hasSwap ? `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><button class="ghost-btn" style="border:none; padding:0; width: 100%; height: 100%; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="event.stopPropagation(); executeSwap('${jsSafeName}')">🔀</button></div>` : '';
-        let saveHtml = isGhost ? `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><button class="ghost-btn" style="border:none; padding:0; width: 100%; height: 100%; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="event.stopPropagation(); promoteGhostItem('${jsSafeName}')">💾</button></div>` : '';
+        let saveHtml = '';
+        if (isGhost) {
+            saveHtml = `<div style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;"><button class="ghost-btn" style="border:none; padding:0; width: 100%; height: 100%; font-size: 1.25rem; display: flex; align-items: center; justify-content: center;" onclick="event.stopPropagation(); promoteGhostItem('${jsSafeName}')">💾</button></div>`;
+        } else if (hasSwap) {
+            saveHtml = `<div style="width: 36px; height: 36px; flex-shrink: 0; pointer-events: none;"></div>`;
+        }
 
         let rightActionHtml = '';
         if (isSuggestion) {
