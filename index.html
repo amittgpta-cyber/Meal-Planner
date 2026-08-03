@@ -1587,6 +1587,8 @@ function forceAppRefresh() {
               const article = document.getElementById('standalone-card');
               article.className = 'meal-card' + (card.isLocked ? ' locked' : ''); 
               article.innerHTML = getCardInnerHTML(card, 'standalone', true);
+              const activeCbBtn = document.querySelector('.stat-btn.active');
+              if (activeCbBtn) renderCookbookList(activeCbBtn.dataset.cbcat, true);
           } else {
               const article = document.getElementById('suggestions').children[idxRaw];
               article.className = 'meal-card' + (card.isLocked ? ' locked' : ''); 
@@ -2318,7 +2320,7 @@ function forceAppRefresh() {
             if (showEditActions) {
                 actionsHtml = `
                 <div style="display:flex; align-items:center; gap: 8px;" onclick="event.stopPropagation();">
-                    <button class="ghost-btn" style="border:none; padding:4px; font-size:1.1rem; width:32px; height: 32px; display:flex; justify-content:center; align-items:center;" onclick="openPantryEditModal('${jsSafeName}', '${escapeJsArg(item.category || '')}')">✏️</button>
+                    <button style="border:none; padding:4px; font-size:1.1rem; width:32px; height: 32px; display:flex; justify-content:center; align-items:center; background: transparent; cursor: pointer;" onclick="openPantryEditModal('${jsSafeName}', '${escapeJsArg(item.category || '')}')">✏️</button>
                     <button class="trash-btn" onclick="executeSoftDelete('master', '${jsSafeName}')">
                         <svg style="pointer-events:none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
