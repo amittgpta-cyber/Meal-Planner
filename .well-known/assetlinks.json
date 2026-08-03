@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "io.github.amittgpta_cyber.twa",
-        "sha256_cert_fingerprints": ["A2:39:77:17:89:DF:21:7D:B3:36:B6:D2:B3:03:D8:8E:1B:D7:11:A9:54:4E:0F:83:56:2C:72:8A:1C:FF:70:AB"]
+        "sha256_cert_fingerprints": ["63:6B:96:65:37:4B:5E:02:8B:BC:E8:28:FD:61:20:F2:0F:1B:06:34:0F:B9:C3:D8:A4:B6:55:EC:E1:39:F0:87"]
       }
     }]
