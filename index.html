@@ -1976,14 +1976,18 @@ function forceAppRefresh() {
 
       // Virtual Cart Injection: High-Frequency Restock Predictions
       if (appSettings.showAutoRestock !== false) {
-          const restockSuggestions = state.grocery.filter(item => 
-              !item.inCart && 
-              !item.isDeleted &&
-              item.recentPurchaseCount >= 4 && 
-              item.category !== 'Ghost' && 
-              item.targetDate > 0 && 
-              getNow() >= (item.targetDate - 2 * 86400000)
-          );
+          const restockSuggestions = state.grocery.filter(item => {
+              const qualifiesTargetDate = getNow() >= (item.targetDate - 2 * 86400000);
+              const notBoughtJustNow = (!item.purchaseHistory || getNow() - new Date(item.purchaseHistory.split(',').pop().trim()).getTime() > 2 * 86400000);
+              
+              return !item.inCart && 
+                  !item.isDeleted &&
+                  item.recentPurchaseCount >= 4 && 
+                  item.category !== 'Ghost' && 
+                  item.targetDate > 0 && 
+                  qualifiesTargetDate &&
+                  notBoughtJustNow;
+          });
           
           if (restockSuggestions.length > 0) {
               restockSuggestions.forEach(item => {
@@ -2271,8 +2275,7 @@ function forceAppRefresh() {
             
             // Step 4: Master Sync (Google Sheets)
             if (oldNameLower !== newNameLower) {
-                runServer('deleteMasterItem', {item: oldName});
-                runServer('addMasterItem', {item: newName, category: newCat});
+                runServer('renameMasterItem', {oldName: oldName, newName: newName, category: newCat});
                 
                 // Step 5: Graveyard Sweep
                 graveyard = graveyard.filter(g => !(g.item && g.item.name === oldName));
