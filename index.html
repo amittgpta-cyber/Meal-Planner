@@ -199,7 +199,7 @@
     .filter-chip.top-picks { border-color: #ffd700; color: #ffd700; }
     .filter-chip.top-picks.active { background: #ffd700; color: #000; }
     
-    .sync-indicator { position: fixed; top: 10px; right: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: bold; color: var(--color-text-muted); background: var(--color-surface-2); padding: 6px 12px; border-radius: 2rem; opacity: 0; transition: 0.3s; z-index: 9999; }
+    .sync-indicator { fixed; top: 10px; right: 10px; display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: bold; color: var(--color-text-muted); background: var(--color-surface-2); padding: 6px 12px; border-radius: 2rem; opacity: 0; transition: 0.3s; z-index: 9999; }
     .sync-indicator.active { opacity: 1; }
     .sync-spinner { width: 12px; height: 12px; border: 2px solid var(--text-muted); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
@@ -902,6 +902,12 @@ function forceAppRefresh() {
                 cloudItem.swappedFromPantry = localItem.swappedFromPantry;
                 cloudItem.rollbackCache = localItem.rollbackCache;
                 cloudItem.count = localItem.count || 0; 
+                
+                // COOLDOWN RACE CONDITION FIX: Preserve local purchase history if it's more recent than the cloud
+                if (localItem.purchaseHistory && (!cloudItem.purchaseHistory || localItem.purchaseHistory.length > cloudItem.purchaseHistory.length)) {
+                    cloudItem.purchaseHistory = localItem.purchaseHistory;
+                    calculateItemMetrics(cloudItem); // Recalculate metrics based on preserved local history
+                }
             } else {
                 cloudItem.inCart = false;
                 cloudItem.checked = false;
@@ -1611,7 +1617,7 @@ function forceAppRefresh() {
       }
       
       const rawSearchStr = card.name.trim() + ' ' + (card.category || '').trim() + ' recipe';
-      const searchQ = rawSearchStr.split(/\s+/).map(encodeURIComponent).join('+');
+      const searchQ = encodeURIComponent(rawSearchStr).replace(/%20/g, '+');
       if (action === 'share-card') { 
           window.open(`whatsapp://send?text=${encodeURIComponent(`🍽️ *${card.name.trim()}*\n\n🔍 _https://google.com/search?q=${searchQ}_\n\n▶️ _https://youtube.com/results?q=${searchQ}_`)}`, '_blank'); 
       }
@@ -1627,7 +1633,7 @@ function forceAppRefresh() {
         let text = "🍽️ *Today's Menu*\n\n";
         lockedCards.forEach(card => { 
             const rawSearchStr = card.name.trim() + ' ' + (card.category || '').trim() + ' recipe';
-            const searchQ = rawSearchStr.split(/\s+/).map(encodeURIComponent).join('+');
+            const searchQ = encodeURIComponent(rawSearchStr).replace(/%20/g, '+');
             text += `*${card.time || card.category}:* ${card.name.trim()}\n\n🔍 _https://google.com/search?q=${searchQ}_\n\n▶️ _https://youtube.com/results?q=${searchQ}_\n\n`; 
         });
         window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
@@ -1658,14 +1664,20 @@ function forceAppRefresh() {
             existing.checked = true;
             existing.checkTime = existing.checkTime || getNow();
             existing.updatedAt = getNow();
-            existing.mealContext = '';
+            
+            // PREVENT CONTEXT WIPE
+            // existing.mealContext = '';
+            
             state.grocery = state.grocery.filter(i => !(i.name.toLowerCase() === nameLower && i.category === 'Ghost'));
             showToast(`${name} already in database. Added to cart.`);
         } else {
             let ghost = state.grocery.find(i => i.name.toLowerCase() === nameLower && i.category === 'Ghost');
             if (ghost) {
                 ghost.category = (category && category !== '📦 Uncategorized') ? category : '📦 Uncategorized';
-                ghost.mealContext = '';
+                
+                // PREVENT CONTEXT WIPE
+                // ghost.mealContext = '';
+                
                 ghost.updatedAt = getNow();
             }
             runServer('addMasterItem', {item: name, category: category});
