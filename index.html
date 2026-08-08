@@ -2794,6 +2794,12 @@ function forceAppRefresh() {
       if(item) { 
           item.inCart = false; item.checked = false; item.count++; item.mealContext=''; delete item.checkTime; 
           item.updatedAt = getNow();
+          
+          // INSTANT COOLDOWN FIX: Immediately append today's date to local memory and recalculate metrics
+          const todayIso = new Date(getNow()).toISOString().split('T')[0];
+          item.purchaseHistory = item.purchaseHistory ? item.purchaseHistory + ',' + todayIso : todayIso;
+          calculateItemMetrics(item);
+          
           delete item.fuzzyOriginal;
           delete item.swappedFromPantry;
           delete item.rollbackCache;
