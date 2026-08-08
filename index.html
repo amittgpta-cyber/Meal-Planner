@@ -1610,13 +1610,14 @@ function forceAppRefresh() {
           }
       }
       
-      const searchQ = encodeURIComponent(card.name.trim() + ' ' + (card.time || '').trim() + ' recipe');
+      const rawSearchStr = card.name.trim() + ' ' + (card.category || '').trim() + ' recipe';
+      const searchQ = rawSearchStr.split(/\s+/).map(encodeURIComponent).join('+');
       if (action === 'share-card') { 
-          window.open(`whatsapp://send?text=${encodeURIComponent(`🍽️ *${card.name.trim()}*\n\n🔍 _https://www.google.com/search?q=${searchQ}_\n\n▶️ _https://www.youtube.com/results?search_query=${searchQ}_`)}`, '_blank'); 
+          window.open(`whatsapp://send?text=${encodeURIComponent(`🍽️ *${card.name.trim()}*\n\n🔍 _https://google.com/search?q=${searchQ}_\n\n▶️ _https://youtube.com/results?q=${searchQ}_`)}`, '_blank'); 
       }
-      if (action === 'google') { window.open(`https://www.google.com/search?q=${searchQ}`, '_blank'); }
-      if (action === 'youtube') { window.open(`https://www.youtube.com/results?search_query=${searchQ}`, '_blank'); }
-      if (action === 'nutrition') { window.open(`https://www.google.com/search?q=${searchQ}+nutritional+info+calories+in+table+format`, '_blank'); }
+      if (action === 'google') { window.open(`https://google.com/search?q=${searchQ}`, '_blank'); }
+      if (action === 'youtube') { window.open(`https://youtube.com/results?q=${searchQ}`, '_blank'); }
+      if (action === 'nutrition') { window.open(`https://google.com/search?q=${searchQ}+nutritional+info+calories+in+table+format`, '_blank'); }
     });
 
     function shareDailyMenuToWhatsApp() {
@@ -1625,8 +1626,9 @@ function forceAppRefresh() {
         if (lockedCards.length === 0) { showToast("Please Select a meal to share"); return; }
         let text = "🍽️ *Today's Menu*\n\n";
         lockedCards.forEach(card => { 
-            const searchQ = card.name.trim() + ' ' + (card.time || '').trim() + ' recipe';
-            text += `*${card.category}:* ${card.name.trim()}\n\n🔍 _https://www.google.com/search?q=${encodeURIComponent(searchQ)}_\n\n▶️ _https://www.youtube.com/results?search_query=${encodeURIComponent(searchQ)}_\n\n`; 
+            const rawSearchStr = card.name.trim() + ' ' + (card.category || '').trim() + ' recipe';
+            const searchQ = rawSearchStr.split(/\s+/).map(encodeURIComponent).join('+');
+            text += `*${card.time || card.category}:* ${card.name.trim()}\n\n🔍 _https://google.com/search?q=${searchQ}_\n\n▶️ _https://youtube.com/results?q=${searchQ}_\n\n`; 
         });
         window.open(`whatsapp://send?text=${encodeURIComponent(text.trim())}`, '_blank');
     }
@@ -2172,7 +2174,8 @@ function forceAppRefresh() {
         { id: '💪 Healthy Snacks', label: '💪 Healthy Snacks' }, { id: '🍜 Fast Food', label: '🍜 Fast Food' },
         { id: '🧃🧋 Drinks', label: '🧃🧋 Drinks' }, { id: '🍦🍨 Ice Cream', label: '🍦🍨 Ice Cream' },
         { id: '🧴🚿 Bath & Grooming', label: '🧴🚿 Bath/Groom' }, { id: '🧼 Hygiene', label: '🧼 Hygiene' },
-        { id: '🧻🚽 Bathroom', label: '🧻🚽 Bathroom' }, { id: '🧽🧹 Cleaning', label: '🧽🧹 Cleaning' },
+        { id: '🧻🚽 Bathroom', label: '🧻🚽 Bathroom' }, { id: '🧻🚽 Bathroom', label: '🧻🚽 Bathroom' },
+        { id: '🧽🧹 Cleaning', label: '🧽🧹 Cleaning' },
         { id: '🍽️🗑️ Kitchen', label: '🍽️🗑️ Kitchen' }, { id: '🪔 Pooja', label: '🪔 Pooja' },
         { id: '👶 Baby', label: '👶 Baby' }, { id: '💊 Meds', label: '💊 Meds' },
         { id: '📝 Stationery', label: '📝 Stationery' }, { id: '📦 Uncategorized', label: '📦 Uncat' }
