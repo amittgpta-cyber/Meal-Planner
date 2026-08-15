@@ -1015,6 +1015,10 @@ function forceAppRefresh() {
         } else {
             btn.innerHTML = `<svg style="pointer-events:none; transition: 0.3s var(--ease-fluid);" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
         }
+        
+        document.getElementById('suggestions').innerHTML = '';
+        renderEmptyState();
+        currentRenderedCacheKey = '';
     }
 
     function toggleAutoRestock() {
@@ -1429,7 +1433,7 @@ function forceAppRefresh() {
       }
 
       let favHtml = `<div class="icon-circle" data-action="toggle-favorite" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''} style="color: ${item.isFavorite ? 'var(--color-error)' : 'var(--color-text)'}; border-color: ${item.isFavorite ? 'var(--color-error)' : 'var(--color-border)'};">
-          <svg style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="${item.isFavorite ? 'var(--color-error)' : 'none'}" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+          <svg id="fav-${isStandalone ? 'standalone' : index}" style="pointer-events:none;" width="18" height="18" viewBox="0 0 24 24" fill="${item.isFavorite ? 'var(--color-error)' : 'none'}" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
       </div>`;
 
       let moreIconHtml = `<div class="icon-circle" data-action="toggle-explore" data-index="${index}" ${isStandalone ? 'data-standalone="true"' : ''}>
@@ -1539,14 +1543,14 @@ function forceAppRefresh() {
           
           runServer('toggleFavorite', { mealName: card.name, sourceSheet: card.source, isFavorite: card.isFavorite });
           
-          if (isStandalone) {
-              const article = document.getElementById('standalone-card');
-              article.innerHTML = getCardInnerHTML(card, 'standalone', true);
-              const activeCbBtn = document.querySelector('.stat-btn.active');
-              if (activeCbBtn) renderCookbookList(activeCbBtn.dataset.cbcat, true);
-          } else {
-              const article = document.getElementById(`card-${idxRaw}`);
-              article.innerHTML = getCardInnerHTML(card, idxRaw, false);
+          const favSvg = document.getElementById('fav-' + (isStandalone ? 'standalone' : idxRaw));
+          if (favSvg) {
+              favSvg.setAttribute('fill', card.isFavorite ? 'var(--color-error)' : 'none');
+              favSvg.parentElement.style.color = card.isFavorite ? 'var(--color-error)' : 'var(--color-text)';
+              favSvg.parentElement.style.borderColor = card.isFavorite ? 'var(--color-error)' : 'var(--color-border)';
+          }
+
+          if (!isStandalone) {
               const cacheKey = `${activeSource}_${activeCategory}_${isFavoritesFilterActive}`;
               if (deckCache[cacheKey]) deckCache[cacheKey] = [...state.currentSuggestions];
           }
