@@ -586,7 +586,7 @@ function forceAppRefresh() {
     });
 
     let state = { grocery: [], savedMeals: [], globalMeals: [], currentSuggestions: [] };
-    let appSettings = { diets: ['veg'], showInfo: false, partners: ['Swiggy', 'Blinkit'] }; 
+    let appSettings = { diets: ['veg'], showInfo: true, partners: ['Swiggy', 'Blinkit'] }; 
     let collapsedCartGroups = {};
     
     let pendingApprovals = []; let graveyard = []; let deckCache = {}; 
@@ -1014,10 +1014,6 @@ function forceAppRefresh() {
             btn.innerHTML = `<svg style="pointer-events:none; transition: 0.3s var(--ease-fluid);" width="24" height="24" viewBox="0 0 24 24" fill="var(--color-error)" stroke="var(--color-error)" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
         } else {
             btn.innerHTML = `<svg style="pointer-events:none; transition: 0.3s var(--ease-fluid);" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
-        }
-        
-        if (activeCategory) {
-            document.getElementById('generateBtn').click();
         }
     }
 
@@ -1627,15 +1623,15 @@ function forceAppRefresh() {
           card.isLocked = !card.isLocked;
           if (card.isLocked) { 
               card.lastServed = new Date(getNow()).toISOString(); 
-              runServer('logCooking', {mealName: card.name, sourceSheet: card.source}); 
+              runServer('logCooking', {mealName: card.name, category: card.category, sourceSheet: card.source}); 
           } else { 
               card.lastServed = ''; 
-              runServer('removeCookingLog', {mealName: card.name, sourceSheet: card.source}); 
+              runServer('removeCookingLog', {mealName: card.name, category: card.category, sourceSheet: card.source}); 
           }
 
           const targetPool = card.source === 'cookbook' ? state.savedMeals : state.globalMeals;
           targetPool.forEach(m => {
-              if (m.name === card.name) m.lastServed = card.lastServed;
+              if (m.name === card.name && m.category === card.category) m.lastServed = card.lastServed;
           });
 
           if (isStandalone) {
@@ -1788,7 +1784,7 @@ function forceAppRefresh() {
         
         let oldMeal = state.savedMeals.find(m => m.name.toLowerCase() === mealToEditName.toLowerCase());
         if(!oldMeal) {
-            oldMeal = { diet: appSettings.diets.length > 0 ? appSettings.diets[0] : 'veg', ingredients: '[]', cuisine: '', origin: '', fact: '' };
+            oldMeal = { diet: appSettings.diets.length > 0 ? appSettings.diets[0] : 'veg', ingredients: '[]', cuisine: '', origin: '', fact: '', isFavorite: false };
         }
         
         state.savedMeals = state.savedMeals.filter(m => m.name.toLowerCase() !== mealToEditName.toLowerCase());
@@ -1801,7 +1797,8 @@ function forceAppRefresh() {
             ingredients: oldMeal.ingredients || '[]', 
             cuisine: oldMeal.cuisine || '', 
             origin: oldMeal.origin || '', 
-            fact: oldMeal.fact || '' 
+            fact: oldMeal.fact || '',
+            isFavorite: oldMeal.isFavorite || false
         });
         
         closeModal('mealEditModal');
@@ -2472,10 +2469,16 @@ function forceAppRefresh() {
     // ------------------------------------------------
     // STANDALONE COOKBOOK POPUP CARD ENGINE
     // ------------------------------------------------
-    function openStandaloneCard(nameRaw, source) {
+    function openStandaloneCard(nameRaw, source, categoryRaw) {
         const name = unescapeHtml(nameRaw);
+        const category = unescapeHtml(categoryRaw || '');
         const pool = source === 'Local DB' ? state.savedMeals : state.globalMeals;
-        const meal = pool.find(m => m.name.toLowerCase() === name.toLowerCase());
+        
+        // Match both name and category to prevent Lunch/Dinner cross-pollination
+        const meal = pool.find(m => 
+            m.name.toLowerCase() === name.toLowerCase() && 
+            (m.category || '').toLowerCase() === category.toLowerCase()
+        );
         if(!meal) return;
         
         standaloneMealContext = buildCard(meal.category || 'Dinner', meal, source === 'Local DB' ? 'cookbook' : 'global');
@@ -2579,7 +2582,7 @@ function forceAppRefresh() {
                                           </div>`;
                     }
                     
-                    html += `<div class="data-row" style="cursor: pointer; ${rowBackground}" onclick="openStandaloneCard('${jsSafeName}', '${i.src}')">
+                    html += `<div class="data-row" style="cursor: pointer; ${rowBackground}" onclick="openStandaloneCard('${jsSafeName}', '${i.src}', '${escapeJsArg(i.category || '')}')">
                                 <div style="flex:1;"><span>${safeName}</span></div>
                                 ${rightTag}
                                 ${actionBtnsHtml}
@@ -2675,7 +2678,7 @@ function forceAppRefresh() {
     
     function executeUnifiedEntrySave(m, c) {
         const structuralFallbackDiet = appSettings.diets.length > 0 ? appSettings.diets[0] : 'veg';
-        pendingApprovals.push({ category: c, meal: m, diet: structuralFallbackDiet, ingredients: '[]', cuisine: '', origin: '', fact: '' }); 
+        pendingApprovals.push({ category: c, meal: m, diet: structuralFallbackDiet, ingredients: '[]', cuisine: '', origin: '', fact: '', isFavorite: false }); 
         document.getElementById('unified-meal-input').value = ''; 
         renderReviewQueue(); 
         updateCookbookIconState();
@@ -2746,7 +2749,7 @@ function forceAppRefresh() {
               pendingApprovals.forEach(i => { 
                   state.savedMeals.push({
                       name: i.meal, category: i.category, diet: i.diet, lastServed: '', 
-                      ingredients: i.ingredients, cuisine: i.cuisine || '', origin: i.origin || '', fact: i.fact || ''
+                      ingredients: i.ingredients, cuisine: i.cuisine || '', origin: i.origin || '', fact: i.fact || '', isFavorite: i.isFavorite || false
                   }); 
               });
               pendingApprovals = []; 
